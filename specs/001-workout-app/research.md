@@ -52,6 +52,8 @@ Sources with URLs: `docs/research/tooling-2026-11-11.md`, `docs/research/pnpm12-
   partitions that iframe's storage by the top origin, port included. Chrome partitions by site, so it worked there.
 - **Rule**: `signInWithGoogle` redirects only when the handler origin (emulator or `https://<authDomain>`) equals `location.origin`,
   otherwise it opens a popup; `VITE_AUTH_FLOW` overrides. Production must be opened on the authDomain host (`*.firebaseapp.com`), or set authDomain to the serving host.
+- **iOS popup finding (2026-11-11)**: on `pnpm dev:remote` iPhone Safari opened the cross-origin popup as a tab and the original tab
+  stayed on /login until tapped again. `dev:remote` now proxies the Auth emulator on the app's origin, so it redirects like production.
 
 ## R4. Keeping the screen on (FR-043)
 

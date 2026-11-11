@@ -43,27 +43,34 @@ writeFileSync(
   }),
 )
 
+// The app reaches the Auth emulator through Vite's proxy on its own origin (scripts/vite.remote.config.ts).
 const env = {
   ...process.env,
   VITE_FIREBASE_PROJECT_ID: projectId,
-  VITE_FIREBASE_AUTH_EMULATOR_HOST: authHost,
+  VITE_FIREBASE_AUTH_EMULATOR_HOST: 'same-origin',
+  DEV_AUTH_EMULATOR: `http://${authHost}`,
   VITE_FIREBASE_FIRESTORE_EMULATOR_HOST: firestoreHost,
 }
 const bin = resolve('node_modules/.bin/vite')
+const viteConfig = resolve('scripts/vite.remote.config.ts')
 const outDir = 'dist-remote'
 
 // Mode e2e: a production bundle wired to the emulators (.env.e2e, never .env.production.local);
 // the variables above outrank .env.e2e, so it talks to this script's emulators and project.
 if (preview) {
-  const build = spawnSync(bin, ['build', '--mode', 'e2e', '--outDir', outDir], {
-    stdio: 'inherit',
-    env,
-  })
+  const build = spawnSync(
+    bin,
+    ['build', '--config', viteConfig, '--mode', 'e2e', '--outDir', outDir],
+    {
+      stdio: 'inherit',
+      env,
+    },
+  )
   if (build.status !== 0) process.exit(build.status ?? 1)
 }
 
 const server = preview ? `preview --mode e2e --outDir ${outDir} ` : ''
-const vite = `"${bin}" ${server}--host ${host} --port ${port} --strictPort`
+const vite = `"${bin}" ${server}--config "${viteConfig}" --host ${host} --port ${port} --strictPort`
 runInGroup(
   resolve('node_modules/.bin/firebase'),
   ['emulators:exec', '--config', config, '--project', projectId, '--only', 'auth,firestore', vite],

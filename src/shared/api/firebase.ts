@@ -30,7 +30,9 @@ export const db = initializeFirestore(app, {
 
 // Direct import.meta.env reads are replaced at build time, so production drops these branches.
 if (import.meta.env.DEV || import.meta.env.MODE === 'test' || import.meta.env.VITE_E2E === '1') {
-  const authHost = import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST ?? '127.0.0.1:9099'
+  const authEnv = import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST ?? '127.0.0.1:9099'
+  // dev:remote proxies the emulator on the app's origin, whichever name or address the device used.
+  const authHost = authEnv === 'same-origin' ? location.host : authEnv
   const [firestoreHost, firestorePort] = (
     import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST ?? '127.0.0.1:8080'
   ).split(':')

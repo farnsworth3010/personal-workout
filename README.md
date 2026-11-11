@@ -44,6 +44,8 @@ In development `/dev/ui` shows every shared UI component; the route is not in pr
 The dev server also answers on Tailscale names (`*.ts.net`).
 `DEV_HOST=<tailscale-ip> pnpm dev:remote` serves Vite (optional `DEV_PORT`, default 5173) and the emulators
 (Auth :9199, Firestore :8180) on that address only, so a phone or another computer on the tailnet can sign in.
+Vite proxies the Auth emulator on the app's own origin (`scripts/vite.remote.config.ts`), so sign-in is the
+same-origin redirect production uses, not a popup.
 `DEV_HOST=<tailscale-ip> pnpm preview:remote` is the same over a production bundle: it builds
 `dist-remote/` in mode `e2e` with the remote emulators and project `demo-workout-remote` (never
 `.env.production.local`) and serves it with `vite preview`, so a phone loads a few bundled files instead of
@@ -82,9 +84,11 @@ local Chrome.
 
 Every push to `main` deploys once `.github/workflows/ci.yml` passes: job `build-prod` (needs `check`, no
 secrets) writes `.env.production.local` from the variables below, runs `pnpm catalog` and `pnpm build` and
-uploads `dist/`; job `deploy` downloads it and runs `firebase-tools@15.34.2` (installed alone, without the
-project's dependencies; keep it equal to `devDependencies`) with
+uploads `dist/`; job `deploy` downloads it and runs `firebase-tools` installed from `deploy/` (its own lockfile and a copy
+of the root supply-chain settings, without the app's dependencies) with
 `firebase deploy --only firestore:rules,hosting --project personal-workout-1b06f`.
+To change its version, edit `deploy/package.json` to match the root, copy `pnpm-lock.yaml` into `deploy/`
+and run `pnpm install --lockfile-only` there: pnpm keeps the root's resolutions and drops the rest.
 Add in GitHub, Settings → Secrets and variables → Actions:
 
 - secret `FIREBASE_SERVICE_ACCOUNT_PERSONAL_WORKOUT_1B06F`: the deploy service account's JSON key (the one

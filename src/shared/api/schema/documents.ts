@@ -53,6 +53,11 @@ export const templateRefSchema = z.strictObject({ source: templateSource, id })
 // Up to five sets per weekday, in the order the user arranged them.
 const scheduleDay = z.array(templateRefSchema).max(5)
 
+// Which session timers are shown. Profiles written before the switches have none: they read as all on.
+const timersSchema = z
+  .strictObject({ exercise: z.boolean(), rest: z.boolean(), workout: z.boolean() })
+  .default(() => ({ exercise: true, rest: true, workout: true }))
+
 export const profileSchema = z.strictObject({
   homeEquipment: z.array(equipmentSchema),
   defaultRestSec: z.int().min(0).max(900),
@@ -69,6 +74,7 @@ export const profileSchema = z.strictObject({
     sun: scheduleDay,
   }),
   activeWorkoutId: id.nullable(),
+  timers: timersSchema,
   updatedAt: timestamp,
 })
 

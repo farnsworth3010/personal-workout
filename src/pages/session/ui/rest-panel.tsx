@@ -12,7 +12,8 @@ interface RestPanelProps {
   n: number
   logged: SetValues
   last: SetValues | undefined
-  remainingSec: number
+  // Undefined when the rest timer is off: the screen stays, without a countdown.
+  remainingSec: number | undefined
   weightStepKg: number
   // Stable across renders, so the strips skip the countdown's re-render each second.
   onEdit: (values: SetValues) => void
@@ -105,12 +106,14 @@ export function RestPanel({
     <div className="flex min-w-0 animate-in flex-col gap-3.5 duration-200 fade-in-0 slide-in-from-bottom-2">
       <div className="py-2 text-center">
         <p className="text-sm text-muted-foreground">Отдых после подхода {n}</p>
-        <p
-          data-testid="rest-countdown"
-          className="text-[84px] leading-none font-extrabold text-primary tabular-nums min-[900px]:text-[120px]"
-        >
-          {formatClock(remainingSec)}
-        </p>
+        {remainingSec !== undefined && (
+          <p
+            data-testid="rest-countdown"
+            className="text-[84px] leading-none font-extrabold text-primary tabular-nums min-[900px]:text-[120px]"
+          >
+            {formatClock(remainingSec)}
+          </p>
+        )}
         {last && (
           <p className="mt-1.5 text-sm text-muted-foreground tabular-nums">
             В прошлый раз: {setText(last, true)}

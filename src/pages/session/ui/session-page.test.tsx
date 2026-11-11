@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   saveActiveWorkout: vi.fn(),
   stats: {},
   sounds: true,
+  timers: { exercise: true, rest: true, workout: true },
   playSignal: vi.fn(),
   unlockAudio: vi.fn(),
 }))
@@ -36,6 +37,7 @@ vi.mock('@/entities/profile', () => ({
       defaultWeightStepKg: 2.5,
       defaultRestSec: 90,
       sounds: mocks.sounds,
+      timers: mocks.timers,
     },
   }),
 }))
@@ -97,6 +99,7 @@ beforeEach(() => {
   mocks.saveActiveWorkout.mockClear()
   mocks.playSignal.mockClear()
   mocks.sounds = true
+  mocks.timers = { exercise: true, rest: true, workout: true }
   mocks.stats = {
     Bench: history([
       { reps: 8, weightKg: 60 },
@@ -228,6 +231,30 @@ describe('SessionPage', () => {
     expect(screen.getByText('Отдых после подхода 1')).toBeInTheDocument()
   })
 
+  it('hides the clocks switched off in settings and keeps the rest screen', async () => {
+    mocks.timers = { exercise: false, rest: false, workout: false }
+    show()
+
+    expect(screen.queryByText('Время')).not.toBeInTheDocument()
+    expect(screen.queryByText(/^\d\d:\d\d$/)).not.toBeInTheDocument()
+
+    await press('Подход сделан')
+
+    expect(screen.getByText('Отдых после подхода 1')).toBeInTheDocument()
+    expect(screen.queryByTestId('rest-countdown')).not.toBeInTheDocument()
+
+    await press('Следующий подход')
+
+    expect(loggedSets()).toEqual([{ n: 1, reps: 8, weightKg: 60 }])
+  })
+
+  it('shows the clocks by default', () => {
+    show()
+
+    expect(screen.getByText('Время')).toBeInTheDocument()
+    expect(screen.getAllByText(/^\d\d:\d\d$/)).toHaveLength(2)
+  })
+
   describe('signals', () => {
     const played = () => mocks.playSignal.mock.calls.map(([signal]) => signal as string)
 
@@ -274,6 +301,14 @@ describe('SessionPage', () => {
       setVisibility('visible')
 
       expect(played()).toEqual(['rest-end'])
+    })
+
+    it('does not signal the end of a rest with the rest timer off', () => {
+      mocks.timers = { exercise: true, rest: false, workout: true }
+      useSessionStore.getState().completeSet({ reps: 8 }, Date.now() - 100_000)
+      show()
+
+      expect(played()).toEqual([])
     })
 
     it('unlocks audio on any tap', () => {

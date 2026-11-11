@@ -40,6 +40,7 @@ All timestamps are client `Timestamp`s. All ids are client-generated, so every w
 | `sounds`, `animations` | boolean | true |
 | `schedule` | `{ mon..sun: TemplateRef[] }` (0–5 per day, in order) | all empty |
 | `activeWorkoutId` | string \| null | legacy, no longer written (2026-11-11); the running workout is found by `status == 'active'` |
+| `timers` | map `{ exercise, rest, workout }` of bool | which session timers are shown; default all `true`, and a profile without it reads as all `true` |
 | `updatedAt` | Timestamp | |
 
 `TemplateRef = { source: 'own' \| 'ready', id: string }`.

@@ -19,6 +19,7 @@ describe('profile defaults', () => {
       sounds: true,
       animations: true,
       activeWorkoutId: null,
+      timers: { exercise: true, rest: true, workout: true },
     })
     expect(Object.values(defaultProfile.schedule)).toEqual(Array(7).fill([]))
   })
@@ -53,6 +54,13 @@ describe('mergeProfile', () => {
       mon: [legDay],
       fri: [legDay, upperDay],
     })
+  })
+
+  it('merges one timer switch, keeping the others', () => {
+    const merged = mergeProfile(defaultProfile, { timers: { rest: false } }, now)
+
+    expect(merged.timers).toEqual({ exercise: true, rest: false, workout: true })
+    expect(profileSchema.safeParse(merged).success).toBe(true)
   })
 
   it('replaces a day with its new list and keeps a whole valid document', () => {

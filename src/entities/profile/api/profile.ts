@@ -9,6 +9,7 @@ import {
   useSnapshotQuery,
   type Profile,
 } from '@/shared/api'
+import { toast } from '@/shared/ui'
 
 import { defaultProfile, mergeProfile, withDefaults, type ProfilePatch } from '../model/profile'
 
@@ -23,6 +24,12 @@ export function updateProfile(client: QueryClient, uid: string, patch: ProfilePa
 
   // Writing defaults over a document that has not arrived yet would erase it.
   if (current === undefined) throw new Error('Profile is not loaded yet')
+
+  // Shown as defaults while the server has not answered: an edit now could only guess the real document.
+  if (current === defaultProfile) {
+    toast('Профиль ещё не загрузился с сервера. Повторите, когда появится связь.')
+    return
+  }
 
   const now = Timestamp.now()
   const parsed = profileSchema.safeParse(mergeProfile(withDefaults(current), patch, now))
@@ -65,7 +72,8 @@ export function ensureProfile(uid: string): void {
 
 export function useProfile(uid: string) {
   const client = useQueryClient()
-  const query = useSnapshotQuery(profileQueryKey(uid), docSource(profileRef(uid)))
+  // Without a server answer the screens get the defaults (by reference, so updateProfile can tell).
+  const query = useSnapshotQuery(profileQueryKey(uid), docSource(profileRef(uid), defaultProfile))
 
   return {
     profile: query.isSuccess ? withDefaults(query.data) : undefined,

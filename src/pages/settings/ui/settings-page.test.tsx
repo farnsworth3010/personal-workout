@@ -2,6 +2,8 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { defaultProfile } from '@/entities/profile'
+
 import { SettingsPage } from './settings-page'
 
 const mocks = vi.hoisted(() => ({
@@ -35,7 +37,7 @@ const user = { uid: 'u1', displayName: 'Алексей', email: 'a@example.com',
 
 const withEquipment = (homeEquipment: string[] | undefined) =>
   mocks.useProfile.mockReturnValue({
-    profile: homeEquipment && { homeEquipment },
+    profile: homeEquipment && { ...defaultProfile, homeEquipment },
     update: mocks.update,
   })
 
@@ -83,6 +85,7 @@ describe('SettingsPage', () => {
   it('shows and saves the workout defaults', async () => {
     mocks.useProfile.mockReturnValue({
       profile: {
+        ...defaultProfile,
         homeEquipment: [],
         defaultRestSec: 90,
         defaultWeightStepKg: 2.5,
@@ -118,6 +121,24 @@ describe('SettingsPage', () => {
     expect(mocks.update).toHaveBeenLastCalledWith({ animations: true })
   })
 
+  it('shows and saves each session timer on its own', async () => {
+    mocks.useProfile.mockReturnValue({
+      profile: { ...defaultProfile, timers: { exercise: true, rest: false, workout: true } },
+      update: mocks.update,
+    })
+    render(<SettingsPage user={user} />)
+
+    const timers = screen.getByRole('region', { name: 'Таймеры' })
+    expect(within(timers).getByRole('switch', { name: /Время упражнения/ })).toBeChecked()
+    expect(within(timers).getByRole('switch', { name: /^Отдых/ })).not.toBeChecked()
+
+    await userEvent.click(within(timers).getByRole('switch', { name: /^Отдых/ }))
+    expect(mocks.update).toHaveBeenLastCalledWith({ timers: { rest: true } })
+
+    await userEvent.click(within(timers).getByRole('switch', { name: /Общее время/ }))
+    expect(mocks.update).toHaveBeenLastCalledWith({ timers: { workout: false } })
+  })
+
   it('locks the defaults until the profile arrives', () => {
     withEquipment(undefined)
     render(<SettingsPage user={user} />)
@@ -139,6 +160,7 @@ describe('SettingsPage', () => {
       'Аккаунт',
       'По умолчанию',
       'Звуки и анимации',
+      'Таймеры',
       'Моё оборудование дома',
       'Сброс прогресса',
     ])

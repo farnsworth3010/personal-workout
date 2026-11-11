@@ -26,6 +26,7 @@ const profile = (): Profile => ({
   animations: true,
   schedule: { mon: [], tue: [], wed: [], thu: [], fri: [], sat: [], sun: [] },
   activeWorkoutId: null,
+  timers: { exercise: true, rest: true, workout: true },
   updatedAt: at,
 })
 
@@ -83,10 +84,31 @@ const check = (schema: z.ZodType, cases: Case[]) =>
     expect(schema.safeParse(value).success).toBe(valid)
   })
 
+describe('profileSchema timers', () => {
+  it('reads a profile written before the timer switches as all timers on', () => {
+    const old: Partial<Profile> = profile()
+    delete old.timers
+
+    expect(profileSchema.parse(old).timers).toEqual({ exercise: true, rest: true, workout: true })
+  })
+})
+
 describe('profileSchema', () => {
   check(profileSchema, [
     ['defaults', profile(), true],
     ['rest 0 s', { ...profile(), defaultRestSec: 0 }, true],
+    [
+      'timers hidden',
+      { ...profile(), timers: { exercise: false, rest: false, workout: false } },
+      true,
+    ],
+    ['timers missing a switch', { ...profile(), timers: { exercise: true, rest: true } }, false],
+    [
+      'timers with an extra switch',
+      { ...profile(), timers: { ...profile().timers, set: true } },
+      false,
+    ],
+    ['timers null', { ...profile(), timers: null }, false],
     ['rest 900 s', { ...profile(), defaultRestSec: 900 }, true],
     ['rest 901 s', { ...profile(), defaultRestSec: 901 }, false],
     ['rest -1 s', { ...profile(), defaultRestSec: -1 }, false],

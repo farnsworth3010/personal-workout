@@ -16,7 +16,8 @@ interface WorkPanelProps {
   predicted: SetValues
   // Seconds left of a timed set; undefined for sets counted in reps.
   timedLeft: number | undefined
-  exerciseSec: number
+  // Time on the exercise; undefined when that timer is off.
+  exerciseSec: number | undefined
   onBack: () => void
   onAdd: () => void
   onPostpone: () => void
@@ -56,7 +57,7 @@ export function WorkPanel({
         ) : (
           <Stat label="Осталось" value={formatClock(timedLeft)} />
         )}
-        <Stat label="Время" value={formatClock(exerciseSec, 2)} />
+        {exerciseSec !== undefined && <Stat label="Время" value={formatClock(exerciseSec, 2)} />}
       </StatRow>
 
       <div className="grid grid-cols-3 gap-2">

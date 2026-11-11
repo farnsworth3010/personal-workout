@@ -2,8 +2,9 @@ import { Timestamp } from 'firebase/firestore'
 
 import type { Profile } from '@/shared/api'
 
-export type ProfilePatch = Partial<Omit<Profile, 'schedule' | 'updatedAt'>> & {
+export type ProfilePatch = Partial<Omit<Profile, 'schedule' | 'timers' | 'updatedAt'>> & {
   schedule?: Partial<Profile['schedule']>
+  timers?: Partial<Profile['timers']>
 }
 
 // data-model.md defaults; updatedAt is the epoch so the object stays one stable reference.
@@ -15,6 +16,7 @@ export const defaultProfile: Profile = {
   animations: true,
   schedule: { mon: [], tue: [], wed: [], thu: [], fri: [], sat: [], sun: [] },
   activeWorkoutId: null,
+  timers: { exercise: true, rest: true, workout: true },
   updatedAt: Timestamp.fromMillis(0),
 }
 
@@ -25,6 +27,7 @@ export function mergeProfile(current: Profile, patch: ProfilePatch, now: Timesta
     ...current,
     ...patch,
     schedule: { ...current.schedule, ...patch.schedule },
+    timers: { ...current.timers, ...patch.timers },
     updatedAt: now,
   }
 }

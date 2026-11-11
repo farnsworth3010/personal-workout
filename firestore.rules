@@ -29,9 +29,15 @@ service cloud.firestore {
       return v in ['own', 'ready'];
     }
 
+    // `timers` may be absent: profiles written before the timer switches lack it, and a merge into
+    // one of them must still pass. The app reads a missing `timers` as all on.
     function validProfile(d) {
-      return hasExactly(d, ['homeEquipment', 'defaultRestSec', 'defaultWeightStepKg', 'sounds',
+      return d.keys().hasAll(['homeEquipment', 'defaultRestSec', 'defaultWeightStepKg', 'sounds',
           'animations', 'schedule', 'activeWorkoutId', 'updatedAt'])
+        && d.keys().hasOnly(['homeEquipment', 'defaultRestSec', 'defaultWeightStepKg', 'sounds',
+          'animations', 'schedule', 'activeWorkoutId', 'timers', 'updatedAt'])
+        && (!('timers' in d) || (hasExactly(d.timers, ['exercise', 'rest', 'workout'])
+          && d.timers.exercise is bool && d.timers.rest is bool && d.timers.workout is bool))
         && d.homeEquipment is list
         && d.homeEquipment.hasOnly(['bands', 'barbell', 'body only', 'cable', 'dumbbell',
           'e-z curl bar', 'exercise ball', 'foam roll', 'kettlebells', 'machine', 'medicine ball',

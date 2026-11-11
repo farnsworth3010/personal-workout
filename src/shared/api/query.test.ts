@@ -2,7 +2,13 @@ import type { QueryClient } from '@tanstack/react-query'
 import type { DocumentReference } from 'firebase/firestore'
 import { describe, expect, it, vi } from 'vitest'
 
-import { createQueryClient, docSource, subscribeQuery, type SnapshotSource } from './query'
+import {
+  createQueryClient,
+  docSource,
+  SERVER_WAIT_MS,
+  subscribeQuery,
+  type SnapshotSource,
+} from './query'
 
 const onSnapshot = vi.hoisted(() => vi.fn())
 vi.mock('firebase/firestore', () => ({ onSnapshot }))
@@ -140,16 +146,56 @@ describe('docSource', () => {
     expect(next.mock.calls).toEqual([[5], [null]])
   })
 
-  it('keeps a document missing only from the cache loading until the server answers', () => {
+  it('waits for the server on a cache miss, then reads it as missing (or the given marker)', () => {
+    vi.useFakeTimers()
     const next = vi.fn()
+    const missing = () => snap(() => undefined, { fromCache: true, hasPendingWrites: false })
+
+    listen(next)(missing())
+    vi.advanceTimersByTime(SERVER_WAIT_MS - 1)
+    expect(next).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(1)
+    expect(next.mock.calls).toEqual([[null]])
+
+    const marker = { defaults: true }
+    const withMarker = vi.fn()
+    docSource(ref, marker)(withMarker, vi.fn())
+    const [, , onNext] = onSnapshot.mock.lastCall as [unknown, unknown, (s: unknown) => void]
+    onNext(missing())
+    vi.advanceTimersByTime(SERVER_WAIT_MS)
+    expect(withMarker.mock.calls).toEqual([[marker]])
+    vi.useRealTimers()
+  })
+
+  it('takes the server answer instead of the fallback, and stops waiting on unsubscribe', () => {
+    vi.useFakeTimers()
+    const next = vi.fn()
+    const missing = () => snap(() => undefined, { fromCache: true, hasPendingWrites: false })
+    onSnapshot.mockReturnValueOnce(vi.fn())
     const onNext = listen(next)
 
-    onNext(snap(() => undefined, { fromCache: true, hasPendingWrites: false }))
-    expect(next).not.toHaveBeenCalled()
+    onNext(missing())
+    onNext(snap(() => 5))
+    vi.advanceTimersByTime(SERVER_WAIT_MS)
+    expect(next.mock.calls).toEqual([[5]])
 
-    onNext(snap(() => undefined, { fromCache: true, hasPendingWrites: true }))
-    onNext(snap(() => 5, { fromCache: true, hasPendingWrites: false }))
-    expect(next.mock.calls).toEqual([[null], [5]])
+    const stopped = vi.fn()
+    onSnapshot.mockReturnValueOnce(vi.fn())
+    const unsubscribe = docSource(ref)(stopped, vi.fn())
+    const [, , later] = onSnapshot.mock.lastCall as [unknown, unknown, (s: unknown) => void]
+    later(missing())
+    unsubscribe()
+    vi.advanceTimersByTime(SERVER_WAIT_MS)
+    expect(stopped).not.toHaveBeenCalled()
+    vi.useRealTimers()
+  })
+
+  it('passes a local delete at once', () => {
+    const next = vi.fn()
+
+    listen(next)(snap(() => undefined, { fromCache: true, hasPendingWrites: true }))
+
+    expect(next.mock.calls).toEqual([[null]])
   })
 
   it('routes a converter failure to the error callback', () => {

@@ -231,6 +231,30 @@ describe.skipIf(!emulatorHost)(
         expect((await as('A').doc('users/A/templates/t1').get()).exists).toBe(true)
       })
 
+      it('lets a profile written before the timer switches take a merge, and the switches later', async () => {
+        const old: Partial<typeof defaultProfile> = { ...defaultProfile, updatedAt: now }
+        delete old.timers
+        await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('users/O').set(old))
+
+        await assertSucceeds(
+          as('O').doc('users/O').set({ sounds: false, updatedAt: now }, { merge: true }),
+        )
+        // Maps merge key by key: one switch alone would leave the profile with a partial `timers`.
+        await assertFails(
+          as('O')
+            .doc('users/O')
+            .set({ timers: { rest: false }, updatedAt: now }, { merge: true }),
+        )
+        await assertSucceeds(
+          as('O')
+            .doc('users/O')
+            .set(
+              { timers: { exercise: false, rest: true, workout: true }, updatedAt: now },
+              { merge: true },
+            ),
+        )
+      })
+
       it('merges activeWorkoutId into an existing profile, but cannot create one', async () => {
         const merge = (id: string | null) => ({ activeWorkoutId: id, updatedAt: now })
 

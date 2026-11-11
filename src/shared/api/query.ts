@@ -97,19 +97,32 @@ export function useSnapshotQuery<T>(queryKey: QueryKey, source: SnapshotSource<T
   return useQuery<T>({ queryKey, queryFn: skipToken })
 }
 
+// How long a document missing from the cache waits for the server before it counts as missing.
+export const SERVER_WAIT_MS = 3000
+
 // A converter that rejects a document reports through `error` instead of throwing in the listener.
-// A document missing only from the cache stays "loading" (no value) until the server answers, so
-// create-if-absent logic never mistakes an unsynced device for a missing document; local deletes pass.
+// A document missing only from the cache waits up to SERVER_WAIT_MS for the server, so an unsynced device
+// is not mistaken for a missing document; then it reads as `unconfirmed` (null unless the caller passes a
+// marker), because a screen must never wait on the network. Local deletes pass at once.
 export const docSource =
-  <T>(ref: DocumentReference<T>): SnapshotSource<T | null> =>
-  (next, error) =>
-    onSnapshot(
+  <T, M = null>(ref: DocumentReference<T>, unconfirmed?: M): SnapshotSource<T | null | M> =>
+  (next, error) => {
+    let wait: ReturnType<typeof setTimeout> | undefined
+
+    const unsubscribe = onSnapshot(
       ref,
       { includeMetadataChanges: true },
       (snapshot) => {
         const { fromCache, hasPendingWrites } = snapshot.metadata
 
-        if (!snapshot.exists() && fromCache && !hasPendingWrites) return
+        clearTimeout(wait)
+
+        if (!snapshot.exists() && fromCache && !hasPendingWrites) {
+          wait = setTimeout(() => {
+            next(unconfirmed ?? null)
+          }, SERVER_WAIT_MS)
+          return
+        }
 
         try {
           next(snapshot.data() ?? null)
@@ -119,6 +132,12 @@ export const docSource =
       },
       error,
     )
+
+    return () => {
+      clearTimeout(wait)
+      unsubscribe()
+    }
+  }
 
 export const querySource =
   <T>(query: Query<T>): SnapshotSource<WithId<T>[]> =>

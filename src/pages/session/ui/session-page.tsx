@@ -49,6 +49,8 @@ export function SessionPage({ user }: { user: AuthUser }) {
   const [picked, setPicked] = useState<Exercise>()
 
   const soundsOn = profile?.sounds !== false
+  // Each clock can be switched off in settings; a timed set's countdown is the exercise, so it stays.
+  const timers = profile?.timers ?? { exercise: true, rest: true, workout: true }
 
   useWakeLock(workout !== null && !finishing)
   useAutosave(user.uid, session)
@@ -73,7 +75,7 @@ export function SessionPage({ user }: { user: AuthUser }) {
   const resting = restEndsAt !== null
   const timedLeft = timedRemaining(session.setStartedAt ?? now, entry?.plan.durationSec ?? 0, now)
   const timeUp = timed && !resting && timedLeft === 0
-  const restOver = resting && restRemaining(restEndsAt, now) === 0
+  const restOver = timers.rest && resting && restRemaining(restEndsAt, now) === 0
 
   useSessionSignals({ timeUp, restOver, restEndsAt, soundsOn, now })
 
@@ -107,7 +109,7 @@ export function SessionPage({ user }: { user: AuthUser }) {
           onConfirm={endWorkout}
         />
         <span className="text-base font-semibold text-foreground tabular-nums">
-          {formatClock(elapsed(workout.startedAt.toMillis(), now), 2)}
+          {timers.workout && formatClock(elapsed(workout.startedAt.toMillis(), now), 2)}
         </span>
         <span className="justify-self-end tabular-nums">
           {index + 1} / {workout.entries.length}
@@ -181,7 +183,7 @@ export function SessionPage({ user }: { user: AuthUser }) {
               n={n}
               logged={logged ?? prediction.values}
               last={prediction.last}
-              remainingSec={restRemaining(restEndsAt, now) ?? 0}
+              remainingSec={timers.rest ? (restRemaining(restEndsAt, now) ?? 0) : undefined}
               weightStepKg={stat?.weightStepKg ?? profile?.defaultWeightStepKg ?? 2.5}
               onEdit={session.editSet}
               onNext={next}
@@ -192,7 +194,9 @@ export function SessionPage({ user }: { user: AuthUser }) {
               n={n}
               predicted={prediction.values}
               timedLeft={timed ? timedLeft : undefined}
-              exerciseSec={elapsed(session.exerciseStartedAt ?? now, now)}
+              exerciseSec={
+                timers.exercise ? elapsed(session.exerciseStartedAt ?? now, now) : undefined
+              }
               onBack={() => session.back()}
               onAdd={() => setPicking(true)}
               onPostpone={() => {

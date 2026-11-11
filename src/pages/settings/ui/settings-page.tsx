@@ -34,6 +34,12 @@ const toggles = [
   { key: 'animations', label: 'Анимации', hint: 'Переходы между экранами и отклик кнопок' },
 ] as const
 
+const timers = [
+  { key: 'exercise', label: 'Время упражнения', hint: 'Сколько идёт текущий подход' },
+  { key: 'rest', label: 'Отдых', hint: 'Обратный отсчёт между подходами' },
+  { key: 'workout', label: 'Общее время тренировки', hint: 'С начала тренировки' },
+] as const
+
 // Body weight is always available, so it is shown checked and never stored.
 const ALWAYS: Equipment = 'body only'
 
@@ -217,6 +223,32 @@ export function SettingsPage({ user }: { user: AuthUser }) {
                       id={`toggle-${key}`}
                       checked={shown[key]}
                       onCheckedChange={(checked) => update({ [key]: checked })}
+                    />
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section aria-labelledby="h-timers" className={section}>
+            <h2 id="h-timers" className={heading}>
+              Таймеры
+            </h2>
+            <ul>
+              {timers.map(({ key, label, hint }) => (
+                <li key={key} className="border-b border-border first:border-t">
+                  <label
+                    htmlFor={`timer-${key}`}
+                    className="grid min-h-16 cursor-pointer grid-cols-[1fr_auto] items-center gap-4 py-2.5"
+                  >
+                    <span>
+                      {label}
+                      <small className={`${note} mt-0.5 block`}>{hint}</small>
+                    </span>
+                    <Switch
+                      id={`timer-${key}`}
+                      checked={shown.timers[key]}
+                      onCheckedChange={(checked) => update({ timers: { [key]: checked } })}
                     />
                   </label>
                 </li>

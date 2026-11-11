@@ -12,6 +12,9 @@ vi.mock('firebase/firestore', async (importOriginal) => ({
   getDocFromServer: vi.fn(),
 }))
 
+const toast = vi.hoisted(() => vi.fn())
+vi.mock('@/shared/ui', () => ({ toast }))
+
 const uid = 'user-1'
 
 describe('updateProfile', () => {
@@ -37,7 +40,7 @@ describe('updateProfile', () => {
 
   it('merges only the edited keys into an existing profile, building on earlier unsynced edits', () => {
     const client = createQueryClient()
-    client.setQueryData(profileQueryKey(uid), defaultProfile)
+    client.setQueryData(profileQueryKey(uid), { ...defaultProfile })
 
     updateProfile(client, uid, { sounds: false })
     updateProfile(client, uid, { schedule: { mon: [{ source: 'own', id: 't1' }] } })
@@ -61,16 +64,28 @@ describe('updateProfile', () => {
     const client = createQueryClient()
     const errors = vi.fn()
     const stop = onWriteError(errors)
-    client.setQueryData(profileQueryKey(uid), defaultProfile)
+    const stored = { ...defaultProfile }
+    client.setQueryData(profileQueryKey(uid), stored)
 
     updateProfile(client, uid, { defaultRestSec: -5 })
     await vi.waitFor(() => {
       expect(errors).toHaveBeenCalledWith(expect.anything(), 'profile')
     })
 
-    expect(client.getQueryData(profileQueryKey(uid))).toBe(defaultProfile)
+    expect(client.getQueryData(profileQueryKey(uid))).toBe(stored)
     expect(setDoc).not.toHaveBeenCalled()
     stop()
+  })
+
+  it('refuses an edit while the screens show defaults because the server has not answered', () => {
+    const client = createQueryClient()
+    client.setQueryData(profileQueryKey(uid), defaultProfile)
+
+    updateProfile(client, uid, { sounds: false })
+
+    expect(setDoc).not.toHaveBeenCalled()
+    expect(client.getQueryData(profileQueryKey(uid))).toBe(defaultProfile)
+    expect(toast).toHaveBeenCalledWith(expect.stringContaining('не загрузился'))
   })
 
   it('refuses to write before the profile is loaded', () => {

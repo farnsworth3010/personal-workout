@@ -61,10 +61,10 @@ describe('auth gate', () => {
     api.subscribeAuth.mockReturnValue(vi.fn())
   })
 
-  it('shows a blank status, not the login page, until Firebase answers', () => {
+  it('shows the splash, not the login page, until Firebase answers', () => {
     renderAt('/')
 
-    expect(screen.getByRole('status')).toHaveTextContent('Загрузка')
+    expect(screen.getByRole('status', { name: 'Загрузка' })).toBeInTheDocument()
     expect(screen.queryByText('login page')).not.toBeInTheDocument()
   })
 

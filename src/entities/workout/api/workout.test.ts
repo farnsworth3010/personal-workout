@@ -207,7 +207,9 @@ describe('workout writes', () => {
     })
     fs.getDocs.mockImplementation((ref: { path: string }) =>
       Promise.resolve(
-        ref.path.endsWith('workouts') ? docs('workouts', 498) : docs(ref.path.split('/')[2] ?? '', 5),
+        ref.path.endsWith('workouts')
+          ? docs('workouts', 498)
+          : docs(ref.path.split('/')[2] ?? '', 5),
       ),
     )
     profileCache('w1')

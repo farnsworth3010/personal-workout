@@ -1,18 +1,11 @@
 import type { Place, ReadyTemplate, TemplateRef } from '@/entities/template'
 import type { Profile, Workout } from '@/shared/api'
+import { addDays, sameDay, weekStart } from '@/shared/lib'
 
 type Schedule = Profile['schedule']
 export type Weekday = keyof Schedule
 
 export const weekdays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
-
-// Local calendar days: steps by date, not by 24 h, so DST changes do not shift them.
-const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)
-
-const sameDay = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() &&
-  a.getMonth() === b.getMonth() &&
-  a.getDate() === b.getDate()
 
 export const weekdayOf = (date: Date): Weekday => weekdays[(date.getDay() + 6) % 7]
 
@@ -91,7 +84,7 @@ export function weekView<W extends Workout>(
   date: Date,
   ready: readonly ReadyTemplate[] = [],
 ) {
-  const monday = addDays(date, -((date.getDay() + 6) % 7))
+  const monday = weekStart(date)
 
   const days = weekdays.map((weekday, i) => {
     const day = addDays(monday, i)

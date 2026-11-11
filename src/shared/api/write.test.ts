@@ -26,12 +26,12 @@ describe('fireWrite', () => {
     unsubscribes.push(onWriteError(first), onWriteError(second))
     const error = new Error('permission-denied')
 
-    fireWrite(() => Promise.reject(error))
+    fireWrite(() => Promise.reject(error), 'finish')
 
     await vi.waitFor(() => {
-      expect(first).toHaveBeenCalledWith(error)
+      expect(first).toHaveBeenCalledWith(error, 'finish')
     })
-    expect(second).toHaveBeenCalledWith(error)
+    expect(second).toHaveBeenCalledWith(error, 'finish')
   })
 
   it('reports a write that throws before it starts', () => {
@@ -43,7 +43,7 @@ describe('fireWrite', () => {
       throw error
     })
 
-    expect(listener).toHaveBeenCalledWith(error)
+    expect(listener).toHaveBeenCalledWith(error, 'other')
   })
 
   it('stops notifying a listener after it unsubscribes', async () => {

@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 
-import { findExercise, muscleLabels, photoUrl, useCatalog } from '@/entities/exercise'
+import { muscleLabels, photoUrl, useCatalogById } from '@/entities/exercise'
 import { useWorkout, useWorkoutHistory } from '@/entities/workout'
 import type { AuthUser, Workout } from '@/shared/api'
-import { cn } from '@/shared/lib'
+import { cn, formatMass, n1 } from '@/shared/lib'
 import { EmptyState } from '@/shared/ui'
 
 import {
@@ -12,8 +12,6 @@ import {
   exerciseRows,
   formatDuration,
   formatSet,
-  formatVolume,
-  n1,
   previousBodyWeight,
   wellbeingWords,
   weightChange,
@@ -62,7 +60,7 @@ export function WorkoutPage({ user }: { user: AuthUser }) {
 
   const rows = exerciseRows(workout)
   const summary = workout.summary
-  const [volume, volumeUnit] = formatVolume(summary?.volumeKg ?? 0)
+  const volume = formatMass(summary?.volumeKg ?? 0)
 
   return (
     <div className="flex min-w-0 flex-col gap-6 min-[900px]:grid min-[900px]:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] min-[900px]:items-start min-[900px]:gap-x-16">
@@ -89,7 +87,7 @@ export function WorkoutPage({ user }: { user: AuthUser }) {
             <em className={unit}>из {rows.reduce((n, r) => n + r.planned, 0)}</em>
           </Stat>
           <Stat label="Объём">
-            {volume} <em className={unit}>{volumeUnit}</em>
+            {volume.value} <em className={unit}>{volume.unit}</em>
           </Stat>
         </div>
 
@@ -130,8 +128,9 @@ function Stat({ label, children }: { label: string; children: React.ReactNode })
 }
 
 function ExerciseItem({ row }: { row: ExerciseRow }) {
-  const { data: catalog } = useCatalog()
-  const exercise = catalog && findExercise(catalog, row.exerciseId)
+  const { data: byId } = useCatalogById()
+  const exercise = byId?.[row.exerciseId]
+  const mass = formatMass(row.volumeKg)
   const photo = exercise && photoUrl(exercise, 0)
   const muscles = exercise
     ? [
@@ -177,7 +176,7 @@ function ExerciseItem({ row }: { row: ExerciseRow }) {
           </span>
         ) : row.volumeKg > 0 ? (
           <span className="text-[13px] whitespace-nowrap text-muted-foreground tabular-nums">
-            {n1(row.volumeKg)} кг
+            {mass.value} {mass.unit}
           </span>
         ) : (
           <span />

@@ -87,6 +87,18 @@ describe('HoldButton', () => {
     expect(button).toHaveTextContent('Пропустить')
   })
 
+  it('keeps one timer when a second finger lands during the hold', () => {
+    const { onConfirm, button } = setup()
+
+    touchDown(button)
+    wait(500)
+    touchDown(button)
+    fireEvent.pointerUp(button, { pointerType: 'touch' })
+    wait(2000)
+
+    expect(onConfirm).not.toHaveBeenCalled()
+  })
+
   it('cancels the hold when the pointer is cancelled', () => {
     const { onConfirm, button } = setup()
 

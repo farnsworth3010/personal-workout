@@ -1,6 +1,7 @@
 import { muscleSchema, type Muscle, type Workout } from '@/shared/api'
+import { addDays, startOfDay, weekStart } from '@/shared/lib'
 
-import { addDays, between, startOfDay, weekStart } from './dates'
+import { between } from './dates'
 
 export type LoadLevel = 0 | 1 | 2 | 3
 
@@ -20,12 +21,13 @@ export function weekMuscleLoad(workouts: readonly Workout[], now = new Date()) {
   const from = weekStart(now)
   const week = between(workouts, from, addDays(startOfDay(now), 1))
 
-  const sets = Object.fromEntries(muscleSchema.options.map((m) => [m, 0])) as Record<Muscle, number>
-  for (const w of week) {
-    for (const [muscle, n] of Object.entries(w.summary?.muscleSets ?? {})) {
-      sets[muscle as Muscle] += n
-    }
-  }
+  const total = (muscle: Muscle) =>
+    week.reduce((n, w) => n + (w.summary?.muscleSets[muscle] ?? 0), 0)
+  // The keys are exactly muscleSchema.options; fromEntries only loses that in its type.
+  const sets = Object.fromEntries(muscleSchema.options.map((m) => [m, total(m)])) as Record<
+    Muscle,
+    number
+  >
 
   return {
     from,

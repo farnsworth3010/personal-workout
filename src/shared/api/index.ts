@@ -18,4 +18,4 @@ export {
   type WithId,
 } from './query'
 export * from './schema'
-export { fireWrite, onWriteError, type WriteErrorListener } from './write'
+export { fireWrite, onWriteError, type WriteErrorListener, type WriteLabel } from './write'

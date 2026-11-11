@@ -1,8 +1,22 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
+import { z } from 'zod'
+
+import { templateEntrySchema } from '@/shared/api'
 
 import type { ReadyTemplate } from '../model/types'
 
 export const READY_TEMPLATES_URL = '/catalog/templates.json'
+
+// A malformed entry fails here, as a query error, instead of crashing the pages that render it.
+export const readyTemplatesSchema = z.array(
+  z.strictObject({
+    id: z.string().min(1),
+    name: z.string().min(1),
+    place: z.enum(['home', 'gym']),
+    pairId: z.string().min(1).optional(),
+    entries: z.array(templateEntrySchema).min(1).max(40),
+  }),
+)
 
 export const readyTemplatesQuery = queryOptions({
   queryKey: ['ready-templates'],
@@ -11,7 +25,7 @@ export const readyTemplatesQuery = queryOptions({
 
     if (!response.ok) throw new Error(`Failed to load ready-made sets: ${response.status}`)
 
-    return (await response.json()) as ReadyTemplate[]
+    return readyTemplatesSchema.parse(await response.json())
   },
   staleTime: Infinity,
 })

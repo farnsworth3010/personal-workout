@@ -27,6 +27,7 @@ Workout app for home and gym: React, Feature-Sliced Design, shadcn/ui, Tailwind 
 ## Code rules
 
 - FSD layers: `app`, `pages`, `widgets`, `features`, `entities`, `shared`. Import only downwards and only through a slice's public API.
+- Segments by role: `ui` holds components only, `model` hooks, state and derived data, `lib` pure helpers and formatters. Inside a slice's segment files are flat (`ui/today-page.tsx` beside `ui/today-page.test.tsx`); a component gets its own folder only when it has private parts of its own. `shared/ui` is the exception: one folder with an `index.ts` per component.
 - No hard-coded colours: use the theme tokens.
 - No Cloud Functions or Cloud Storage. Per-user data isolation is enforced in Firestore security rules.
 - A workout session must never be blocked by a form, a network call or navigation.

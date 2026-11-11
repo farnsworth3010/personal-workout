@@ -1,8 +1,7 @@
 import type { Workout } from '@/shared/api'
+import { addDays, n1 } from '@/shared/lib'
 
 import { bodyWeightSeries, weeklySurvey } from '../../model/body'
-import { addDays } from '../../model/dates'
-import { n1 } from '../../model/format'
 import { LineChart, type ChartPoint } from '../line-chart'
 import { note, Section } from '../section'
 

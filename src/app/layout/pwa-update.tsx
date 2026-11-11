@@ -51,11 +51,30 @@ function useWaitingWorker(): ServiceWorker | null {
   return waiting
 }
 
-function update(worker: ServiceWorker) {
-  navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), {
-    once: true,
-  })
+// True once a new worker takes over, from this tab's «Обновить» or another tab's.
+function useWorkerSwapped() {
+  const [swapped, setSwapped] = useState(false)
 
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+
+    const sw = navigator.serviceWorker
+    // The very first install takes control without a previous worker: nothing to reload for.
+    let controlled = sw.controller !== null
+    const onChange = () => {
+      if (controlled) setSwapped(true)
+      controlled = true
+    }
+
+    sw.addEventListener('controllerchange', onChange)
+
+    return () => sw.removeEventListener('controllerchange', onChange)
+  }, [])
+
+  return swapped
+}
+
+function update(worker: ServiceWorker) {
   // The generated sw.js calls skipWaiting() on this message.
   worker.postMessage({ type: 'SKIP_WAITING' })
 }
@@ -66,6 +85,13 @@ export function PwaUpdate() {
   const [dismissed, setDismissed] = useState<ServiceWorker | null>(null)
   const active = useSessionStore(selectActive)
   const signedIn = useAuth().status === 'signedIn'
+  const swapped = useWorkerSwapped()
+
+  // The old chunks are gone with the old worker, so the tab reloads, but never under a running
+  // workout: then it waits until the workout ends (the session itself survives a reload).
+  useEffect(() => {
+    if (swapped && !active) location.reload()
+  }, [swapped, active])
 
   useEffect(() => {
     if (signedIn) persistStorage()

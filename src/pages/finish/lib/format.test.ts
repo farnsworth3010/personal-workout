@@ -1,7 +1,7 @@
 import { Timestamp } from 'firebase/firestore'
 import { describe, expect, it } from 'vitest'
 
-import { mass, setsLine } from './format'
+import { setsLine } from './format'
 
 const at = Timestamp.fromMillis(0)
 const sets = (...list: { reps?: number; weightKg?: number; durationSec?: number }[]) => ({
@@ -9,11 +9,6 @@ const sets = (...list: { reps?: number; weightKg?: number; durationSec?: number 
 })
 
 describe('format', () => {
-  it('writes tonnes from a thousand kilograms', () => {
-    expect(mass(540)).toBe('540 кг')
-    expect(mass(15620)).toBe('15,6 т')
-  })
-
   it('summarises the sets of an entry', () => {
     expect(setsLine(sets())).toBeNull()
     expect(setsLine(sets(...Array.from({ length: 4 }, () => ({ reps: 12, weightKg: 140 }))))).toBe(

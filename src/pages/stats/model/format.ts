@@ -1,6 +1,4 @@
-const n1Format = new Intl.NumberFormat('ru', { maximumFractionDigits: 1 })
-
-export const n1 = (value: number) => n1Format.format(value)
+import { n1 } from '@/shared/lib'
 
 // Russian plural forms [one, few, many]; fractions take the "few" form (0,5 подхода).
 export function plural(n: number, [one, few, many]: readonly [string, string, string]) {

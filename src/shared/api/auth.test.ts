@@ -17,12 +17,14 @@ const fb = vi.hoisted(() => ({
   signOut: vi.fn(),
 }))
 vi.mock('firebase/auth', () => fb)
+const fs = vi.hoisted(() => ({ terminate: vi.fn(), clearIndexedDbPersistence: vi.fn() }))
+vi.mock('firebase/firestore', () => fs)
 const auth = vi.hoisted(() => ({
   name: 'auth',
   emulatorConfig: null as { protocol: string; host: string; port: number | null } | null,
   app: { options: { authDomain: 'personal-workout.firebaseapp.com' } },
 }))
-vi.mock('./firebase', () => ({ auth }))
+vi.mock('./firebase', () => ({ auth, db: { name: 'db' } }))
 
 const flush = () => new Promise((resolve) => setTimeout(resolve))
 
@@ -94,6 +96,48 @@ describe('auth', () => {
     await flush()
 
     expect(errors.mock.calls).toEqual([[error], [error]])
+  })
+
+  it('signs out, then wipes the Firestore cache and localStorage and reloads', async () => {
+    const calls: string[] = []
+    const record = (name: string) => () => {
+      calls.push(name)
+      return Promise.resolve()
+    }
+    fb.signOut.mockImplementation(record('signOut'))
+    fs.terminate.mockImplementation(record('terminate'))
+    fs.clearIndexedDbPersistence.mockImplementation(record('clearIndexedDbPersistence'))
+    vi.stubGlobal('localStorage', { clear: vi.fn(() => calls.push('localStorage.clear')) })
+    vi.stubGlobal('location', { reload: vi.fn(() => calls.push('reload')) })
+
+    signOutUser()
+    await flush()
+
+    expect(calls).toEqual([
+      'signOut',
+      'terminate',
+      'clearIndexedDbPersistence',
+      'localStorage.clear',
+      'reload',
+    ])
+  })
+
+  it('still clears localStorage and reloads when another tab holds the Firestore cache', async () => {
+    const busy = new Error('failed-precondition')
+    fb.signOut.mockResolvedValue(undefined)
+    fs.terminate.mockResolvedValue(undefined)
+    fs.clearIndexedDbPersistence.mockRejectedValue(busy)
+    const clear = vi.fn()
+    const reload = vi.fn()
+    vi.stubGlobal('localStorage', { clear })
+    vi.stubGlobal('location', { reload })
+
+    signOutUser()
+    await flush()
+
+    expect(errors).toHaveBeenCalledWith(busy)
+    expect(clear).toHaveBeenCalledOnce()
+    expect(reload).toHaveBeenCalledOnce()
   })
 
   it('completes the redirect and reports its failure without rejecting', async () => {

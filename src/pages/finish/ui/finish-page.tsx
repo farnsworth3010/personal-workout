@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 
-import { photoUrl, useCatalog, type Exercise } from '@/entities/exercise'
+import { photoUrl, useCatalogById } from '@/entities/exercise'
 import { formatClock, selectFinishing, useSessionStore } from '@/entities/session'
 import {
   compareRecords,
@@ -16,9 +16,10 @@ import {
   type Records,
 } from '@/entities/workout'
 import type { AuthUser } from '@/shared/api'
+import { formatMass, n1 } from '@/shared/lib'
 import { Button, ExercisePhoto, Sheet, SheetContent } from '@/shared/ui'
 
-import { decimal, mass, setsLine } from '../lib/format'
+import { setsLine } from '../lib/format'
 import { emptySurvey, surveyAnswers } from '../lib/survey'
 import { Survey } from './survey'
 
@@ -33,21 +34,26 @@ const RECORD_LABELS: Record<RecordKey, string> = {
   bestSet: 'Лучший подход',
 }
 
+const massText = (kg: number) => {
+  const { value, unit } = formatMass(kg)
+  return `${value} ${unit}`
+}
+
 const recordValue = (key: RecordKey, records: Records | undefined) => {
   if (key === 'bestSet') {
     const set = records?.bestSet
-    return set && `${set.reps} × ${decimal(set.weightKg)} кг`
+    return set && `${set.reps} × ${n1(set.weightKg)} кг`
   }
 
   const kg = records?.[key]
-  return kg === undefined ? undefined : `${decimal(kg)} кг`
+  return kg === undefined ? undefined : `${n1(kg)} кг`
 }
 
 // finish.html: summary on the left, the survey on the right from 900px; no app navigation.
 export function FinishPage({ user }: { user: AuthUser }) {
   const navigate = useNavigate()
   const finishing = useSessionStore(selectFinishing)
-  const { data: catalog } = useCatalog()
+  const { data: byId, isError: catalogFailed } = useCatalogById()
   const previousWeight = useLastBodyWeight(user.uid)
   const [survey, setSurvey] = useState(emptySurvey)
   const [confirmEmpty, setConfirmEmpty] = useState(false)
@@ -56,14 +62,6 @@ export function FinishPage({ user }: { user: AuthUser }) {
   const entries = useMemo(() => workout?.entries ?? [], [workout])
   const current = useMemo(() => recordsByExercise(entries), [entries])
   const stats = useExerciseStats(user.uid, Object.keys(current))
-  const byId = useMemo(
-    () =>
-      Object.fromEntries((catalog ?? []).map((e) => [e.id, e])) as Record<
-        string,
-        Exercise | undefined
-      >,
-    [catalog],
-  )
 
   // The guard sends the page home once the store is cleared.
   if (!finishing || !workout) return null
@@ -74,7 +72,13 @@ export function FinishPage({ user }: { user: AuthUser }) {
         const { improved } = compareRecords(previous, records)
         const name = entries.find((e) => e.exerciseId === id)?.name ?? id
 
-        return improved.map((key) => ({ id, key, name, now: records, previous }))
+        return improved.map((key) => ({
+          id,
+          key,
+          name,
+          now: records,
+          was: recordValue(key, previous),
+        }))
       })
     : []
 
@@ -82,11 +86,12 @@ export function FinishPage({ user }: { user: AuthUser }) {
     ((workout.endedAt ?? workout.updatedAt).toMillis() - workout.startedAt.toMillis()) / 1000,
   )
   const done = entries.filter((e) => e.status === 'done').length
+  const total = formatMass(volumeKg(entries))
 
   // Writes are fired, never awaited (research R2), so the page leaves at once.
   const save = () => {
     const finished = useSessionStore.getState().finish(surveyAnswers(survey, previousWeight?.kg))
-    if (finished) finishWorkout(user.uid, finished.workoutId, finished.workout, byId)
+    if (finished) finishWorkout(user.uid, finished.workoutId, finished.workout, byId ?? {})
     void navigate('/')
   }
 
@@ -115,7 +120,7 @@ export function FinishPage({ user }: { user: AuthUser }) {
           {[
             ['Время', formatClock(durationSec)],
             ['Упражнения', `${done}`, `из ${entries.length}`],
-            ['Объём', ...mass(volumeKg(entries)).split(' ')],
+            ['Объём', total.value, total.unit],
           ].map(([label, value, unit]) => (
             <div key={label} className="py-3">
               <dt className="mb-0.5 text-xs text-muted-foreground">{label}</dt>
@@ -140,7 +145,7 @@ export function FinishPage({ user }: { user: AuthUser }) {
             >
               Новые рекорды
             </h2>
-            {records.map(({ id, key, name, now, previous }) => (
+            {records.map(({ id, key, name, now, was }) => (
               <p
                 key={`${id}-${key}`}
                 className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-0.5 rounded-lg border border-primary px-3.5 py-3"
@@ -153,8 +158,8 @@ export function FinishPage({ user }: { user: AuthUser }) {
                   {RECORD_LABELS[key]}:{' '}
                   <strong className="font-semibold text-foreground tabular-nums">
                     {recordValue(key, now)}
-                  </strong>{' '}
-                  · было {recordValue(key, previous)}
+                  </strong>
+                  {was !== undefined && ` · было ${was}`}
                 </span>
               </p>
             ))}
@@ -171,7 +176,7 @@ export function FinishPage({ user }: { user: AuthUser }) {
           <ul>
             {entries.map((entry, i) => {
               const line = setsLine(entry)
-              const exercise = byId[entry.exerciseId]
+              const exercise = byId?.[entry.exerciseId]
 
               return (
                 <li
@@ -195,7 +200,7 @@ export function FinishPage({ user }: { user: AuthUser }) {
                   </div>
                   {line ? (
                     <span className="text-right text-[13px] text-muted-foreground tabular-nums">
-                      {volumeKg([entry]) > 0 && mass(volumeKg([entry]))}
+                      {volumeKg([entry]) > 0 && massText(volumeKg([entry]))}
                     </span>
                   ) : (
                     <span className="rounded-full bg-surface-2 px-2 py-[3px] text-xs text-muted-foreground">
@@ -211,8 +216,10 @@ export function FinishPage({ user }: { user: AuthUser }) {
 
       <div className="flex min-w-0 flex-col gap-5 min-[900px]:sticky min-[900px]:top-10">
         <Survey value={survey} onChange={setSurvey} previousWeight={previousWeight} />
+        {/* Muscle load is computed from the catalog at save time; a failed load saves without it. */}
         <Button
           className={cta}
+          disabled={!byId && !catalogFailed}
           onClick={() => (setsDone(entries) === 0 ? setConfirmEmpty(true) : save())}
         >
           Сохранить тренировку

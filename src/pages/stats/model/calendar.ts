@@ -1,6 +1,7 @@
 import type { Workout } from '@/shared/api'
+import { addDays, sameDay, startOfDay, weekStart } from '@/shared/lib'
 
-import { addDays, between, byDate, sameDay, startOfDay, weekStart, workoutDate } from './dates'
+import { between, byDate, workoutDate } from './dates'
 
 export interface CalendarDay<W extends Workout = Workout> {
   date: Date

@@ -33,7 +33,7 @@ export function createTemplate(
   const ref = doc(templatesRef(uid))
   const now = Timestamp.now()
 
-  fireWrite(() => setDoc(ref, { ...draft, copiedFrom, createdAt: now, updatedAt: now }))
+  fireWrite(() => setDoc(ref, { ...draft, copiedFrom, createdAt: now, updatedAt: now }), 'template')
 
   return ref.id
 }
@@ -45,11 +45,13 @@ export const copyTemplate = (uid: string, ready: Pick<ReadyTemplate, 'id' | 'nam
 export function updateTemplate(uid: string, template: Template, draft: TemplateDraft) {
   const { id, copiedFrom, createdAt } = template
 
-  fireWrite(() =>
-    setDoc(templateRef(uid, id), { ...draft, copiedFrom, createdAt, updatedAt: Timestamp.now() }),
+  fireWrite(
+    () =>
+      setDoc(templateRef(uid, id), { ...draft, copiedFrom, createdAt, updatedAt: Timestamp.now() }),
+    'template',
   )
 }
 
 export function deleteTemplate(uid: string, templateId: string) {
-  fireWrite(() => deleteDoc(templateRef(uid, templateId)))
+  fireWrite(() => deleteDoc(templateRef(uid, templateId)), 'template')
 }

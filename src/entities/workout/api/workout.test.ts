@@ -1,15 +1,9 @@
 import { Timestamp, type DocumentReference } from 'firebase/firestore'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { ExerciseStats, Workout } from '@/shared/api'
+import { onWriteError, type ExerciseStats, type Workout } from '@/shared/api'
 
-import {
-  discardWorkout,
-  finishWorkout,
-  newWorkoutId,
-  resetProgress,
-  saveActiveWorkout,
-} from './workout'
+import { discardWorkout, finishWorkout, resetProgress, saveActiveWorkout } from './workout'
 
 const fs = vi.hoisted(() => {
   const batch = { set: vi.fn(), delete: vi.fn(), commit: vi.fn(() => Promise.resolve()) }
@@ -87,36 +81,20 @@ describe('workout writes', () => {
     profileCache()
   })
 
-  it('saves the active workout and merges only activeWorkoutId into the profile', async () => {
+  it('saves the active workout and writes nothing else', async () => {
     saveActiveWorkout(uid, 'w1', { ...workout(), status: 'done' })
     await flush()
 
-    expect(paths(fs.setDoc.mock.calls)).toEqual(['users/u1/workouts/w1', 'users/u1'])
+    expect(paths(fs.setDoc.mock.calls)).toEqual(['users/u1/workouts/w1'])
     expect(fs.setDoc.mock.calls[0]?.[1]).toMatchObject({ status: 'active' })
-    const [, profile, options] = fs.setDoc.mock.calls[1]
-    expect(Object.keys(profile as object).sort()).toEqual(['activeWorkoutId', 'updatedAt'])
-    expect(profile).toMatchObject({ activeWorkoutId: 'w1' })
-    expect(options).toEqual({ merge: true })
   })
 
-  it('skips the profile when it already points at the workout or is known to be missing', async () => {
-    profileCache('w1')
-    saveActiveWorkout(uid, 'w1', workout())
-    profileCache(null)
-    saveActiveWorkout(uid, 'w1', workout())
-    await flush()
-
-    expect(paths(fs.setDoc.mock.calls)).toEqual(['users/u1/workouts/w1', 'users/u1/workouts/w1'])
-  })
-
-  it('deletes a discarded workout and clears activeWorkoutId', async () => {
-    profileCache('w1')
-
+  it('deletes a discarded workout', async () => {
     discardWorkout(uid, 'w1')
     await flush()
 
     expect(paths(fs.deleteDoc.mock.calls)).toEqual(['users/u1/workouts/w1'])
-    expect(fs.setDoc.mock.calls[0]?.[1]).toMatchObject({ activeWorkoutId: null })
+    expect(fs.setDoc).not.toHaveBeenCalled()
   })
 
   it('writes the done workout at once, then the stats per exercise with sets in one batch', async () => {
@@ -166,7 +144,7 @@ describe('workout writes', () => {
       lastWorkoutId: 'w1',
       records: { maxWeightKg: 70, maxVolumeKg: 612.5, bestSet: { reps: 5, weightKg: 62.5 } },
     })
-    expect(fs.setDoc.mock.calls[1]?.[1]).toMatchObject({ activeWorkoutId: null })
+    expect(fs.setDoc).toHaveBeenCalledOnce()
   })
 
   it('reads previous stats from the cache first', async () => {
@@ -184,8 +162,10 @@ describe('workout writes', () => {
     expect(fs.batch.set.mock.calls[0]?.[1]).toMatchObject({ weightStepKg: 5 })
   })
 
-  it('treats stats it cannot read as a first workout with this exercise', async () => {
-    fs.getDoc.mockRejectedValue(new Error('offline, not cached'))
+  it('treats stats it cannot reach offline as a first workout with this exercise', async () => {
+    fs.getDoc.mockRejectedValue(
+      Object.assign(new Error('offline, not cached'), { code: 'unavailable' }),
+    )
 
     finishWorkout(uid, 'w1', workout(), {})
     await flush()
@@ -197,6 +177,32 @@ describe('workout writes', () => {
       maxVolumeKg: 612.5,
       bestSet: { reps: 5, weightKg: 62.5, e1rmKg: 72.92 },
     })
+  })
+
+  it('skips an exercise whose stats fail for another reason and reports it, keeping the rest', async () => {
+    const denied = Object.assign(new Error('rules'), { code: 'permission-denied' })
+    const errors = vi.fn()
+    const stop = onWriteError(errors)
+    fs.getDoc.mockImplementation((ref: DocumentReference) =>
+      ref.path.endsWith('Bench')
+        ? Promise.reject(denied)
+        : Promise.resolve({ data: () => undefined }),
+    )
+    const twoExercises = workout()
+    twoExercises.entries[1] = {
+      ...twoExercises.entries[0],
+      exerciseId: 'Squat',
+      name: 'Squat',
+    }
+
+    finishWorkout(uid, 'w1', twoExercises, {})
+    await vi.waitFor(() => {
+      expect(errors).toHaveBeenCalledWith(denied, 'stats')
+    })
+
+    expect(paths(fs.batch.set.mock.calls)).toEqual(['users/u1/exerciseStats/Squat'])
+    expect(fs.batch.commit).toHaveBeenCalledOnce()
+    stop()
   })
 
   it('resets progress: deletes workouts, stats and templates in batches of 500, empties the schedule', async () => {
@@ -230,9 +236,5 @@ describe('workout writes', () => {
       activeWorkoutId: null,
       schedule: { mon: [], sun: [] },
     })
-  })
-
-  it('generates workout ids without crypto.randomUUID', () => {
-    expect(newWorkoutId(uid)).toMatch(/^[A-Za-z0-9]{20}$/)
   })
 })

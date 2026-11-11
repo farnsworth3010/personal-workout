@@ -2,10 +2,10 @@ import { Timestamp } from 'firebase/firestore'
 import { describe, expect, it } from 'vitest'
 
 import type { LoggedSet, Workout, WorkoutEntry } from '@/shared/api'
+import { addDays, weekStart } from '@/shared/lib'
 
 import { bodyWeightSeries, weeklySurvey } from './body'
 import { firstMonth, monthCalendar, totalDurationSec, workoutsThisWeek } from './calendar'
-import { addDays, weekStart } from './dates'
 import { weekMuscleLoad } from './muscle-load'
 import { exerciseProgress, exercisesWithHistory } from './progress'
 
@@ -140,6 +140,16 @@ describe('exercise progress', () => {
       value: { reps: 10, weightKg: 60, e1rmKg: 80 },
       date: day(9, 10, 7),
     })
+  })
+
+  it('ignores a 0-rep attempt for the top weight and the records', () => {
+    const failed = [workout(day(5), 600, {}, [bench([0, 120], [5, 100])])]
+
+    const { points, records } = exerciseProgress(failed, 'Bench')
+
+    expect(points[0]).toMatchObject({ topWeightKg: 100, reps: 5 })
+    expect(records.maxWeightKg?.value).toBe(100)
+    expect(records.bestSet?.value).toMatchObject({ reps: 5, weightKg: 100 })
   })
 
   it('has reps but no weight records for a bodyweight exercise', () => {

@@ -1,8 +1,7 @@
 import { Timestamp } from 'firebase/firestore'
 
 import type { LoggedSet, Workout, WorkoutEntry } from '@/shared/api'
-
-import { addDays } from './dates'
+import { addDays } from '@/shared/lib'
 
 // Deterministic history like stats.html: Mon and Fri at home, Wed in the gym, 3 Aug – 11 Nov 2026.
 const skipped = new Set(['2026-7-21', '2026-8-23', '2026-7-5'])

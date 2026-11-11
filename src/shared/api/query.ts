@@ -73,9 +73,11 @@ export function subscribeQuery<T>(
   const unsubscribe = source(
     (data) => client.setQueryData(queryKey, data),
     (error) => {
-      cache
-        .build(client, { queryKey })
-        .setState({ status: 'error', error: error as Error, fetchStatus: 'idle' })
+      cache.build(client, { queryKey }).setState({
+        status: 'error',
+        error: error instanceof Error ? error : new Error(String(error)),
+        fetchStatus: 'idle',
+      })
       // After source() has returned its unsubscribe, even if it reports synchronously.
       queueMicrotask(close)
     },
@@ -96,12 +98,19 @@ export function useSnapshotQuery<T>(queryKey: QueryKey, source: SnapshotSource<T
 }
 
 // A converter that rejects a document reports through `error` instead of throwing in the listener.
+// A document missing only from the cache stays "loading" (no value) until the server answers, so
+// create-if-absent logic never mistakes an unsynced device for a missing document; local deletes pass.
 export const docSource =
   <T>(ref: DocumentReference<T>): SnapshotSource<T | null> =>
   (next, error) =>
     onSnapshot(
       ref,
+      { includeMetadataChanges: true },
       (snapshot) => {
+        const { fromCache, hasPendingWrites } = snapshot.metadata
+
+        if (!snapshot.exists() && fromCache && !hasPendingWrites) return
+
         try {
           next(snapshot.data() ?? null)
         } catch (e) {

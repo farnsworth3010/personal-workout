@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 
 import type { Equipment } from '@/entities/exercise'
 import { useProfile } from '@/entities/profile'
@@ -12,40 +12,32 @@ import {
 import type { Place, TemplateRef } from '@/entities/template'
 import { useWorkoutHistory } from '@/entities/workout'
 import { InstallHint } from '@/features/install-app'
+import { RunningWorkoutSheet, useStartWorkout } from '@/features/start-workout'
 import type { AuthUser, WithId, Workout } from '@/shared/api'
-import { unlockAudio } from '@/shared/lib'
+import { addDays, formatMass, useToday, weekStart } from '@/shared/lib'
 import { Button, Sheet, SheetContent } from '@/shared/ui'
 
-import {
-  counterpartOf,
-  dayPlan,
-  nextPlanned,
-  variantFor,
-  weekdays,
-  weekView,
-} from '../model/schedule'
+import { weekdayName } from '../lib/format'
+import { weekdays } from '../model/schedule'
+import { refKey, useSets, type SetInfo } from '../model/sets'
+import { todayPlan } from '../model/today-plan'
 import { DaySheet } from './day-sheet'
+import { RecoveredWorkout } from './recovered-workout'
 import { SetList } from './set-list'
-import { capitalize, cta, ghost, mass, refKey, useSets, weekdayName, type SetInfo } from './sets'
+import { label, title2 } from './styles'
+import { TodayHeader } from './today-header'
 import { TodaySets } from './today-sets'
 import { WeekBlock } from './week'
 
 const NO_EQUIPMENT: Equipment[] = []
 const NO_WORKOUTS: WithId<Workout>[] = []
 
-const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)
-
-const label = 'mb-1.5 text-[13px] text-muted-foreground'
-const title2 =
-  'text-[26px] leading-[1.1] font-extrabold tracking-[-0.02em] uppercase min-[900px]:text-[34px]'
-
 // home.html: today's sets in order, the week, the last workout and the weekday editor.
 export function TodayPage({ user }: { user: AuthUser }) {
-  const navigate = useNavigate()
-  const now = useMemo(() => new Date(), [])
+  const now = useToday()
   // shortcut: four weeks back are enough for "last workout"; a person away longer sees none.
   const range = useMemo(() => {
-    const monday = addDays(now, -((now.getDay() + 6) % 7))
+    const monday = weekStart(now)
     return { from: addDays(monday, -28), to: addDays(monday, 7) }
   }, [now])
 
@@ -56,114 +48,45 @@ export function TodayPage({ user }: { user: AuthUser }) {
   const active = useSessionStore(selectActive)
   const finishing = useSessionStore(selectFinishing)
   const running = useSessionStore((s) => s.workout?.template.name)
+  const startWorkout = useStartWorkout()
 
   const [mode, setMode] = useState<Place | null>(null)
-  const [open, setOpen] = useState<number | null>(null)
-  const [other, setOther] = useState(false)
-  const [waiting, setWaiting] = useState(false)
-  const [editing, setEditing] = useState<number | null>(null)
-
-  const header = (paired: boolean, place: Place) => (
-    <header className="flex items-end justify-between gap-3">
-      <div>
-        <p className="mb-1 text-[13px] text-muted-foreground">
-          {capitalize(
-            now.toLocaleDateString('ru', { weekday: 'long', day: 'numeric', month: 'long' }),
-          )}
-        </p>
-        <h1 className="text-[26px] leading-[1.1] font-extrabold tracking-[-0.02em] uppercase min-[900px]:text-[40px]">
-          Сегодня
-        </h1>
-      </div>
-      {paired && (
-        <div
-          role="group"
-          aria-label="Где тренируетесь"
-          className="flex gap-[3px] rounded-lg border border-border bg-surface p-[3px]"
-        >
-          {(['home', 'gym'] as const).map((p) => (
-            <button
-              key={p}
-              type="button"
-              aria-pressed={place === p}
-              onClick={() => setMode(p)}
-              className="min-h-10 min-w-16 rounded-[4px] px-3 text-sm text-muted-foreground aria-pressed:bg-primary aria-pressed:font-bold aria-pressed:text-on-accent"
-            >
-              {p === 'home' ? 'Дома' : 'Зал'}
-            </button>
-          ))}
-        </div>
-      )}
-    </header>
-  )
+  const [openSetIndex, setOpenSetIndex] = useState<number | null>(null)
+  const [otherSheetOpen, setOtherSheetOpen] = useState(false)
+  const [editingDay, setEditingDay] = useState<number | null>(null)
 
   if (!profile || !sets.loaded)
     return (
       <>
-        {header(false, 'gym')}
+        <TodayHeader date={now} onPlace={setMode} />
         <p className="text-sm text-muted-foreground">Загрузка…</p>
       </>
     )
 
-  // A ref to an own set deleted elsewhere is skipped; the next edit of that day drops it for good.
-  const schedule = Object.fromEntries(
-    weekdays.map((day) => [day, profile.schedule[day].filter((ref) => sets.find(ref))]),
-  ) as typeof profile.schedule
-  const plan = dayPlan(schedule, workouts, now, sets.ready)
-  const week = weekView(schedule, workouts, now, sets.ready)
-
-  const pairedRef = plan.sets.find((s) => counterpartOf(s.ref, sets.ready))?.ref
-  const place = mode ?? sets.ready.find((t) => t.id === pairedRef?.id)?.place ?? 'gym'
-
-  const items = plan.sets.map((s) => {
-    const ref = s.done ? s.ref : variantFor(s.ref, place, sets.ready)
-    const swapped = refKey(ref) !== refKey(s.ref)
-
-    return {
-      set: sets.find(ref),
-      doneAt: s.workout && (s.workout.endedAt ?? s.workout.startedAt).toDate(),
-      workoutId: s.workout?.id,
-      swappedTo: swapped ? (place === 'home' ? 'дома' : 'зала') : undefined,
-    }
-  })
-  const doneCount = plan.sets.filter((s) => s.done).length
-  const next = plan.sets.length === 0 ? nextPlanned(schedule, now) : null
-  const planEmpty = weekdays.every((day) => schedule[day].length === 0)
+  const { schedule, plan, week, paired, place, items, doneCount, next, planEmpty, planned } =
+    todayPlan(profile.schedule, sets, workouts, now, mode)
   const last = workouts.at(0)
 
-  // A running workout is never replaced silently: the person continues or finishes it first.
   const start = (set: SetInfo) => {
-    setOther(false)
-
-    if (active) {
-      setWaiting(true)
-      return
-    }
-
-    // In the tap itself: the first signal of the session would be silent otherwise (research R5).
-    unlockAudio()
-    useSessionStore
-      .getState()
-      .start({ ...set.ref, name: set.name }, toSessionEntries(set.entries, sets.byId))
-    void navigate('/session')
+    setOtherSheetOpen(false)
+    startWorkout.start({ ...set.ref, name: set.name }, toSessionEntries(set.entries, sets.byId))
   }
 
   const editDay = (refs: TemplateRef[]) => {
-    if (editing === null) return
+    if (editingDay === null) return
 
-    if (week.days[editing].today) setOpen(null)
-    update({ schedule: { ...schedule, [weekdays[editing]]: refs } })
+    if (week.days[editingDay].today) setOpenSetIndex(null)
+    update({ schedule: { ...schedule, [weekdays[editingDay]]: refs } })
   }
-
-  const planned = new Set(items.flatMap(({ set }) => (set ? [refKey(set.ref)] : [])))
 
   return (
     <>
-      {header(pairedRef !== undefined, place)}
+      <TodayHeader date={now} place={paired ? place : undefined} onPlace={setMode} />
 
       <div className="flex flex-col gap-7 min-[900px]:grid min-[900px]:grid-cols-[minmax(0,1.5fr)_minmax(300px,1fr)] min-[900px]:items-start min-[900px]:gap-12">
         <div className="flex min-w-0 flex-col gap-7">
           <InstallHint />
+          <RecoveredWorkout uid={user.uid} />
           {(active || finishing) && (
             <section aria-labelledby="running-title" className="flex flex-col gap-3.5">
               <div>
@@ -174,7 +97,7 @@ export function TodayPage({ user }: { user: AuthUser }) {
                   {running}
                 </h2>
               </div>
-              <Button asChild className={cta}>
+              <Button asChild size="cta">
                 <Link to={active ? '/session' : '/session/finish'}>
                   {active ? 'Продолжить тренировку' : 'К итогам тренировки'}
                 </Link>
@@ -197,8 +120,8 @@ export function TodayPage({ user }: { user: AuthUser }) {
               </p>
               {planEmpty && (
                 <Button
-                  className={cta}
-                  onClick={() => setEditing(week.days.findIndex((day) => day.today))}
+                  size="cta"
+                  onClick={() => setEditingDay(week.days.findIndex((day) => day.today))}
                 >
                   Добавить наборы в план
                 </Button>
@@ -209,7 +132,7 @@ export function TodayPage({ user }: { user: AuthUser }) {
                   {next.refs.map((ref) => sets.find(ref)?.name ?? 'Набор удалён').join(', ')}
                 </p>
               )}
-              <Button variant="outline" className={ghost} onClick={() => setOther(true)}>
+              <Button variant="outline" size="ghost" onClick={() => setOtherSheetOpen(true)}>
                 Другая тренировка
               </Button>
             </section>
@@ -220,18 +143,18 @@ export function TodayPage({ user }: { user: AuthUser }) {
               </p>
               <TodaySets
                 items={items}
-                open={open ?? plan.current}
+                open={openSetIndex ?? plan.current}
                 byId={sets.byId}
-                onOpen={setOpen}
+                onOpen={setOpenSetIndex}
                 onStart={start}
-                onOther={() => setOther(true)}
+                onOther={() => setOtherSheetOpen(true)}
               />
               {plan.state === 'done' && (
                 <>
                   <p className="text-[15px] leading-[1.45] text-muted-foreground">
                     Все наборы на сегодня сделаны. Отдыхайте или выберите ещё одну тренировку.
                   </p>
-                  <Button variant="outline" className={ghost} onClick={() => setOther(true)}>
+                  <Button variant="outline" size="ghost" onClick={() => setOtherSheetOpen(true)}>
                     Другая тренировка
                   </Button>
                 </>
@@ -257,7 +180,11 @@ export function TodayPage({ user }: { user: AuthUser }) {
                   ['Длительность', Math.round(last.summary.durationSec / 60), 'мин'],
                   // A bodyweight-only workout has no volume to show.
                   last.summary.volumeKg > 0
-                    ? ['Объём', mass(last.summary.volumeKg).value, mass(last.summary.volumeKg).unit]
+                    ? [
+                        'Объём',
+                        formatMass(last.summary.volumeKg).value,
+                        formatMass(last.summary.volumeKg).unit,
+                      ]
                     : ['Объём', '—', ''],
                 ].map(([name, value, unit]) => (
                   <div key={name} className="min-w-0 py-3">
@@ -274,11 +201,11 @@ export function TodayPage({ user }: { user: AuthUser }) {
             </section>
           )}
 
-          <WeekBlock week={week} find={sets.find} onOpenDay={setEditing} />
+          <WeekBlock week={week} find={sets.find} onOpenDay={setEditingDay} />
         </aside>
       </div>
 
-      <Sheet open={other} onOpenChange={setOther}>
+      <Sheet open={otherSheetOpen} onOpenChange={setOtherSheetOpen}>
         <SheetContent title="Другая тренировка" description="Расписание не изменится">
           <SetList
             hold
@@ -290,39 +217,20 @@ export function TodayPage({ user }: { user: AuthUser }) {
         </SheetContent>
       </Sheet>
 
-      <Sheet open={waiting} onOpenChange={setWaiting}>
-        <SheetContent
-          title="Уже идёт тренировка"
-          description={`Сначала продолжите или завершите «${running ?? ''}».`}
-        >
-          <Button asChild className={cta}>
-            <Link to="/session">Продолжить</Link>
-          </Button>
-          <Button
-            variant="outline"
-            className={ghost}
-            onClick={() => {
-              useSessionStore.getState().end()
-              void navigate('/session/finish')
-            }}
-          >
-            Завершить и перейти к итогам
-          </Button>
-        </SheetContent>
-      </Sheet>
+      <RunningWorkoutSheet open={startWorkout.blocked} onOpenChange={startWorkout.setBlocked} />
 
       <DaySheet
-        date={editing === null ? null : week.days[editing].date}
-        refs={editing === null ? [] : schedule[weekdays[editing]]}
+        date={editingDay === null ? null : week.days[editingDay].date}
+        refs={editingDay === null ? [] : schedule[weekdays[editingDay]]}
         sets={sets.all}
         find={sets.find}
         byId={sets.byId}
         onChange={editDay}
         onStart={(set) => {
-          setEditing(null)
+          setEditingDay(null)
           start(set)
         }}
-        onClose={() => setEditing(null)}
+        onClose={() => setEditingDay(null)}
       />
     </>
   )

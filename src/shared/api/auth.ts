@@ -7,7 +7,9 @@ import {
   signOut,
 } from 'firebase/auth'
 
-import { auth } from './firebase'
+import { clearIndexedDbPersistence, terminate } from 'firebase/firestore'
+
+import { auth, db } from './firebase'
 
 export interface AuthUser {
   uid: string
@@ -55,8 +57,18 @@ export function completeRedirectSignIn(): Promise<void> {
   return getRedirectResult(auth).then(() => undefined, report)
 }
 
+// Leaves nothing of this user on the device: the Firestore cache, localStorage (the running session) and,
+// through the reload, every in-memory cache. Throws the running session away: confirm before calling.
 export function signOutUser(): void {
-  signOut(auth).catch(report)
+  signOut(auth)
+    .then(async () => {
+      await terminate(db)
+      // Fails while another tab holds the cache; the reload below still drops this tab's data.
+      await clearIndexedDbPersistence(db).catch(report)
+      localStorage.clear()
+      location.reload()
+    })
+    .catch(report)
 }
 
 export function subscribeAuth(listener: (user: AuthUser | null) => void): () => void {

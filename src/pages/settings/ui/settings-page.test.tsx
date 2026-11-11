@@ -11,10 +11,15 @@ const mocks = vi.hoisted(() => ({
   toast: vi.fn(),
   resetProgress: vi.fn(),
   discard: vi.fn(),
+  workout: null as { template: { name: string } } | null,
 }))
 vi.mock('@/entities/workout', () => ({ resetProgress: mocks.resetProgress }))
 vi.mock('@/entities/session', () => ({
-  useSessionStore: { getState: () => ({ discard: mocks.discard }) },
+  useSessionStore: Object.assign(
+    (select: (s: { workout: typeof mocks.workout }) => unknown) =>
+      select({ workout: mocks.workout }),
+    { getState: () => ({ discard: mocks.discard }) },
+  ),
 }))
 vi.mock('@/shared/api', () => ({ signOutUser: mocks.signOutUser }))
 vi.mock('@/entities/profile', async (original) => ({
@@ -179,5 +184,22 @@ describe('SettingsPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Выйти' }))
 
     expect(mocks.signOutUser).toHaveBeenCalledOnce()
+  })
+
+  it('asks before signing out over a workout that is not saved', async () => {
+    withEquipment([])
+    mocks.workout = { template: { name: 'Спина' } }
+    render(<SettingsPage user={user} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Выйти' }))
+
+    expect(mocks.signOutUser).not.toHaveBeenCalled()
+    const dialog = screen.getByRole('dialog', { name: 'Выйти из аккаунта?' })
+    expect(dialog).toHaveTextContent('«Спина» не сохранена')
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Выйти' }))
+
+    expect(mocks.signOutUser).toHaveBeenCalledOnce()
+    mocks.workout = null
   })
 })

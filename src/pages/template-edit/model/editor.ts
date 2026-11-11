@@ -1,3 +1,4 @@
+import type { Exercise } from '@/entities/exercise'
 import type { ExerciseKind, TemplateEntry } from '@/shared/api'
 
 // Field values stay text while typed, so a cleared or half-typed input is not reset under the cursor.
@@ -7,6 +8,8 @@ export interface Row {
   sets: string
   amount: string
   rest: string
+  // An exercise that left the catalog: its kind is unknown, so the entry is kept untouched.
+  stored?: TemplateEntry
 }
 
 export type Field = 'sets' | 'amount' | 'rest'
@@ -40,6 +43,17 @@ const text = (n: number) => String(n).replace('.', ',')
 const parse = (value: string) => Number(value.trim().replace(',', '.'))
 
 export function rowOf(entry: TemplateEntry, kind: ExerciseKind | undefined): Row {
+  if (!kind) {
+    return {
+      key: nextKey(),
+      exerciseId: entry.exerciseId,
+      sets: '',
+      amount: '',
+      rest: '',
+      stored: entry,
+    }
+  }
+
   const amount =
     entry.durationSec === undefined
       ? (entry.reps ?? 0)
@@ -79,7 +93,7 @@ function toEntry(row: Row, kind: ExerciseKind, num = parse): TemplateEntry {
 }
 
 // Moves the row by delta places; out-of-range moves return the same array.
-export function move<T>(rows: readonly T[], index: number, delta: number): readonly T[] {
+export function move<T>(rows: T[], index: number, delta: number): T[] {
   const target = index + delta
   if (target < 0 || target >= rows.length) return rows
 
@@ -134,6 +148,11 @@ export function validate(
   const entries: TemplateEntry[] = []
 
   for (const [index, row] of rows.entries()) {
+    if (row.stored) {
+      entries.push(row.stored)
+      continue
+    }
+
     const kind = kindOf(row.exerciseId) ?? 'strength'
     const exercise = `«${nameOf(row.exerciseId)}»`
     const fail = (field: Field, rule: string): Validation => ({
@@ -163,4 +182,19 @@ export function validate(
   }
 
   return { ok: true, name: trimmed, entries }
+}
+
+/** The rows to start from, with ?add=<exerciseId> appended unless the set already has it. */
+export function initialRows(
+  entries: readonly TemplateEntry[],
+  addId: string | null,
+  byId: Readonly<Record<string, Exercise | undefined>>,
+  defaultRestSec: number,
+): { rows: Row[]; added: Exercise | undefined } {
+  const rows = entries.map((e) => rowOf(e, byId[e.exerciseId]?.kind))
+  const exercise = addId ? byId[addId] : undefined
+
+  if (!exercise || rows.some((r) => r.exerciseId === exercise.id)) return { rows, added: undefined }
+
+  return { rows: [...rows, newRow(exercise.id, exercise.kind, defaultRestSec)], added: exercise }
 }

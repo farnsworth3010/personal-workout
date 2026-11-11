@@ -68,6 +68,97 @@ describe('start', () => {
     expect(store().workoutId).toMatch(/^[\w-]{20}$/)
     vi.restoreAllMocks()
   })
+
+  it('refuses while a workout runs, keeping it', () => {
+    const before = store()
+
+    expect(store().start(template, [entry('X')], at(10))).toBe(false)
+    expect(store()).toBe(before)
+  })
+
+  it('refuses while an ended workout waits on the finish screen', () => {
+    doSet(60, 0)
+    store().end(at(600))
+
+    const finishing = selectFinishing(store())
+
+    expect(store().start(template, [entry('X')], at(700))).toBe(false)
+    expect(selectFinishing(store())).toBe(finishing)
+    expect(finishing?.workout.entries[0]?.sets).toHaveLength(1)
+  })
+
+  it('refuses a workout without entries', () => {
+    store().discard()
+
+    expect(store().start(template, [], t0)).toBe(false)
+    expect(store().workout).toBeNull()
+    expect(store().start(template, [entry('A')], t0)).toBe(true)
+  })
+})
+
+describe('restore', () => {
+  const serverDoc = () => {
+    doSet(60, 0)
+    doSet(60, 10)
+    store().completeSet({ reps: 10, weightKg: 70 }, at(20))
+    store().postpone(at(25))
+
+    const { workoutId, workout } = store()
+
+    store().discard()
+    if (!workoutId || !workout) throw new Error('no workout')
+
+    return { workoutId, workout }
+  }
+
+  it('continues a server workout on the first pending entry and its first undone set', () => {
+    const { workoutId, workout } = serverDoc()
+
+    expect(store().restore(workoutId, workout, at(1000))).toBe(true)
+    expect(store()).toMatchObject({
+      workoutId,
+      current: 2,
+      setIndex: 0,
+      restEndsAt: null,
+      exerciseStartedAt: at(1000),
+      finishing: false,
+    })
+    expect(statuses()).toEqual(['done', 'postponed', 'pending'])
+    expect(selectActive(store())).toBe(true)
+  })
+
+  it('lands at the end of the queue when nothing is pending, so it can be ended', () => {
+    const { workoutId, workout } = serverDoc()
+    const done = {
+      ...workout,
+      entries: workout.entries.map((e) =>
+        e.status === 'pending' ? { ...e, status: 'done' as const } : e,
+      ),
+    }
+
+    store().restore(workoutId, done, at(1000))
+    store().end(at(1100))
+
+    expect(selectFinishing(store())?.workout.entries.map((e) => e.status)).toEqual([
+      'done',
+      'skipped',
+      'done',
+    ])
+  })
+
+  it('refuses unless idle, and refuses a finished document', () => {
+    const { workoutId, workout } = serverDoc()
+
+    store().start(template, [entry('X')], t0)
+    const before = store()
+
+    expect(store().restore(workoutId, workout, at(1000))).toBe(false)
+    expect(store()).toBe(before)
+
+    store().discard()
+    expect(store().restore(workoutId, { ...workout, status: 'done' }, at(1000))).toBe(false)
+    expect(store().workout).toBeNull()
+  })
 })
 
 describe('sets', () => {
@@ -244,6 +335,16 @@ describe('addExercise', () => {
     expect(store()).toMatchObject({ current: 0, exerciseStartedAt: at(20) })
   })
 
+  it('replace: keeps a fully logged exercise as done', () => {
+    doSet(60, 0)
+    store().completeSet({ reps: 10, weightKg: 60 }, at(10))
+    store().back(at(12))
+    store().addExercise(entry('X'), 'replace', at(20))
+
+    expect(ids()).toEqual(['A', 'X', 'B', 'C'])
+    expect(statuses()).toEqual(['done', 'pending', 'pending', 'pending'])
+  })
+
   it('replace: keeps a started exercise as skipped', () => {
     doSet(60, 0)
     store().addExercise(entry('X'), 'replace', at(20))
@@ -349,5 +450,19 @@ describe('persistence', () => {
     expect(reloaded.workout?.entries[0]?.sets[1]?.at).toBeInstanceOf(Timestamp)
     expect(workoutSchema.safeParse(reloaded.workout).success).toBe(true)
     expect(restRemaining(reloaded.restEndsAt, at(160))).toBe(30)
+  })
+  it('rebuilds the waiting finished workout from a version 1 store', async () => {
+    doSet(60, 0)
+    store().end(at(600))
+
+    const { workoutId, workout } = store()
+    const v1 = { ...store(), finished: undefined }
+
+    localStorage.setItem('personal-workout:session', JSON.stringify({ state: v1, version: 1 }))
+    vi.resetModules()
+    const reloaded = (await import('./store')).useSessionStore.getState()
+
+    expect(reloaded.finished?.workoutId).toBe(workoutId)
+    expect(reloaded.finished?.workout).toEqual(workout)
   })
 })

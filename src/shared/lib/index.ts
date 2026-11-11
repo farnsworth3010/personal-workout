@@ -1,3 +1,6 @@
 export { playSignal, unlockAudio, type Signal } from './audio'
+export { addDays, sameDay, startOfDay, weekStart } from './date'
+export { formatMass, n1 } from './format'
 export { cn } from './utils'
+export { useToday } from './use-today'
 export { useWakeLock } from './wake-lock'

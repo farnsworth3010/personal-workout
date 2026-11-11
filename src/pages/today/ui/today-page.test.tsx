@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { catalogQuery, type Exercise } from '@/entities/exercise'
 import { defaultProfile } from '@/entities/profile'
-import { useSessionStore } from '@/entities/session'
+import { useSessionStore, type NewEntry } from '@/entities/session'
 import { readyTemplatesQuery, type ReadyTemplate, type TemplateRef } from '@/entities/template'
 import { createQueryClient, type Profile, type WithId, type Workout } from '@/shared/api'
 
@@ -17,12 +17,16 @@ const mocks = vi.hoisted(() => ({
   profile: undefined as Profile | undefined,
   update: vi.fn<(patch: { schedule: Record<string, TemplateRef[]> }) => void>(),
   history: [] as unknown[],
+  active: null as WithId<Workout> | null,
 }))
 vi.mock('@/entities/profile', async (load) => ({
   ...(await load<typeof import('@/entities/profile')>()),
   useProfile: () => ({ profile: mocks.profile, update: mocks.update }),
 }))
-vi.mock('@/entities/workout', () => ({ useWorkoutHistory: () => mocks.history }))
+vi.mock('@/entities/workout', () => ({
+  useWorkoutHistory: () => mocks.history,
+  useActiveWorkout: () => mocks.active,
+}))
 vi.mock('@/entities/template', async (load) => ({
   ...(await load<typeof import('@/entities/template')>()),
   useOwnTemplates: () => ({ data: [] }),
@@ -100,6 +104,10 @@ function renderToday() {
   return router
 }
 
+const ENTRY: NewEntry[] = [
+  { exerciseId: 'A', name: 'A', kind: 'strength', plan: { sets: 1, reps: 5, restSec: 60 } },
+]
+
 const lastSchedule = () => mocks.update.mock.lastCall?.[0].schedule
 
 describe('TodayPage', () => {
@@ -107,6 +115,7 @@ describe('TodayPage', () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(NOW)
     vi.clearAllMocks()
+    mocks.active = null
     useSessionStore.getState().discard()
   })
 
@@ -235,7 +244,7 @@ describe('TodayPage', () => {
     seed([ref('warmup'), ref('back'), ref('stretch')])
     const router = renderToday()
 
-    useSessionStore.getState().start({ source: 'ready', id: 'x', name: 'Утро' }, [])
+    useSessionStore.getState().start({ source: 'ready', id: 'x', name: 'Утро' }, ENTRY)
     await userEvent.click(await screen.findByRole('button', { name: 'Начать' }))
     expect(screen.getByRole('dialog', { name: 'Уже идёт тренировка' })).toBeInTheDocument()
 
@@ -249,6 +258,52 @@ describe('TodayPage', () => {
       id: 'stretch',
       name: 'Растяжка',
     })
+  })
+
+  it('leads an ended, unsaved workout to its summary instead of starting over it', async () => {
+    seed([ref('warmup'), ref('back'), ref('stretch')])
+    const router = renderToday()
+
+    useSessionStore.getState().start({ source: 'ready', id: 'x', name: 'Утро' }, ENTRY)
+    useSessionStore.getState().end()
+    await userEvent.click(await screen.findByRole('button', { name: 'Начать' }))
+
+    expect(screen.getByRole('dialog', { name: 'Тренировка не сохранена' })).toBeInTheDocument()
+    expect(useSessionStore.getState().workout?.template.id).toBe('x')
+
+    await userEvent.click(screen.getByRole('link', { name: 'К итогам тренировки' }))
+    expect(router.state.location.pathname).toBe('/session/finish')
+  })
+
+  it('offers to continue a workout the server still holds as active', async () => {
+    seed([ref('warmup')])
+    mocks.active = {
+      id: 'w-lost',
+      status: 'active',
+      startedAt: Timestamp.fromDate(NOW),
+      endedAt: null,
+      template: { source: 'ready', id: 'x', name: 'Утро' },
+      entries: [
+        {
+          exerciseId: 'A',
+          name: 'A',
+          kind: 'strength',
+          plan: { sets: 1, reps: 5, restSec: 60 },
+          status: 'pending',
+          sets: [],
+        },
+      ],
+      survey: {},
+      summary: null,
+      updatedAt: Timestamp.fromDate(NOW),
+    }
+    const router = renderToday()
+
+    expect(screen.getByRole('heading', { name: 'Утро' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Продолжить' }))
+
+    expect(router.state.location.pathname).toBe('/session')
+    expect(useSessionStore.getState().workoutId).toBe('w-lost')
   })
 
   it("edits a weekday's list and saves the whole schedule", async () => {

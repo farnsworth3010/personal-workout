@@ -20,6 +20,23 @@ export const muscleLabels: Record<Muscle, string> = {
   triceps: 'Трицепс',
 }
 
+// The order of equipment chips and lists; a test keeps it in step with the labels.
+export const equipmentList: readonly Equipment[] = [
+  'body only',
+  'pull-up bar',
+  'dumbbell',
+  'barbell',
+  'e-z curl bar',
+  'kettlebells',
+  'bands',
+  'cable',
+  'machine',
+  'medicine ball',
+  'exercise ball',
+  'foam roll',
+  'other',
+]
+
 export const equipmentLabels: Record<Equipment, string> = {
   'body only': 'Собственный вес',
   'pull-up bar': 'Турник',

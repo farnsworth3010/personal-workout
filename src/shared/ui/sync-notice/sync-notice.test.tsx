@@ -6,7 +6,7 @@ import { SyncNotice } from './sync-notice'
 
 describe('SyncNotice', () => {
   it('appears when a write is rejected and closes on demand', async () => {
-    let report: () => void = vi.fn()
+    let report: (error: unknown, label?: string) => void = vi.fn()
     render(
       <SyncNotice
         subscribe={(listener) => {
@@ -17,8 +17,11 @@ describe('SyncNotice', () => {
     )
     expect(screen.queryByRole('alert')).toBeNull()
 
-    act(() => report())
-    expect(screen.getByRole('alert')).toBeVisible()
+    act(() => report(new Error('x')))
+    expect(screen.getByRole('alert')).toHaveTextContent('Не удалось сохранить изменения')
+
+    act(() => report(new Error('x'), 'finish'))
+    expect(screen.getByRole('alert')).toHaveTextContent('Продолжите её на экране «Сегодня»')
 
     await userEvent.click(screen.getByRole('button', { name: 'Закрыть' }))
     expect(screen.queryByRole('alert')).toBeNull()

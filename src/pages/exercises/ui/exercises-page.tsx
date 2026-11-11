@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router'
 
 import {
   equipmentLabels,
+  equipmentList,
   isGymOnly,
   kindLabels,
   muscleLabels,
@@ -34,7 +35,6 @@ const PAGE = 60
 const DESKTOP = '(min-width: 900px)'
 
 const labels = { muscles: muscleLabels, equipment: equipmentLabels }
-const equipmentList = Object.keys(equipmentLabels) as Equipment[]
 const groupList = Object.entries(muscleGroups) as [
   MuscleGroup,
   (typeof muscleGroups)[MuscleGroup],

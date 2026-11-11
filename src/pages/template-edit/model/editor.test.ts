@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
+import type { Exercise } from '@/entities/exercise'
 import { templateEntrySchema, type ExerciseKind } from '@/shared/api'
 
-import { move, newRow, previewEntries, rowOf, validate, type Row } from './editor'
+import { initialRows, move, newRow, previewEntries, rowOf, validate, type Row } from './editor'
 
 const kinds: Record<string, ExerciseKind> = {
   Squat: 'strength',
@@ -121,5 +122,51 @@ describe('previewEntries', () => {
     expect(
       previewEntries([row('Squat', '', 'abc', '60'), row('Gone', '3', '10', '90')], kindOf),
     ).toEqual([{ exerciseId: 'Squat', sets: 0, reps: 0, restSec: 60 }])
+  })
+})
+
+describe('an exercise that left the catalog', () => {
+  it('keeps its stored entry untouched through a save', () => {
+    const plank = { exerciseId: 'Gone_Plank', sets: 3, durationSec: 45, restSec: 30 }
+    const rows = [rowOf(plank, undefined), newRow('Squat', 'strength')]
+
+    const result = validate('Мой набор', rows, kindOf, nameOf)
+
+    expect(result).toMatchObject({ ok: true })
+    expect(result.ok && result.entries[0]).toEqual(plank)
+  })
+})
+
+describe('initialRows', () => {
+  const squat: Exercise = {
+    id: 'Squat',
+    name: 'Squat',
+    kind: 'strength',
+    primaryMuscles: [],
+    secondaryMuscles: [],
+    equipment: 'barbell',
+    instructions: [],
+    images: [],
+  }
+  const byId = { Squat: squat }
+  const pushups = { exerciseId: 'Pushups', sets: 3, reps: 12, restSec: 60 }
+
+  it('appends the ?add exercise once and reports it', () => {
+    const { rows, added } = initialRows([pushups], 'Squat', byId, 120)
+
+    expect(rows.map((r) => [r.exerciseId, r.rest])).toEqual([
+      ['Pushups', ''],
+      ['Squat', '120'],
+    ])
+    // Pushups is not in this catalog, so its entry is kept as stored.
+    expect(rows.at(0)?.stored).toEqual(pushups)
+    expect(added?.name).toBe('Squat')
+  })
+
+  it('adds nothing for an exercise already in the set or unknown', () => {
+    const squatEntry = { exerciseId: 'Squat', sets: 3, reps: 8, restSec: 90 }
+
+    expect(initialRows([squatEntry], 'Squat', byId, 120).added).toBeUndefined()
+    expect(initialRows([], 'Nope', byId, 120)).toEqual({ rows: [], added: undefined })
   })
 })

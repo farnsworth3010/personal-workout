@@ -2,9 +2,9 @@ import { useState } from 'react'
 
 import { muscleLabels } from '@/entities/exercise'
 import type { Muscle } from '@/shared/api'
-import { cn } from '@/shared/lib'
+import { cn, n1 } from '@/shared/lib'
 
-import { dayRange, formatSets, formatWorkouts, n1, plural } from '../../model/format'
+import { dayRange, formatSets, formatWorkouts, plural } from '../../model/format'
 import { loadLevel, loadLevelLabels, type weekMuscleLoad } from '../../model/muscle-load'
 import { MuscleLegend, MuscleMap, offFigureMuscles } from '../muscle-map'
 import { note, Section, subheading } from '../section'

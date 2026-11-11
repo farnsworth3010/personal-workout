@@ -51,7 +51,8 @@ export function exerciseProgress(workouts: readonly Workout[], exerciseId: strin
     const date = workoutDate(w)
     const point: ProgressPoint = { date, topWeightKg: 0, volumeKg: 0, reps: 0 }
     for (const { reps = 0, weightKg = 0 } of sets) {
-      point.topWeightKg = Math.max(point.topWeightKg, weightKg)
+      // A failed 0-rep attempt is not a working weight, as in the finish screen's records.
+      if (reps > 0) point.topWeightKg = Math.max(point.topWeightKg, weightKg)
       point.volumeKg += reps * weightKg
       point.reps += reps
 

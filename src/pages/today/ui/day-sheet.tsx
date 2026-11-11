@@ -4,7 +4,8 @@ import { estimateDurationMin, type TemplateRef } from '@/entities/template'
 import { HoldButton, Sheet, SheetContent } from '@/shared/ui'
 
 import { SetList } from './set-list'
-import { capitalize, placeLabel, refKey, type ExercisesById, type SetInfo } from './sets'
+import { capitalize, placeLabel } from '../lib/format'
+import { refKey, type ExercisesById, type SetInfo } from '../model/sets'
 
 const MAX_SETS = 5
 

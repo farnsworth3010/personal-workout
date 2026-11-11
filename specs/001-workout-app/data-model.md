@@ -39,7 +39,7 @@ All timestamps are client `Timestamp`s. All ids are client-generated, so every w
 | `defaultWeightStepKg` | `0.5 \| 1 \| 2.5 \| 5` | 2.5 |
 | `sounds`, `animations` | boolean | true |
 | `schedule` | `{ mon..sun: TemplateRef[] }` (0–5 per day, in order) | all empty |
-| `activeWorkoutId` | string \| null | id of the workout in progress |
+| `activeWorkoutId` | string \| null | legacy, no longer written (2026-11-11); the running workout is found by `status == 'active'` |
 | `updatedAt` | Timestamp | |
 
 `TemplateRef = { source: 'own' \| 'ready', id: string }`.
@@ -113,7 +113,7 @@ Entry:    pending --all sets logged--> done
 A set of today's schedule counts as done when a `done` workout started today has the same
 `template.source` and `template.id`, or is the home/gym counterpart of that set (same `pairId`). A day is done when every planned set is done.
 
-Only one workout per person is `active`; `users/{uid}.activeWorkoutId` points to it.
+Only one workout per person is `active`; the app finds it by status (`useActiveWorkout`), and Today offers to continue it when the local session is gone.
 
 ## Running session (device-local, not Firestore)
 

@@ -5,7 +5,6 @@ import {
   exerciseRows,
   formatDuration,
   formatSet,
-  formatVolume,
   previousBodyWeight,
   weightChange,
   workoutWhen,
@@ -31,8 +30,6 @@ describe('formatting', () => {
   it('formats duration, volume, sets and the time of day', () => {
     expect(formatDuration(3520)).toBe('58:40')
     expect(formatDuration(3912)).toBe('1:05:12')
-    expect(formatVolume(13282)).toEqual(['13,3', 'т'])
-    expect(formatVolume(540)).toEqual(['540', 'кг'])
     expect(formatSet({ n: 1, reps: 8, weightKg: 62.5, at: Timestamp.now() })).toBe('8 × 62,5 кг')
     expect(formatSet({ n: 1, reps: 8, at: Timestamp.now() })).toBe('8 повт.')
     expect(formatSet({ n: 1, durationSec: 45, at: Timestamp.now() })).toBe('45 с')

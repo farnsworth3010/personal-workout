@@ -1,6 +1,6 @@
 import type { weekView } from '../model/schedule'
 
-import { refKey, type SetInfo } from './sets'
+import { refKey, type SetInfo } from '../model/sets'
 import type { TemplateRef } from '@/entities/template'
 
 type Week = ReturnType<typeof weekView>

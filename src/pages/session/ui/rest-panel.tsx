@@ -1,3 +1,5 @@
+import { memo } from 'react'
+
 import { formatClock, type SetValues } from '@/entities/session'
 import type { WorkoutEntry } from '@/shared/api'
 import { HoldButton, ValueStrip } from '@/shared/ui'
@@ -11,6 +13,7 @@ interface RestPanelProps {
   last: SetValues | undefined
   remainingSec: number
   weightStepKg: number
+  // Stable across renders, so the strips skip the countdown's re-render each second.
   onEdit: (values: SetValues) => void
   onNext: () => void
 }
@@ -24,6 +27,68 @@ function Strip(props: React.ComponentProps<typeof ValueStrip>) {
   )
 }
 
+interface StripsProps extends SetValues {
+  kind: WorkoutEntry['kind']
+  weightStepKg: number
+  onEdit: (values: SetValues) => void
+}
+
+// Primitive props only: a 0.5 kg step makes ~600 weight chips, too many to redraw every second.
+const Strips = memo(function Strips({
+  kind,
+  durationSec,
+  reps,
+  weightKg,
+  weightStepKg,
+  onEdit,
+}: StripsProps) {
+  return (
+    <>
+      {kind === 'timed' && (
+        <Strip
+          label="Время, с"
+          value={durationSec ?? 0}
+          max={600}
+          step={5}
+          integer
+          onChange={(durationSec) => onEdit({ durationSec })}
+        />
+      )}
+
+      {kind === 'cardio' && (
+        <Strip
+          label="Время, мин"
+          value={(durationSec ?? 0) / 60}
+          max={120}
+          step={1}
+          onChange={(min) => onEdit({ durationSec: Math.round(min * 60) })}
+        />
+      )}
+
+      {(kind === 'strength' || kind === 'bodyweight') && (
+        <Strip
+          label="Повторы"
+          value={reps ?? 0}
+          max={200}
+          step={1}
+          integer
+          onChange={(reps) => onEdit({ reps })}
+        />
+      )}
+
+      {kind === 'strength' && (
+        <Strip
+          label="Вес, кг"
+          value={weightKg}
+          max={300}
+          step={weightStepKg}
+          onChange={(weightKg) => onEdit({ weightKg })}
+        />
+      )}
+    </>
+  )
+})
+
 // Logging happens here while the countdown runs; an untouched strip keeps the prediction.
 export function RestPanel({
   entry,
@@ -35,8 +100,6 @@ export function RestPanel({
   onEdit,
   onNext,
 }: RestPanelProps) {
-  const { kind } = entry
-
   return (
     <div className="flex min-w-0 animate-in flex-col gap-3.5 duration-200 fade-in-0 slide-in-from-bottom-2">
       <div className="py-2 text-center">
@@ -54,47 +117,14 @@ export function RestPanel({
         )}
       </div>
 
-      {kind === 'timed' && (
-        <Strip
-          label="Время, с"
-          value={logged.durationSec ?? 0}
-          max={600}
-          step={5}
-          integer
-          onChange={(durationSec) => onEdit({ durationSec })}
-        />
-      )}
-
-      {kind === 'cardio' && (
-        <Strip
-          label="Время, мин"
-          value={(logged.durationSec ?? 0) / 60}
-          max={120}
-          step={1}
-          onChange={(min) => onEdit({ durationSec: Math.round(min * 60) })}
-        />
-      )}
-
-      {(kind === 'strength' || kind === 'bodyweight') && (
-        <Strip
-          label="Повторы"
-          value={logged.reps ?? 0}
-          max={200}
-          step={1}
-          integer
-          onChange={(reps) => onEdit({ reps })}
-        />
-      )}
-
-      {kind === 'strength' && (
-        <Strip
-          label="Вес, кг"
-          value={logged.weightKg}
-          max={300}
-          step={weightStepKg}
-          onChange={(weightKg) => onEdit({ weightKg })}
-        />
-      )}
+      <Strips
+        kind={entry.kind}
+        durationSec={logged.durationSec}
+        reps={logged.reps}
+        weightKg={logged.weightKg}
+        weightStepKg={weightStepKg}
+        onEdit={onEdit}
+      />
 
       <p className="text-center text-xs text-muted-foreground">
         листайте, чтобы найти значение · тап по выбранному — ввести своё

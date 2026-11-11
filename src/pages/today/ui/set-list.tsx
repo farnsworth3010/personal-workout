@@ -1,7 +1,8 @@
 import { estimateDurationMin } from '@/entities/template'
 import { HoldButton } from '@/shared/ui'
 
-import { placeLabel, refKey, type ExercisesById, type SetInfo } from './sets'
+import { placeLabel } from '../lib/format'
+import { refKey, type ExercisesById, type SetInfo } from '../model/sets'
 
 // One row per set, grouped into the person's own and the ready-made ones.
 export function SetList({

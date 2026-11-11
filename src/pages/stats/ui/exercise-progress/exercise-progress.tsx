@@ -1,9 +1,10 @@
 import { useState } from 'react'
 
 import type { Workout } from '@/shared/api'
+import { formatMass, n1 } from '@/shared/lib'
 import { Chip } from '@/shared/ui'
 
-import { dayShort, n1 } from '../../model/format'
+import { dayShort } from '../../model/format'
 import { exerciseProgress, exercisesWithHistory, type ProgressPoint } from '../../model/progress'
 import { LineChart } from '../line-chart'
 import { Section, subheading } from '../section'
@@ -25,7 +26,11 @@ const metrics: Record<
 }
 
 // Tonnes keep the axis labels short; the unit is part of the value here.
-const formatVolume = (v: number) => (v >= 1000 ? `${n1(v / 1000)} т` : `${Math.round(v)} кг`)
+const formatVolume = (kg: number) => {
+  const { value, unit } = formatMass(kg)
+
+  return `${value} ${unit}`
+}
 
 function Record({ label, value, date }: { label: string; value: string | null; date?: Date }) {
   return (
@@ -127,7 +132,7 @@ export function ExerciseProgress({
         />
         <Record
           label="Макс. объём"
-          value={records.maxVolumeKg && `${n1(records.maxVolumeKg.value)} кг`}
+          value={records.maxVolumeKg && formatVolume(records.maxVolumeKg.value)}
           date={records.maxVolumeKg?.date}
         />
         <Record

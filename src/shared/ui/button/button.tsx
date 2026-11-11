@@ -31,6 +31,11 @@ const buttonVariants = cva(
         'icon-sm':
           'size-8 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-md',
         'icon-lg': 'size-10',
+        // The app's main action (start, save); pair with the default variant.
+        cta: 'h-auto min-h-16 rounded-lg border-0 text-lg font-bold uppercase',
+        // The secondary action under a cta; pair with the outline variant.
+        ghost:
+          'h-auto min-h-12 rounded-lg bg-surface text-sm font-normal min-[900px]:min-h-16 min-[900px]:px-6',
       },
     },
     defaultVariants: {

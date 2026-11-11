@@ -48,6 +48,16 @@ describe('subscribeQuery', () => {
     expect(client.getQueryData(['n'])).toBe(2)
   })
 
+  it('turns a non-Error listener failure into an Error', () => {
+    const client = createQueryClient()
+    const { source, listeners } = fakeSource<number>()
+
+    subscribeQuery(client, ['n'], source)
+    listeners[0]?.error('permission-denied')
+
+    expect(stateOf(client, ['n'])?.error).toEqual(new Error('permission-denied'))
+  })
+
   it('opens one listener per key and closes it when the query leaves the cache', () => {
     const client = createQueryClient()
     const { source, listeners, unsubscribe } = fakeSource<number>()
@@ -104,28 +114,55 @@ describe('subscribeQuery', () => {
 
 describe('docSource', () => {
   const ref = {} as DocumentReference<number>
+  const meta = { fromCache: false, hasPendingWrites: false }
+  const snap = (data: () => number | undefined, metadata = meta) => ({
+    data,
+    exists: () => data() !== undefined,
+    metadata,
+  })
 
-  it('passes the document data, or null for a missing document', () => {
+  const listen = (next = vi.fn(), error = vi.fn()) => {
+    docSource(ref)(next, error)
+    const [, options, onNext] = onSnapshot.mock.lastCall as [unknown, unknown, (s: unknown) => void]
+
+    expect(options).toEqual({ includeMetadataChanges: true })
+
+    return onNext
+  }
+
+  it('passes the document data, or null for a document the server says is missing', () => {
     const next = vi.fn()
-    docSource(ref)(next, vi.fn())
-    const [, onNext] = onSnapshot.mock.lastCall as [unknown, (s: unknown) => void]
+    const onNext = listen(next)
 
-    onNext({ data: () => 5 })
-    onNext({ data: () => undefined })
+    onNext(snap(() => 5))
+    onNext(snap(() => undefined))
 
     expect(next.mock.calls).toEqual([[5], [null]])
+  })
+
+  it('keeps a document missing only from the cache loading until the server answers', () => {
+    const next = vi.fn()
+    const onNext = listen(next)
+
+    onNext(snap(() => undefined, { fromCache: true, hasPendingWrites: false }))
+    expect(next).not.toHaveBeenCalled()
+
+    onNext(snap(() => undefined, { fromCache: true, hasPendingWrites: true }))
+    onNext(snap(() => 5, { fromCache: true, hasPendingWrites: false }))
+    expect(next.mock.calls).toEqual([[null], [5]])
   })
 
   it('routes a converter failure to the error callback', () => {
     const error = vi.fn()
     const invalid = new Error('invalid document')
-    docSource(ref)(vi.fn(), error)
-    const [, onNext] = onSnapshot.mock.lastCall as [unknown, (s: unknown) => void]
+    const onNext = listen(vi.fn(), error)
 
     onNext({
       data: () => {
         throw invalid
       },
+      exists: () => true,
+      metadata: meta,
     })
 
     expect(error).toHaveBeenCalledWith(invalid)

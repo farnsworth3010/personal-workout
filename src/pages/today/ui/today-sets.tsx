@@ -5,18 +5,8 @@ import { estimateDurationMin, muscleGroupsOf } from '@/entities/template'
 import { cn } from '@/shared/lib'
 import { Button, buttonVariants, ExercisePhoto, HoldButton } from '@/shared/ui'
 
-import {
-  clock,
-  cta,
-  ghost,
-  musclesOf,
-  placeLabel,
-  planLine,
-  refKey,
-  setCount,
-  type ExercisesById,
-  type SetInfo,
-} from './sets'
+import { clock, musclesOf, placeLabel, planLine, setCount } from '../lib/format'
+import { refKey, type ExercisesById, type SetInfo } from '../model/sets'
 
 export interface TodaySet {
   set: SetInfo | undefined
@@ -76,10 +66,10 @@ function Body({
       <div className="grid gap-2 min-[900px]:grid-cols-[1fr_auto]">
         <HoldButton
           label="Начать тренировку"
-          className={cn(buttonVariants(), cta)}
+          className={buttonVariants({ size: 'cta' })}
           onConfirm={onStart}
         />
-        <Button variant="outline" className={ghost} onClick={onOther}>
+        <Button variant="outline" size="ghost" onClick={onOther}>
           Другая тренировка
         </Button>
       </div>

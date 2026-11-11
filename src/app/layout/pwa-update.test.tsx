@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -25,10 +25,15 @@ function stubUpdate(storage?: object) {
     serviceWorker: {
       controller: {},
       register: () => Promise.resolve({ waiting, addEventListener: vi.fn() }),
-      addEventListener: vi.fn(),
+      addEventListener: (type: string, listener: () => void) => {
+        if (type === 'controllerchange') swap.listener = listener
+      },
+      removeEventListener: vi.fn(),
     },
   })
 }
+
+const swap = { listener: (): void => undefined }
 
 function renderWith(auth: AuthState = loading) {
   return render(
@@ -55,6 +60,26 @@ describe('PwaUpdate', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Обновить' }))
 
     expect(waiting.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' })
+  })
+
+  it('reloads after a worker swap from any tab, but only once the running workout ends', async () => {
+    const reload = vi.fn()
+    stubUpdate()
+    vi.stubGlobal('location', { reload })
+    session.active = true
+    const { rerender } = renderWith()
+
+    act(() => swap.listener())
+    expect(reload).not.toHaveBeenCalled()
+
+    session.active = false
+    rerender(
+      <AuthContext value={loading}>
+        <PwaUpdate />
+      </AuthContext>,
+    )
+
+    await waitFor(() => expect(reload).toHaveBeenCalledOnce())
   })
 
   it('keeps quiet while a workout runs', async () => {

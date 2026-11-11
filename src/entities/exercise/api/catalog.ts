@@ -9,6 +9,7 @@ export const catalogQuery = queryOptions({
 
     if (!response.ok) throw new Error(`Catalog request failed: ${response.status}`)
 
+    // Not validated: scripts/build-catalog.ts writes the file from checked data, and parsing ~1 MB would cost.
     const list = (await response.json()) as Omit<Exercise, 'instructions'>[]
 
     return list.map((exercise) => ({ ...exercise, instructions: [] }))
@@ -18,6 +19,18 @@ export const catalogQuery = queryOptions({
 
 export function useCatalog() {
   return useQuery(catalogQuery)
+}
+
+function indexById(catalog: readonly Exercise[]) {
+  const byId: Record<string, Exercise | undefined> = {}
+  for (const exercise of catalog) byId[exercise.id] = exercise
+
+  return byId
+}
+
+/** The catalog keyed by id; select keeps one object per catalog, so it is safe in deps. */
+export function useCatalogById() {
+  return useQuery({ ...catalogQuery, select: indexById })
 }
 
 export function findExercise(catalog: readonly Exercise[], id: string): Exercise | undefined {
@@ -31,6 +44,7 @@ export const instructionsQuery = queryOptions({
 
     if (!response.ok) throw new Error(`Instructions request failed: ${response.status}`)
 
+    // Same build-time source as the list.
     return (await response.json()) as Record<string, string[] | undefined>
   },
   staleTime: Infinity,

@@ -1,11 +1,24 @@
-import { equipmentLabels, type Equipment } from '@/entities/exercise'
+import { useState } from 'react'
+
+import { equipmentLabels, equipmentList, type Equipment } from '@/entities/exercise'
 import { defaultProfile, useProfile } from '@/entities/profile'
 import { useSessionStore } from '@/entities/session'
 import { resetProgress } from '@/entities/workout'
 import { InstallSettings } from '@/features/install-app'
 import { signOutUser, type AuthUser } from '@/shared/api'
 import { cn } from '@/shared/lib'
-import { Badge, Button, Chip, HoldButton, PageHeader, Switch, toast, ValueStrip } from '@/shared/ui'
+import {
+  Badge,
+  Button,
+  Chip,
+  HoldButton,
+  PageHeader,
+  Sheet,
+  SheetContent,
+  Switch,
+  toast,
+  ValueStrip,
+} from '@/shared/ui'
 
 const section = 'flex flex-col gap-3 border-t border-border pt-5 pb-1'
 const heading = 'text-lg leading-[1.15] font-extrabold tracking-[-0.02em] uppercase'
@@ -20,8 +33,6 @@ const toggles = [
   { key: 'sounds', label: 'Звуки', hint: 'Конец отдыха и таймера, подход и тренировка завершены' },
   { key: 'animations', label: 'Анимации', hint: 'Переходы между экранами и отклик кнопок' },
 ] as const
-
-const equipmentList = Object.keys(equipmentLabels) as Equipment[]
 
 // Body weight is always available, so it is shown checked and never stored.
 const ALWAYS: Equipment = 'body only'
@@ -92,6 +103,10 @@ export function SettingsPage({ user }: { user: AuthUser }) {
     toast('Прогресс сброшен')
   }
   const name = user.displayName ?? user.email ?? ''
+  // Sign-out clears this device, so a running or unsaved workout would be lost without asking.
+  const workoutName = useSessionStore((s) => s.workout?.template.name)
+  const hasWorkout = workoutName !== undefined
+  const [confirmSignOut, setConfirmSignOut] = useState(false)
 
   return (
     <>
@@ -122,7 +137,7 @@ export function SettingsPage({ user }: { user: AuthUser }) {
               <Button
                 variant="outline"
                 className="h-auto min-h-11 rounded-lg px-4"
-                onClick={signOutUser}
+                onClick={() => (hasWorkout ? setConfirmSignOut(true) : signOutUser())}
               >
                 Выйти
               </Button>
@@ -246,6 +261,20 @@ export function SettingsPage({ user }: { user: AuthUser }) {
           />
         </section>
       </div>
+
+      <Sheet open={confirmSignOut} onOpenChange={setConfirmSignOut}>
+        <SheetContent
+          title="Выйти из аккаунта?"
+          description={`Тренировка «${workoutName ?? ''}» не сохранена и пропадёт с этого устройства.`}
+        >
+          <Button variant="destructive" size="cta" onClick={signOutUser}>
+            Выйти
+          </Button>
+          <Button variant="outline" size="ghost" onClick={() => setConfirmSignOut(false)}>
+            Отмена
+          </Button>
+        </SheetContent>
+      </Sheet>
     </>
   )
 }

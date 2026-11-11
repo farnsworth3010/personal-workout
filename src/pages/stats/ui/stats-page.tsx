@@ -1,12 +1,12 @@
-import { useState } from 'react'
+import { useMemo } from 'react'
 
 import { useProfile } from '@/entities/profile'
 import { useWorkoutHistory } from '@/entities/workout'
 import type { AuthUser } from '@/shared/api'
 import { PageHeader } from '@/shared/ui'
+import { addDays, startOfDay, useToday } from '@/shared/lib'
 
 import { firstMonth } from '../model/calendar'
-import { addDays, startOfDay } from '../model/dates'
 import { longDate } from '../model/format'
 import { weekMuscleLoad } from '../model/muscle-load'
 import { BodyCharts } from './body-charts'
@@ -19,8 +19,8 @@ const historyRange = (now: Date) => ({ from: new Date(0), to: addDays(startOfDay
 
 // stats.html: muscles of the week, regularity, exercise progress, body and wellbeing.
 export function StatsPage({ user }: { user: AuthUser }) {
-  const [now] = useState(() => new Date())
-  const [range] = useState(() => historyRange(now))
+  const now = useToday()
+  const range = useMemo(() => historyRange(now), [now])
   const workouts = useWorkoutHistory(user.uid, range)
   const { profile } = useProfile(user.uid)
 

@@ -57,6 +57,8 @@ const catalog = [
   exercise('Leg_Press', 'machine', ['quadriceps']),
 ]
 
+const names = catalog.map((e) => e.name)
+
 const user = { uid: 'u1', displayName: null, email: 'a@example.com', photoURL: null }
 
 function Location() {
@@ -79,10 +81,15 @@ function renderPage(search = '', { desktop = false, exercises = catalog } = {}) 
   )
 }
 
-const rows = () =>
-  within(screen.getByRole('list'))
-    .getAllByRole('button')
-    .map((row) => row.querySelector('b')?.textContent)
+const rows = () => within(screen.getByRole('list')).getAllByRole('button')
+
+// Each row's name and gym mark, found by text rather than by markup.
+const listed = () =>
+  rows().map((row) => {
+    const name = names.find((n) => within(row).queryByText(n))
+
+    return within(row).queryByText('зал') ? `${name ?? '?'} · зал` : (name ?? '?')
+  })
 
 const url = () => screen.getByRole('status', { name: 'url' }).textContent
 
@@ -96,7 +103,12 @@ describe('ExercisesPage', () => {
 
     expect(mocks.useProfile).toHaveBeenCalledWith('u1')
     expect(screen.getByText('Показаны все 4 упражнения')).toBeInTheDocument()
-    expect(rows()).toEqual(['Barbell Squatзал', 'Dumbbell Press', 'Pushups', 'Leg Pressзал'])
+    expect(listed()).toEqual([
+      'Barbell Squat · зал',
+      'Dumbbell Press',
+      'Pushups',
+      'Leg Press · зал',
+    ])
     expect(screen.getByText('Гантели и свой вес — из профиля')).toBeInTheDocument()
   })
 
@@ -105,7 +117,7 @@ describe('ExercisesPage', () => {
 
     expect(screen.getByRole('searchbox', { name: 'Поиск по каталогу' })).toHaveValue('press')
     expect(screen.getByRole('switch', { name: /Только для дома/ })).toBeChecked()
-    expect(rows()).toEqual(['Dumbbell Press'])
+    expect(listed()).toEqual(['Dumbbell Press'])
     expect(screen.getByText('Найдено: 1 упражнение')).toBeInTheDocument()
   })
 
@@ -114,7 +126,7 @@ describe('ExercisesPage', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Ноги' }))
     expect(url()).toBe('?muscle=legs')
-    expect(rows()).toEqual(['Barbell Squatзал', 'Leg Pressзал'])
+    expect(listed()).toEqual(['Barbell Squat · зал', 'Leg Press · зал'])
 
     await userEvent.click(screen.getByRole('button', { name: 'Тренажёр' }))
     await userEvent.click(screen.getByRole('switch', { name: /Только для дома/ }))

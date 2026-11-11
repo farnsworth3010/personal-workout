@@ -51,16 +51,15 @@ export function muscleSets(
   return load
 }
 
-// Max weight, the exercise's volume in this workout and the best set by e1RM; weightless sets set none.
+// Max weight, the exercise's volume in this workout and the best set by e1RM. Weightless sets and failed
+// attempts (0 reps) set none, the same rule as the stats page.
 export function recordsOf(sets: Sets): Records {
   const records: Records = {}
 
   for (const { reps, weightKg } of sets) {
-    if (weightKg === undefined || weightKg === 0) continue
+    if (!weightKg || !reps) continue
 
     records.maxWeightKg = Math.max(records.maxWeightKg ?? 0, weightKg)
-
-    if (reps === undefined) continue
 
     const e1rmKg = e1rm(weightKg, reps)
 
@@ -83,14 +82,17 @@ export function recordsByExercise(entries: Entries) {
   return Object.fromEntries(Object.entries(sets).map(([id, list]) => [id, recordsOf(list)]))
 }
 
-// Merges this workout's records into the stored ones; a first workout has no "new" records.
+// Merges this workout's records into the stored ones. Only a beaten earlier value is "new": a first
+// workout, or a key the exercise never had (push-ups first done with weight), is stored silently.
 export function compareRecords(previous: Records | undefined, current: Records) {
   const improved: RecordKey[] = []
 
   const beats = (key: RecordKey, value: number | undefined, before: number | undefined) => {
-    if (value === undefined || (before !== undefined && value <= before)) return false
+    if (value === undefined) return false
+    if (before === undefined) return true
+    if (value <= before) return false
 
-    if (previous) improved.push(key)
+    improved.push(key)
 
     return true
   }

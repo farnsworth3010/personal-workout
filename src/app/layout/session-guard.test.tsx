@@ -25,7 +25,12 @@ function pathAfter(path: string) {
   return router.state.location.pathname
 }
 
-const start = () => useSessionStore.getState().start({ source: 'ready', id: 't', name: 'T' }, [])
+const start = () =>
+  useSessionStore
+    .getState()
+    .start({ source: 'ready', id: 't', name: 'T' }, [
+      { exerciseId: 'A', name: 'A', kind: 'strength', plan: { sets: 1, reps: 5, restSec: 60 } },
+    ])
 
 describe('SessionGuard', () => {
   beforeEach(() => useSessionStore.getState().discard())

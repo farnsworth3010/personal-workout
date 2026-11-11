@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { cn } from 'cn'
 import { useNavigate } from 'react-router'
 
@@ -12,35 +12,29 @@ import {
   timedRemaining,
   useSessionStore,
 } from '@/entities/session'
-import { saveActiveWorkout, useExerciseStats } from '@/entities/workout'
+import { useExerciseStats } from '@/entities/workout'
 import { PickExerciseSheet } from '@/features/pick-exercise'
 import type { AuthUser } from '@/shared/api'
-import { playSignal, unlockAudio, useWakeLock } from '@/shared/lib'
-import { Badge, HoldButton, Stat, StatRow, toast } from '@/shared/ui'
+import { playSignal, useWakeLock } from '@/shared/lib'
+import { Badge, HoldButton, toast } from '@/shared/ui'
 import { ExerciseDetails } from '@/widgets/exercise-details'
 
-import { setText, tagsText } from '../lib/format'
-import { newEntry } from '../lib/plan'
+import { tagsText } from '../lib/format'
+import { doneValues, newEntry } from '../lib/plan'
 import { useNow } from '../lib/use-now'
+import { useAutosave } from '../model/use-autosave'
+import { useSessionSignals } from '../model/use-session-signals'
 import { PostponedChip, PostponedSheet } from './postponed'
 import { AddModeSheet } from './quick-add'
 import { RestPanel } from './rest-panel'
-
-const NAV_BUTTON =
-  'min-h-12 rounded-md border border-border bg-surface text-sm text-muted-foreground'
+import { WorkPanel } from './work-panel'
 
 // Work and rest swap in place; each one slides in when it mounts.
 const EXERCISE_ENTER = 'animate-in fade-in-0 duration-300'
 
-const ENTER = 'animate-in fade-in-0 slide-in-from-bottom-2 duration-200'
-
-// The hold fill is dark on the accent background.
-const CTA =
-  'min-h-16 rounded-md bg-primary text-lg font-bold text-on-accent uppercase [&>span:first-child]:bg-on-accent/25'
-
 export function SessionPage({ user }: { user: AuthUser }) {
   const session = useSessionStore()
-  const { workoutId, workout, current, setIndex, restEndsAt, finishing } = session
+  const { workout, current, setIndex, restEndsAt, finishing } = session
   const navigate = useNavigate()
   const now = useNow()
   const { profile } = useProfile(user.uid)
@@ -54,21 +48,9 @@ export function SessionPage({ user }: { user: AuthUser }) {
   const [picked, setPicked] = useState<Exercise>()
 
   const soundsOn = profile?.sounds !== false
-  const heardRestEnd = useRef<number | null>(null)
 
   useWakeLock(workout !== null && !finishing)
-
-  // Audio starts only from a tap; any tap on the session may be the first one after a reload.
-  useEffect(() => {
-    document.addEventListener('pointerdown', unlockAudio)
-
-    return () => document.removeEventListener('pointerdown', unlockAudio)
-  }, [])
-
-  // Every change of the document is written without waiting: sets, postponements, additions.
-  useEffect(() => {
-    if (workoutId && workout && !finishing) saveActiveWorkout(user.uid, workoutId, workout)
-  }, [user.uid, workoutId, workout, finishing])
+  useAutosave(user.uid, session)
 
   const postponedCount = entries?.filter((entry) => entry.status === 'postponed').length ?? 0
   const queueOver = workout !== null && current === null && !finishing
@@ -92,22 +74,7 @@ export function SessionPage({ user }: { user: AuthUser }) {
   const timeUp = timed && !resting && timedLeft === 0
   const restOver = resting && restRemaining(restEndsAt, now) === 0
 
-  useEffect(() => {
-    if (!timeUp) return
-
-    if (soundsOn) playSignal('countdown-end')
-    if ('vibrate' in navigator) navigator.vibrate(300)
-    toast('Время вышло')
-  }, [timeUp, soundsOn])
-
-  // A rest that ended while the app was hidden is signalled once on return; now re-runs it then.
-  useEffect(() => {
-    if (!restOver || document.visibilityState !== 'visible') return
-    if (heardRestEnd.current === restEndsAt) return
-
-    heardRestEnd.current = restEndsAt
-    if (soundsOn) playSignal('rest-end')
-  }, [restOver, restEndsAt, soundsOn, now])
+  useSessionSignals({ timeUp, restOver, restEndsAt, soundsOn, now })
 
   if (!workout || !entry) return null
 
@@ -215,64 +182,32 @@ export function SessionPage({ user }: { user: AuthUser }) {
               last={prediction.last}
               remainingSec={restRemaining(restEndsAt, now) ?? 0}
               weightStepKg={stat?.weightStepKg ?? profile?.defaultWeightStepKg ?? 2.5}
-              onEdit={(values) => session.editSet(values)}
+              onEdit={session.editSet}
               onNext={next}
             />
           ) : (
-            <div className={cn('flex min-w-0 flex-col gap-3 min-[900px]:gap-5', ENTER)}>
-              <StatRow>
-                <Stat label="Подход" value={`${n} / ${entry.plan.sets}`}>
-                  <div className="mt-1.5 flex max-w-[80%] gap-1.5">
-                    {Array.from({ length: entry.plan.sets }, (_, i) => (
-                      <i
-                        key={i}
-                        className={cn(
-                          'h-1 flex-1 rounded-full',
-                          entry.sets.some((set) => set.n === i + 1) ? 'bg-primary' : 'bg-surface-2',
-                        )}
-                      />
-                    ))}
-                  </div>
-                </Stat>
-                {timed ? (
-                  <Stat label="Осталось" value={formatClock(timedLeft)} />
-                ) : (
-                  <Stat label="План" value={setText(prediction.values)} />
-                )}
-                <Stat
-                  label="Время"
-                  value={formatClock(elapsed(session.exerciseStartedAt ?? now, now), 2)}
-                />
-              </StatRow>
+            <WorkPanel
+              entry={entry}
+              n={n}
+              predicted={prediction.values}
+              timedLeft={timed ? timedLeft : undefined}
+              exerciseSec={elapsed(session.exerciseStartedAt ?? now, now)}
+              onBack={() => session.back()}
+              onAdd={() => setPicking(true)}
+              onPostpone={() => {
+                session.postpone()
+                toast('Упражнение отложено')
+              }}
+              onDone={() => {
+                const at = Date.now()
 
-              <div className="grid grid-cols-3 gap-2">
-                <HoldButton
-                  label="← Назад"
-                  className={NAV_BUTTON}
-                  onConfirm={() => session.back()}
-                />
-                <button type="button" className={NAV_BUTTON} onClick={() => setPicking(true)}>
-                  + Упражнение
-                </button>
-                <HoldButton
-                  label="Пропустить →"
-                  className={NAV_BUTTON}
-                  onConfirm={() => {
-                    session.postpone()
-                    toast('Упражнение отложено')
-                  }}
-                />
-              </div>
-
-              <HoldButton
-                label="Подход сделан"
-                className={CTA}
-                onConfirm={() => {
-                  session.completeSet(prediction.values)
-                  if (soundsOn) playSignal('set-done')
-                }}
-              />
-            </div>
+                session.completeSet(
+                  doneValues(entry.kind, prediction.values, session.setStartedAt, at),
+                  at,
+                )
+                if (soundsOn) playSignal('set-done')
+              }}
+            />
           )}
         </div>
       </div>

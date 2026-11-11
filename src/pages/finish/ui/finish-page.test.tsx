@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Timestamp } from 'firebase/firestore'
 import { createMemoryRouter, RouterProvider } from 'react-router'
@@ -19,6 +19,16 @@ const api = vi.hoisted(() => ({
 vi.mock('@/entities/workout', async (load) => ({
   ...(await load<typeof import('@/entities/workout')>()),
   ...api,
+}))
+
+const catalog = vi.hoisted(() => {
+  const state: { data: object | undefined; isError: boolean } = { data: {}, isError: false }
+
+  return { state }
+})
+vi.mock('@/entities/exercise', async (load) => ({
+  ...(await load<typeof import('@/entities/exercise')>()),
+  useCatalogById: () => catalog.state,
 }))
 
 const at = Timestamp.fromMillis(0)
@@ -48,7 +58,12 @@ function finishing(entries: WorkoutEntry[]) {
     summary: null,
     updatedAt: at,
   }
-  useSessionStore.setState({ workoutId: 'w1', workout, finishing: true })
+  useSessionStore.setState({
+    workoutId: 'w1',
+    workout,
+    finishing: true,
+    finished: { workoutId: 'w1', workout },
+  })
 }
 
 const user = { uid: 'u1', displayName: null, email: null, photoURL: null }
@@ -76,6 +91,7 @@ describe('FinishPage', () => {
     useSessionStore.getState().discard()
     api.useExerciseStats.mockReturnValue({ Bench: { records: { maxWeightKg: 60 } } })
     api.useLastBodyWeight.mockReturnValue({ kg: 82.4, date: new Date(2026, 10, 9) })
+    catalog.state = { data: {}, isError: false }
   })
 
   it('summarises the workout with its new records and skipped exercises', () => {
@@ -94,6 +110,30 @@ describe('FinishPage', () => {
     expect(list.getByText('2 подхода · 60–62,5 кг')).toBeInTheDocument()
     expect(list.getByText('не выполнено')).toBeInTheDocument()
     expect(list.getByText('пропущено')).toBeInTheDocument()
+  })
+
+  it('never shows «было» without a previous value', () => {
+    api.useExerciseStats.mockReturnValue({ Bench: { records: { maxVolumeKg: 500 } } })
+    finishing([bench])
+    renderFinish()
+
+    const records = screen.getByRole('region', { name: 'Новые рекорды' })
+    expect(records).toHaveTextContent('· было 500 кг')
+    expect(records.textContent).not.toMatch(/было(?! \d)/)
+  })
+
+  it('waits for the catalog before saving, unless it failed to load', () => {
+    catalog.state = { data: undefined, isError: false }
+    finishing([bench])
+    renderFinish()
+
+    expect(screen.getByRole('button', { name: 'Сохранить тренировку' })).toBeDisabled()
+    cleanup()
+
+    catalog.state = { data: undefined, isError: true }
+    renderFinish()
+
+    expect(screen.getByRole('button', { name: 'Сохранить тренировку' })).toBeEnabled()
   })
 
   it('saves the survey without skipped items and goes home', async () => {

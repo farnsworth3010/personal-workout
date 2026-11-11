@@ -77,6 +77,16 @@ describe('records', () => {
     expect(recordsOf([{ reps: 10, weightKg: 0 }])).toEqual({})
   })
 
+  it('ignores failed attempts (0 reps) for max weight and the best set', () => {
+    expect(
+      recordsOf([{ reps: 0, weightKg: 120 }, { reps: 5, weightKg: 100 }, { weightKg: 130 }]),
+    ).toEqual({
+      maxWeightKg: 100,
+      maxVolumeKg: 500,
+      bestSet: { reps: 5, weightKg: 100, e1rmKg: 116.67 },
+    })
+  })
+
   it('groups records by exercise across repeated entries', () => {
     const again = { exerciseId: 'Bench', sets: [{ reps: 5, weightKg: 70 }] }
 
@@ -111,10 +121,13 @@ describe('compareRecords', () => {
     })
   })
 
-  it('reports a record that did not exist before', () => {
+  it('stores but does not announce a record the exercise never had', () => {
     const current = recordsOf([{ reps: 10, weightKg: 20 }])
 
-    expect(compareRecords({}, current).improved).toEqual(['maxWeightKg', 'maxVolumeKg', 'bestSet'])
+    expect(compareRecords({ maxVolumeKg: 150 }, current)).toEqual({
+      merged: current,
+      improved: ['maxVolumeKg'],
+    })
   })
 
   it('stores but does not announce records of a first workout', () => {

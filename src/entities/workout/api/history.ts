@@ -33,7 +33,7 @@ export function useWorkoutHistory(uid: string, range: HistoryRange): WithId<Work
 
 const RECENT = 30
 
-export const recentWorkoutsQueryKey = (uid: string) => ['workouts', uid, 'recent'] as const
+const recentWorkoutsQueryKey = (uid: string) => ['workouts', uid, 'recent'] as const
 
 // The body weight of the newest finished workout that recorded one.
 export function lastBodyWeight(workouts: readonly Workout[]): { kg: number; date: Date } | null {

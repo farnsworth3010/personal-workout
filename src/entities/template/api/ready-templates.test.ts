@@ -3,11 +3,18 @@ import { describe, expect, it } from 'vitest'
 import readyTemplates from '../../../../public/catalog/templates.json'
 import { gymOnlyCount, usesDuration } from '../lib/derive'
 import { exercisesFixture } from '../lib/exercises.fixture'
-import type { ReadyTemplate } from '../model/types'
+import { readyTemplatesSchema } from './ready-templates'
 
-const templates: ReadyTemplate[] = readyTemplates as ReadyTemplate[]
+const templates = readyTemplatesSchema.parse(readyTemplates)
 
 describe('public/catalog/templates.json', () => {
+  it('matches the schema the app parses it with', () => {
+    expect(readyTemplatesSchema.safeParse(readyTemplates).success).toBe(true)
+    expect(
+      readyTemplatesSchema.safeParse([{ id: 'x', name: 'X', place: 'park', entries: [] }]).success,
+    ).toBe(false)
+  })
+
   it('has unique ids and pairs of one home and one gym set', () => {
     expect(new Set(templates.map((t) => t.id)).size).toBe(templates.length)
 

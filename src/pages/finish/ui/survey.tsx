@@ -1,8 +1,7 @@
 import { useId, type ReactNode } from 'react'
 
-import { cn } from '@/shared/lib'
+import { cn, n1 } from '@/shared/lib'
 
-import { decimal } from '../lib/format'
 import type { SurveyKey, SurveyState } from '../lib/survey'
 
 const tile =
@@ -130,7 +129,7 @@ function BodyWeight({
         >
           {delta === 0
             ? `как в прошлый раз · ${sinceDate(previous.date)}`
-            : `${delta > 0 ? '+' : '−'}${decimal(Math.abs(delta))} кг к прошлому разу`}
+            : `${delta > 0 ? '+' : '−'}${n1(Math.abs(delta))} кг к прошлому разу`}
         </p>
       )}
       <div role="group" aria-labelledby={labelId} className="grid grid-cols-4 gap-1.5">
@@ -138,13 +137,13 @@ function BodyWeight({
           <button
             key={step}
             type="button"
-            aria-label={`${step < 0 ? 'Минус' : 'Плюс'} ${decimal(Math.abs(step))} кг`}
+            aria-label={`${step < 0 ? 'Минус' : 'Плюс'} ${n1(Math.abs(step))} кг`}
             // Tenths as integers, so repeated taps do not drift.
             onClick={() => onChange(Math.max(0.1, Math.round(value * 10 + step * 10) / 10))}
             className={cn(tile, 'min-h-13 text-[17px] font-semibold active:bg-surface-2')}
           >
             {step < 0 ? '−' : '+'}
-            {decimal(Math.abs(step))}
+            {n1(Math.abs(step))}
           </button>
         ))}
       </div>

@@ -8,7 +8,7 @@ import { WorkoutPage } from './workout-page'
 const mocks = vi.hoisted(() => ({
   useWorkout: vi.fn(),
   useWorkoutHistory: vi.fn(),
-  useCatalog: vi.fn(),
+  useCatalogById: vi.fn(),
 }))
 vi.mock('@/entities/workout', async (importOriginal) => ({
   ...(await importOriginal<object>()),
@@ -17,7 +17,7 @@ vi.mock('@/entities/workout', async (importOriginal) => ({
 }))
 vi.mock('@/entities/exercise', async (importOriginal) => ({
   ...(await importOriginal<object>()),
-  useCatalog: mocks.useCatalog,
+  useCatalogById: mocks.useCatalogById,
 }))
 
 const user = { uid: 'u1', displayName: null, email: null, photoURL: null }
@@ -33,9 +33,9 @@ const renderPage = () =>
 
 beforeEach(() => {
   mocks.useWorkoutHistory.mockReturnValue([])
-  mocks.useCatalog.mockReturnValue({
-    data: [
-      {
+  mocks.useCatalogById.mockReturnValue({
+    data: {
+      'Barbell_Bench_Press_-_Medium_Grip': {
         id: 'Barbell_Bench_Press_-_Medium_Grip',
         name: 'Barbell Bench Press',
         kind: 'strength',
@@ -45,7 +45,7 @@ beforeEach(() => {
         instructions: [],
         images: ['Barbell_Bench_Press_-_Medium_Grip/0.jpg'],
       },
-    ],
+    },
   })
 })
 

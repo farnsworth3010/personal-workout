@@ -1,9 +1,6 @@
 import { e1rm } from '@/entities/workout'
 import type { LoggedSet, Workout } from '@/shared/api'
-
-const n1Format = new Intl.NumberFormat('ru', { maximumFractionDigits: 1 })
-
-export const n1 = (value: number) => n1Format.format(value)
+import { n1 } from '@/shared/lib'
 
 export type ExerciseState = 'done' | 'partial' | 'skipped'
 
@@ -56,10 +53,6 @@ export function formatDuration(sec: number) {
   const pad = (v: number) => String(v).padStart(2, '0')
   return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`
 }
-
-/** [value, unit]: tonnes from 1000 kg, as on the finish screen. */
-export const formatVolume = (kg: number): [string, string] =>
-  kg >= 1000 ? [n1(kg / 1000), 'т'] : [String(Math.round(kg)), 'кг']
 
 /** "12 × 140 кг", "15 повт." or "45 с". */
 export function formatSet({ reps, weightKg, durationSec }: LoggedSet) {

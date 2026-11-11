@@ -28,10 +28,15 @@ export interface SessionData {
   shiftKg: Record<string, number>
   // The workout has ended and waits on the finish screen for the survey.
   finishing: boolean
+  // The ended workout while finishing, so selectFinishing is a plain field read.
+  finished: FinishedWorkout | null
 }
 
 export interface SessionActions {
-  start: (template: Workout['template'], entries: NewEntry[], now?: number) => void
+  // False, and nothing changes, while a workout runs or waits on the finish screen, or without entries.
+  start: (template: Workout['template'], entries: NewEntry[], now?: number) => boolean
+  // Continues a workout known only from its server document (status active); false unless idle.
+  restore: (workoutId: string, workout: Workout, now?: number) => boolean
   // Logs the current set (the prediction unless changed) and starts the rest.
   completeSet: (values: SetValues, now?: number) => void
   // Corrects the logged current set; a weight change shifts the next predictions.
@@ -69,6 +74,7 @@ const idle: SessionData = {
   spentMs: [],
   shiftKg: {},
   finishing: false,
+  finished: null,
 }
 
 const ts = (ms: number) => Timestamp.fromMillis(ms)
@@ -109,7 +115,7 @@ const patchEntry = (workout: Workout, index: number, patch: Partial<WorkoutEntry
   )
 
 // Stores the time spent on the entry being left.
-const bank = (s: SessionData, now: number) =>
+const bankSpentTime = (s: SessionData, now: number) =>
   s.current === null || s.exerciseStartedAt === null
     ? s.spentMs
     : s.spentMs.with(s.current, now - s.exerciseStartedAt)
@@ -136,7 +142,12 @@ function advance(s: SessionData, workout: Workout, now: number): Partial<Session
 
   return {
     workout,
-    ...moveTo(bank(s, now), target, target === null ? 0 : firstUndone(workout.entries[index]), now),
+    ...moveTo(
+      bankSpentTime(s, now),
+      target,
+      target === null ? 0 : firstUndone(workout.entries[index]),
+      now,
+    ),
   }
 }
 
@@ -144,7 +155,7 @@ export const useSessionStore = create<SessionState>()(
   persist(
     (set, get) => {
       // Applies a transition to a running session; without one every action is a no-op.
-      const update =
+      const transition =
         <A extends unknown[]>(
           fn: (s: SessionData, workout: Workout, ...args: A) => Partial<SessionData> | undefined,
         ) =>
@@ -154,7 +165,9 @@ export const useSessionStore = create<SessionState>()(
       return {
         ...idle,
 
-        start: (template, entries, now = Date.now()) =>
+        start: (template, entries, now = Date.now()) => {
+          if (get().workout || entries.length === 0) return false
+
           set({
             ...idle,
             workoutId: newId(),
@@ -172,9 +185,32 @@ export const useSessionStore = create<SessionState>()(
             exerciseStartedAt: now,
             setStartedAt: now,
             spentMs: entries.map(() => 0),
-          }),
+          })
 
-        completeSet: update((s, workout, values: SetValues, now = Date.now()) => {
+          return true
+        },
+
+        restore: (workoutId, workout, now = Date.now()) => {
+          if (get().workout || workout.status !== 'active') return false
+
+          const index = workout.entries.findIndex((entry) => entry.status === 'pending')
+
+          set({
+            ...idle,
+            workoutId,
+            workout,
+            ...moveTo(
+              workout.entries.map(() => 0),
+              index < 0 ? null : index,
+              index < 0 ? 0 : firstUndone(workout.entries[index]),
+              now,
+            ),
+          })
+
+          return true
+        },
+
+        completeSet: transition((s, workout, values: SetValues, now = Date.now()) => {
           if (s.current === null) return
 
           const entry = workout.entries[s.current]
@@ -193,7 +229,7 @@ export const useSessionStore = create<SessionState>()(
           }
         }),
 
-        editSet: update((s, workout, values: SetValues, now = Date.now()) => {
+        editSet: transition((s, workout, values: SetValues, now = Date.now()) => {
           if (s.current === null) return
 
           const entry = workout.entries[s.current]
@@ -212,7 +248,7 @@ export const useSessionStore = create<SessionState>()(
           }
         }),
 
-        next: update((s, workout, now = Date.now()) => {
+        next: transition((s, workout, now = Date.now()) => {
           if (s.current === null) return
 
           const entry = workout.entries[s.current]
@@ -225,7 +261,7 @@ export const useSessionStore = create<SessionState>()(
 
         // During rest: back to the set just logged; in work: the previous set, else the
         // previous finished exercise, reopened on its last set.
-        back: update((s, workout, now = Date.now()) => {
+        back: transition((s, workout, now = Date.now()) => {
           if (s.current !== null && s.restEndsAt !== null)
             return {
               workout: patchEntry(workout, s.current, { status: 'pending' }, now),
@@ -245,32 +281,32 @@ export const useSessionStore = create<SessionState>()(
 
           return {
             workout: patchEntry(workout, index, { status: 'pending' }, now),
-            ...moveTo(bank(s, now), index, workout.entries[index].plan.sets - 1, now),
+            ...moveTo(bankSpentTime(s, now), index, workout.entries[index].plan.sets - 1, now),
           }
         }),
 
-        postpone: update((s, workout, now = Date.now()) => {
+        postpone: transition((s, workout, now = Date.now()) => {
           if (s.current === null || workout.entries[s.current].status !== 'pending') return
 
           return advance(s, patchEntry(workout, s.current, { status: 'postponed' }, now), now)
         }),
 
-        resume: update((s, workout, index: number, now = Date.now()) => {
+        resume: transition((s, workout, index: number, now = Date.now()) => {
           const entry = workout.entries.at(index)
 
           if (entry?.status !== 'postponed') return
 
           return {
             workout: patchEntry(workout, index, { status: 'pending' }, now),
-            ...moveTo(bank(s, now), index, firstUndone(entry), now),
+            ...moveTo(bankSpentTime(s, now), index, firstUndone(entry), now),
           }
         }),
 
-        addExercise: update((s, workout, added: NewEntry, mode: AddMode, now = Date.now()) => {
+        addExercise: transition((s, workout, added: NewEntry, mode: AddMode, now = Date.now()) => {
           if (workout.entries.length >= MAX_ENTRIES) return
 
           const entry: WorkoutEntry = { ...added, status: 'pending', sets: [] }
-          const spentMs = bank(s, now)
+          const spentMs = bankSpentTime(s, now)
 
           if (s.current === null) {
             const index = workout.entries.length
@@ -291,10 +327,13 @@ export const useSessionStore = create<SessionState>()(
               ...moveTo(spentMs.toSpliced(s.current, 1, 0), s.current, 0, now),
             }
 
+          // A replaced entry with every set logged counts as done, as the workout page derives it.
           const entries = workout.entries
             .toSpliced(at, 0, entry)
             .map((e, i) =>
-              mode === 'replace' && i === s.current ? { ...e, status: 'skipped' as const } : e,
+              mode === 'replace' && i === s.current
+                ? { ...e, status: allLogged(e) ? ('done' as const) : ('skipped' as const) }
+                : e,
             )
 
           if (mode === 'next')
@@ -309,11 +348,8 @@ export const useSessionStore = create<SessionState>()(
           }
         }),
 
-        end: update((s, workout, now = Date.now()) => ({
-          ...idle,
-          workoutId: s.workoutId,
-          finishing: true,
-          workout: {
+        end: transition((s, workout, now = Date.now()) => {
+          const ended: Workout = {
             ...workout,
             status: 'done',
             endedAt: ts(now),
@@ -322,11 +358,21 @@ export const useSessionStore = create<SessionState>()(
             entries: workout.entries.map((entry) =>
               entry.status === 'done' ? entry : { ...entry, status: 'skipped' },
             ),
-          },
-        })),
+          }
+
+          return s.workoutId === null
+            ? undefined
+            : {
+                ...idle,
+                workoutId: s.workoutId,
+                workout: ended,
+                finishing: true,
+                finished: { workoutId: s.workoutId, workout: ended },
+              }
+        }),
 
         finish: (survey) => {
-          const finished = selectFinishing(get())
+          const { finished } = get()
 
           if (finished) set(idle)
 
@@ -338,7 +384,22 @@ export const useSessionStore = create<SessionState>()(
     },
     {
       name: 'personal-workout:session',
-      version: 1,
+      version: 2,
+      // Version 1 kept no `finished`: rebuild it for a workout that was waiting on the finish screen.
+      migrate: (persisted, version) => {
+        const state = persisted as SessionData
+
+        if (version < 2)
+          return {
+            ...state,
+            finished:
+              state.finishing && state.workoutId && state.workout
+                ? { workoutId: state.workoutId, workout: state.workout }
+                : null,
+          }
+
+        return state
+      },
       storage: createJSONStorage(() => localStorage, {
         reviver: (_key, value) => (isTimestampJson(value) ? Timestamp.fromJSON(value) : value),
       }),
@@ -349,14 +410,5 @@ export const useSessionStore = create<SessionState>()(
 // A running session the screen can show; false while the finish screen waits.
 export const selectActive = (s: SessionData) => s.workout !== null && !s.finishing
 
-let lastFinishing: FinishedWorkout | null = null
-
-// Stable between calls, so it works as a useSessionStore selector without useShallow.
-export function selectFinishing(s: SessionData): FinishedWorkout | null {
-  if (!s.finishing || !s.workoutId || !s.workout) return null
-
-  if (lastFinishing?.workout !== s.workout)
-    lastFinishing = { workoutId: s.workoutId, workout: s.workout }
-
-  return lastFinishing
-}
+// The ended workout waiting for the survey; a stored object, so the selector is stable.
+export const selectFinishing = (s: SessionData): FinishedWorkout | null => s.finished

@@ -48,6 +48,9 @@ function HoldButton({
   }
 
   const start = () => {
+    // A second finger or a palm must not start a second timer that outlives the release.
+    if (holdTimer.current !== undefined) return
+
     clearTimeout(hintTimer.current)
     setHint(false)
     setHolding(true)

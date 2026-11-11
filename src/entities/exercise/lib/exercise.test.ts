@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { equipmentLabels, equipmentList } from '../config/labels'
 import type { Exercise } from '../model/types'
 
 import { isGymOnly, photoUrl } from './exercise'
@@ -37,5 +38,11 @@ describe('photoUrl', () => {
   it('builds the static path and returns undefined past the last photo', () => {
     expect(photoUrl(exercise(null), 1)).toBe('/catalog/images/Test/1.jpg')
     expect(photoUrl(exercise(null), 2)).toBeUndefined()
+  })
+})
+
+describe('equipmentList', () => {
+  it('lists every labelled equipment once', () => {
+    expect([...equipmentList].sort()).toEqual(Object.keys(equipmentLabels).sort())
   })
 })

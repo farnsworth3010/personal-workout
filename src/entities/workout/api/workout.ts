@@ -1,6 +1,5 @@
 import {
   deleteDoc,
-  doc,
   getDoc,
   getDocFromCache,
   getDocs,
@@ -31,56 +30,45 @@ import {
 import type { MuscleFacts } from '../model/summary'
 import { exerciseStatsAfter, finishedWorkout } from './documents'
 
-// Firestore's auto-id: crypto.randomUUID() is missing on plain-http origins such as dev:remote.
-export const newWorkoutId = (uid: string) => doc(workoutsRef(uid)).id
+const workoutQueryKey = (uid: string, workoutId: string) => ['workout', uid, workoutId] as const
 
-export const workoutQueryKey = (uid: string, workoutId: string) =>
-  ['workout', uid, workoutId] as const
+const activeWorkoutQueryKey = (uid: string) => ['workout', uid, 'active'] as const
 
-export const activeWorkoutQueryKey = (uid: string) => ['workout', uid, 'active'] as const
+const exerciseStatsQueryKey = (uid: string) => ['exerciseStats', uid] as const
 
-export const exerciseStatsQueryKey = (uid: string) => ['exerciseStats', uid] as const
-
-// A merge writes only these keys, so the rest of the profile is never overwritten. A profile the
-// cache knows is missing is skipped: the merge would create a half-empty one that the rules reject.
-function pointProfileAt(uid: string, workoutId: string | null) {
-  fireWrite(async () => {
-    const ref = profileRef(uid)
-    const cached = await getDocFromCache(ref).catch(() => undefined)
-
-    if (cached && (!cached.exists() || cached.get('activeWorkoutId') === workoutId)) return
-
-    await setDoc(ref, { activeWorkoutId: workoutId, updatedAt: Timestamp.now() }, { merge: true })
-  })
-}
-
-// Called after every logged set; the profile is written only when it points elsewhere.
+// Called after every logged set.
 export function saveActiveWorkout(uid: string, workoutId: string, workout: Workout): void {
-  fireWrite(() => setDoc(workoutRef(uid, workoutId), { ...workout, status: 'active' }))
-  pointProfileAt(uid, workoutId)
+  fireWrite(() => setDoc(workoutRef(uid, workoutId), { ...workout, status: 'active' }), 'workout')
 }
 
 export function discardWorkout(uid: string, workoutId: string): void {
-  fireWrite(() => deleteDoc(workoutRef(uid, workoutId)))
-  pointProfileAt(uid, null)
+  fireWrite(() => deleteDoc(workoutRef(uid, workoutId)), 'workout')
 }
 
-// shortcut: previous stats come from the cache (the session listens to them), else the server; an
-// exercise whose stats were never cached on this device counts as new offline.
-function previousStats(uid: string, exerciseId: string) {
+// From the cache (the session listens to stats), else the server. Offline with no copy counts as a first
+// workout with the exercise; any other failure (rules, a document the converter rejects) rejects, so the
+// caller skips that exercise instead of resetting its records.
+async function previousStats(uid: string, exerciseId: string): Promise<ExerciseStats | undefined> {
   const ref = exerciseStatRef(uid, exerciseId)
 
-  return getDocFromCache(ref)
-    .catch(() => getDoc(ref))
-    .then(
-      (snapshot) => snapshot.data(),
-      () => undefined,
-    )
+  try {
+    return (await getDocFromCache(ref)).data()
+  } catch {
+    // Not cached, or the cached copy is invalid: the server decides.
+  }
+
+  try {
+    return (await getDoc(ref)).data()
+  } catch (error) {
+    // By code: SDK errors are not reliably instances of the exported FirestoreError class.
+    if ((error as { code?: unknown } | null)?.code === 'unavailable') return undefined
+
+    throw error
+  }
 }
 
 // The workout is queued at once: Firestore persists a write a few ms after the call, and an app closed
-// right after finishing must not lose it to the stats reads. Stats (a rebuildable cache) follow in a batch;
-// the profile apart, so a missing profile cannot fail either.
+// right after finishing must not lose it to the stats reads. Stats (a rebuildable cache) follow in a batch.
 export function finishWorkout(
   uid: string,
   workoutId: string,
@@ -89,23 +77,31 @@ export function finishWorkout(
 ): void {
   const now = Timestamp.now()
 
-  fireWrite(() => setDoc(workoutRef(uid, workoutId), finishedWorkout(workout, exercises, now)))
+  fireWrite(
+    () => setDoc(workoutRef(uid, workoutId), finishedWorkout(workout, exercises, now)),
+    'finish',
+  )
   fireWrite(async () => {
     const ids = [...new Set(workout.entries.filter((e) => e.sets.length).map((e) => e.exerciseId))]
-    const previous = await Promise.all(ids.map((id) => previousStats(uid, id)))
-    const stats = exerciseStatsAfter(
-      workoutId,
-      workout,
-      Object.fromEntries(ids.map((id, i) => [id, previous[i]])),
-      now,
+    const results = await Promise.allSettled(ids.map((id) => previousStats(uid, id)))
+    const known = new Map(
+      ids.flatMap((id, i) => {
+        const result = results[i]
+
+        return result.status === 'fulfilled' ? [[id, result.value] as const] : []
+      }),
     )
+    const stats = exerciseStatsAfter(workoutId, workout, Object.fromEntries(known), now)
 
     const batch = writeBatch(db)
-    for (const [id, doc] of Object.entries(stats)) batch.set(exerciseStatRef(uid, id), doc)
+    for (const [id, doc] of Object.entries(stats))
+      if (known.has(id)) batch.set(exerciseStatRef(uid, id), doc)
 
     await batch.commit()
-  })
-  pointProfileAt(uid, null)
+
+    const failed = results.find((result) => result.status === 'rejected')
+    if (failed) throw failed.reason
+  }, 'stats')
 }
 
 const BATCH_LIMIT = 500
@@ -133,7 +129,7 @@ export function resetProgress(uid: string): void {
     }
 
     await Promise.all(commits)
-  })
+  }, 'reset')
   fireWrite(async () => {
     const ref = profileRef(uid)
     const cached = await getDocFromCache(ref).catch(() => undefined)
@@ -145,7 +141,7 @@ export function resetProgress(uid: string): void {
       { activeWorkoutId: null, schedule: emptySchedule, updatedAt: Timestamp.now() },
       { merge: true },
     )
-  })
+  }, 'reset')
 }
 
 export function useWorkout(uid: string, workoutId: string): Workout | null | undefined {
@@ -153,7 +149,7 @@ export function useWorkout(uid: string, workoutId: string): Workout | null | und
     .data
 }
 
-// Found by status, not through profile.activeWorkoutId, so a lost profile write cannot hide it.
+// The server copy of a running workout, found by status (profile.activeWorkoutId is no longer written).
 export function useActiveWorkout(uid: string): (Workout & { id: string }) | null | undefined {
   const { data } = useSnapshotQuery(
     activeWorkoutQueryKey(uid),

@@ -1,7 +1,7 @@
 import { getDocFromServer, setDoc, type DocumentReference } from 'firebase/firestore'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { createQueryClient, type Profile } from '@/shared/api'
+import { createQueryClient, onWriteError, type Profile } from '@/shared/api'
 
 import { defaultProfile } from '../model/profile'
 import { ensureProfile, profileQueryKey, updateProfile } from './profile'
@@ -35,15 +35,42 @@ describe('updateProfile', () => {
     expect(vi.mocked(setDoc).mock.calls[0]?.[2]).toBeUndefined()
   })
 
-  it('builds a second update on the first before the snapshot arrives', () => {
+  it('merges only the edited keys into an existing profile, building on earlier unsynced edits', () => {
     const client = createQueryClient()
     client.setQueryData(profileQueryKey(uid), defaultProfile)
 
     updateProfile(client, uid, { sounds: false })
-    updateProfile(client, uid, { animations: false })
+    updateProfile(client, uid, { schedule: { mon: [{ source: 'own', id: 't1' }] } })
 
-    expect(vi.mocked(setDoc).mock.calls[1]?.[1]).toMatchObject({ sounds: false, animations: false })
-    expect(client.getQueryData(profileQueryKey(uid))).toMatchObject({ sounds: false })
+    const [, first, firstOptions] = vi.mocked(setDoc).mock.calls[0] ?? []
+    const [, second] = vi.mocked(setDoc).mock.calls[1] ?? []
+    expect(Object.keys(first as object).sort()).toEqual(['sounds', 'updatedAt'])
+    expect(firstOptions).toEqual({ merge: true })
+    // A merged schedule is sent whole, so each day is replaced, never merged item by item.
+    expect(second).toMatchObject({
+      schedule: { ...defaultProfile.schedule, mon: [{ source: 'own', id: 't1' }] },
+    })
+    expect(Object.keys(second as object).sort()).toEqual(['schedule', 'updatedAt'])
+    expect(client.getQueryData(profileQueryKey(uid))).toMatchObject({
+      sounds: false,
+      schedule: { mon: [{ source: 'own', id: 't1' }] },
+    })
+  })
+
+  it('reports an invalid change without touching the cache or writing', async () => {
+    const client = createQueryClient()
+    const errors = vi.fn()
+    const stop = onWriteError(errors)
+    client.setQueryData(profileQueryKey(uid), defaultProfile)
+
+    updateProfile(client, uid, { defaultRestSec: -5 })
+    await vi.waitFor(() => {
+      expect(errors).toHaveBeenCalledWith(expect.anything(), 'profile')
+    })
+
+    expect(client.getQueryData(profileQueryKey(uid))).toBe(defaultProfile)
+    expect(setDoc).not.toHaveBeenCalled()
+    stop()
   })
 
   it('refuses to write before the profile is loaded', () => {

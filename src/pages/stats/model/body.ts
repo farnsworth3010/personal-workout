@@ -1,6 +1,7 @@
 import type { Workout } from '@/shared/api'
+import { weekStart } from '@/shared/lib'
 
-import { byDate, weekStart, workoutDate } from './dates'
+import { byDate, workoutDate } from './dates'
 
 export const bodyWeightSeries = (workouts: readonly Workout[]) =>
   byDate(workouts).flatMap((w) =>

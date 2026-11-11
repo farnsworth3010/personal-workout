@@ -1,14 +1,8 @@
-import { useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 
-import { muscleLabels, useCatalog, type Exercise } from '@/entities/exercise'
+import { muscleLabels, useCatalogById, type Exercise } from '@/entities/exercise'
 import { useProfile } from '@/entities/profile'
-import {
-  selectActive,
-  selectFinishing,
-  toSessionEntries,
-  useSessionStore,
-} from '@/entities/session'
+import { toSessionEntries } from '@/entities/session'
 import {
   copyTemplate,
   estimateDurationMin,
@@ -20,19 +14,10 @@ import {
   type TemplateEntry,
   type TemplateRef,
 } from '@/entities/template'
+import { RunningWorkoutSheet, useStartWorkout } from '@/features/start-workout'
 import type { AuthUser, Profile } from '@/shared/api'
 import { cn } from '@/shared/lib'
-import {
-  Badge,
-  Button,
-  Chip,
-  HoldButton,
-  PageHeader,
-  ScrollTop,
-  Sheet,
-  SheetContent,
-  toast,
-} from '@/shared/ui'
+import { Badge, Button, Chip, HoldButton, PageHeader, ScrollTop, toast } from '@/shared/ui'
 
 interface ListedSet {
   ref: TemplateRef
@@ -42,8 +27,6 @@ interface ListedSet {
 
 type ById = Record<string, Exercise | undefined>
 
-const cta = 'h-auto min-h-16 rounded-lg border-0 text-lg font-bold uppercase'
-const ghost = 'h-auto min-h-12 rounded-lg bg-surface text-sm font-normal'
 const action =
   'flex min-h-11 items-center justify-center rounded-lg px-[18px] text-[15px] font-semibold outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid min-[900px]:px-3'
 const columns = 'min-[900px]:grid-cols-[minmax(0,1fr)_70px_110px_90px_330px] min-[900px]:gap-x-5'
@@ -92,37 +75,22 @@ const daysText = (ref: TemplateRef, schedule: Profile['schedule'] | undefined) =
 
 // templates.html: own and ready-made sets with a place filter; start, edit or copy each.
 export function TemplatesPage({ user }: { user: AuthUser }) {
-  const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
-  const active = useSessionStore(selectActive)
-  const finishing = useSessionStore(selectFinishing)
-  const running = useSessionStore((s) => s.workout?.template.name)
-  const [waiting, setWaiting] = useState(false)
+  const startWorkout = useStartWorkout()
 
   const { profile } = useProfile(user.uid)
-  const { data: catalog } = useCatalog()
+  const { data: catalog } = useCatalogById()
   const { data: ready, error: readyError } = useReadyTemplates()
   const { data: own, error: ownError } = useOwnTemplates(user.uid)
-  const byId = useMemo(
-    () => Object.fromEntries((catalog ?? []).map((e) => [e.id, e])) as ById,
-    [catalog],
-  )
+  const byId: ById = catalog ?? {}
   const homeEquipment = profile?.homeEquipment ?? []
   const filter = FILTERS.find((f) => f.place === params.get('place'))?.place ?? null
 
   const setFilter = (place: Place | null) =>
     setParams(place ? { place } : {}, { replace: true, preventScrollReset: true })
 
-  // A running or unsaved workout is never replaced silently: the person continues or finishes it.
-  const start = ({ ref, name, entries }: ListedSet) => {
-    if (active || finishing) {
-      setWaiting(true)
-      return
-    }
-
-    useSessionStore.getState().start({ ...ref, name }, toSessionEntries(entries, byId))
-    void navigate('/session')
-  }
+  const start = ({ ref, name, entries }: ListedSet) =>
+    startWorkout.start({ ...ref, name }, toSessionEntries(entries, byId))
 
   const copy = (set: ListedSet) => {
     copyTemplate(user.uid, { id: set.ref.id, name: set.name, entries: set.entries })
@@ -315,38 +283,7 @@ export function TemplatesPage({ user }: { user: AuthUser }) {
 
       <ScrollTop />
 
-      <Sheet open={waiting} onOpenChange={setWaiting}>
-        <SheetContent
-          title={active ? 'Уже идёт тренировка' : 'Тренировка не сохранена'}
-          description={
-            active
-              ? `Сначала продолжите или завершите «${running ?? ''}».`
-              : `Сначала сохраните итоги «${running ?? ''}».`
-          }
-        >
-          {active ? (
-            <>
-              <Button asChild className={cta}>
-                <Link to="/session">Продолжить</Link>
-              </Button>
-              <Button
-                variant="outline"
-                className={ghost}
-                onClick={() => {
-                  useSessionStore.getState().end()
-                  void navigate('/session/finish')
-                }}
-              >
-                Завершить и перейти к итогам
-              </Button>
-            </>
-          ) : (
-            <Button asChild className={cta}>
-              <Link to="/session/finish">К итогам тренировки</Link>
-            </Button>
-          )}
-        </SheetContent>
-      </Sheet>
+      <RunningWorkoutSheet open={startWorkout.blocked} onOpenChange={startWorkout.setBlocked} />
     </>
   )
 }

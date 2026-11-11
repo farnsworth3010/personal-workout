@@ -47,7 +47,7 @@ async function open(page: Page) {
 }
 
 // spec.md User Story 5, independent test.
-test('two sets today: the finished one is marked, the other waits, clearing makes a rest day', async ({
+test('two sets today: the finished one is marked, the other waits, clearing empties the plan', async ({
   page,
 }) => {
   const now = new Date()
@@ -80,9 +80,10 @@ test('two sets today: the finished one is marked, the other waits, clearing make
   await page.getByRole('button', { name: 'Без тренировки' }).click()
   await page.keyboard.press('Escape')
 
-  await expect(page.getByRole('heading', { name: 'День отдыха' })).toBeVisible()
+  // Today was the only planned day, so the whole week is empty now.
+  await expect(page.getByRole('heading', { name: 'План пуст' })).toBeVisible()
   await page.reload()
-  await expect(page.getByRole('heading', { name: 'День отдыха' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'План пуст' })).toBeVisible()
 })
 
 test('the day sheet adds, reorders and removes sets and keeps them', async ({ page }) => {

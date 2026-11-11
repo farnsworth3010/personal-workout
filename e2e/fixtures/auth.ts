@@ -67,4 +67,9 @@ export const test = base.extend<{ cleanEmulators: undefined }>({
     },
     { auto: true },
   ],
+  // The install sheet opens on Today on phones and would cover every flow; an install test can remove the key.
+  page: async ({ page }, use) => {
+    await page.addInitScript(() => localStorage.setItem('personal-workout:install-hint', 'never'))
+    await use(page)
+  },
 })

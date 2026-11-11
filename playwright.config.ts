@@ -17,7 +17,12 @@ export default defineConfig({
   // shortcut: the fixture resets the shared emulators, so parallel projects would wipe each other; switch to per-test uids when the suite gets slow.
   workers: 1,
   retries: isCI ? 2 : 0,
-  reporter: isCI ? [['html', { outputFolder: 'playwright-report', open: 'never' }]] : 'list',
+  // A broken build stops after 10 failures instead of retrying the whole suite.
+  maxFailures: isCI ? 10 : 0,
+  // list: live progress in the CI log; html: the report uploaded on failure.
+  reporter: isCI
+    ? [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]]
+    : 'list',
   use: {
     baseURL: devURL,
     trace: 'on-first-retry',

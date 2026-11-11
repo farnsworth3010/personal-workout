@@ -4,6 +4,13 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Actions → CI → Run workflow: deploys main, after the checks unless skip_checks is set.
+  workflow_dispatch:
+    inputs:
+      skip_checks:
+        description: Deploy without running the checks
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -15,6 +22,7 @@ concurrency:
 
 jobs:
   check:
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_checks) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -66,7 +74,12 @@ jobs:
   # No secrets here: this job installs and runs the project's dependencies.
   build-prod:
     needs: [check]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Only main deploys; check may be skipped only by a manual run with skip_checks.
+    if: >-
+      ${{ !cancelled() && github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      (needs.check.result == 'success' ||
+      (needs.check.result == 'skipped' && github.event_name == 'workflow_dispatch' && inputs.skip_checks)) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -115,6 +128,8 @@ jobs:
   # The only job with the service account: it never installs or runs the project's dependencies.
   deploy:
     needs: [build-prod]
+    # Explicit: a skipped check would otherwise skip this job too, even after build-prod succeeded.
+    if: ${{ !cancelled() && needs.build-prod.result == 'success' }}
     runs-on: ubuntu-latest
     concurrency:
       group: deploy

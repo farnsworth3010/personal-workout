@@ -4,8 +4,9 @@ import type { z } from 'zod'
 import { exerciseStatsSchema, profileSchema, templateSchema, workoutSchema } from '@/shared/api'
 
 const at = Timestamp.fromMillis(1_700_000_000_000)
-const templateEntry = { exerciseId: 'Pushups', sets: 3, reps: 10, restSec: 60 }
+const templateEntry = { id: 'a1', exerciseId: 'Pushups', sets: 3, reps: 10, restSec: 60 }
 const workoutEntry = {
+  id: 'a1',
   exerciseId: 'Pushups',
   name: 'Pushups',
   kind: 'bodyweight',

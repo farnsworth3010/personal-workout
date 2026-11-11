@@ -13,7 +13,7 @@ vi.mock('firebase/firestore', async (importOriginal) => ({
 }))
 
 const uid = 'user-1'
-const entries = [{ exerciseId: 'Pushups', sets: 3, reps: 12, restSec: 60 }]
+const entries = [{ id: 'a1', exerciseId: 'Pushups', sets: 3, reps: 12, restSec: 60 }]
 
 const written = (call = 0) => {
   const [ref, data] = vi.mocked(setDoc).mock.calls[call] ?? []

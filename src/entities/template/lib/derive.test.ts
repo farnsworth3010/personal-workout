@@ -19,10 +19,10 @@ const exercises: Record<string, ExerciseFacts> = {
 
 const template = {
   entries: [
-    { exerciseId: 'squat', sets: 3, reps: 15, restSec: 60 },
-    { exerciseId: 'chin', sets: 3, reps: 6, restSec: 120 },
-    { exerciseId: 'curl', sets: 2, reps: 12, restSec: 60 },
-    { exerciseId: 'stretch', sets: 2, durationSec: 30, restSec: 10 },
+    { id: 'squat', exerciseId: 'squat', sets: 3, reps: 15, restSec: 60 },
+    { id: 'chin', exerciseId: 'chin', sets: 3, reps: 6, restSec: 120 },
+    { id: 'curl', exerciseId: 'curl', sets: 2, reps: 12, restSec: 60 },
+    { id: 'stretch', exerciseId: 'stretch', sets: 2, durationSec: 30, restSec: 10 },
   ],
 }
 
@@ -51,7 +51,7 @@ describe('placeOf and gymOnlyCount', () => {
   })
 
   it('ignores exercises missing from the catalog', () => {
-    const unknown = { entries: [{ exerciseId: 'gone', sets: 1, reps: 1, restSec: 0 }] }
+    const unknown = { entries: [{ id: 'x', exerciseId: 'gone', sets: 1, reps: 1, restSec: 0 }] }
 
     expect(placeOf(unknown, exercises, [])).toBe('home')
   })
@@ -65,14 +65,16 @@ describe('estimateDurationMin', () => {
 
   it('picks the work field by exercise kind', () => {
     const both = {
-      entries: [{ exerciseId: 'press', sets: 1, reps: 10, durationSec: 600, restSec: 0 }],
+      entries: [{ id: 'x', exerciseId: 'press', sets: 1, reps: 10, durationSec: 600, restSec: 0 }],
     }
 
     expect(estimateDurationMin(both, exercises)).toBe(2)
   })
 
   it('falls back to the entry fields for an unknown exercise', () => {
-    const unknown = { entries: [{ exerciseId: 'gone', sets: 2, durationSec: 120, restSec: 0 }] }
+    const unknown = {
+      entries: [{ id: 'x', exerciseId: 'gone', sets: 2, durationSec: 120, restSec: 0 }],
+    }
 
     expect(estimateDurationMin(unknown, exercises)).toBe(5)
   })

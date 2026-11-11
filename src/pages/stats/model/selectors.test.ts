@@ -22,6 +22,7 @@ const sets = (...pairs: [reps: number, weightKg?: number][]): LoggedSet[] =>
   }))
 
 const entry = (exerciseId: string, kind: WorkoutEntry['kind'], logged: LoggedSet[]) => ({
+  id: exerciseId,
   exerciseId,
   name: exerciseId,
   kind,
@@ -90,6 +91,8 @@ describe('weekMuscleLoad', () => {
     expect(load.untrained).toHaveLength(13)
     expect(load.untrained).toContain('lats')
     expect(load.untrained).not.toContain('chest')
+    // Eye exercises are not on the map, so eyes are never «untrained».
+    expect(load.untrained).not.toContain('eyes')
   })
 
   it('treats a week without workouts as all untrained', () => {

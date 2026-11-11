@@ -61,11 +61,11 @@ export function useTemplateDraft({ template, addId, byId, defaultRestSec }: Draf
 
   const edit = (key: string, field: Field, value: string) => {
     setProblem(null)
-    setRows((current) => current.map((row) => (row.key === key ? { ...row, [field]: value } : row)))
+    setRows((current) => current.map((row) => (row.id === key ? { ...row, [field]: value } : row)))
   }
 
   const reorder = (key: string, delta: number) => {
-    const index = rows.findIndex((row) => row.key === key)
+    const index = rows.findIndex((row) => row.id === key)
     const target = index + delta
     const edge = target === 0 ? -1 : target === rows.length - 1 ? 1 : 0
 
@@ -75,20 +75,20 @@ export function useTemplateDraft({ template, addId, byId, defaultRestSec }: Draf
     setRows((current) =>
       move(
         current,
-        current.findIndex((row) => row.key === key),
+        current.findIndex((row) => row.id === key),
         delta,
       ),
     )
   }
 
   const remove = (key: string) => {
-    const index = rows.findIndex((row) => row.key === key)
+    const index = rows.findIndex((row) => row.id === key)
     const row = rows.at(index)
     const neighbour = rows.at(index + 1) ?? (index > 0 ? rows.at(index - 1) : undefined)
 
-    pendingFocus.current = neighbour ? `[data-row="${neighbour.key}"][data-remove]` : 'add'
+    pendingFocus.current = neighbour ? `[data-row="${neighbour.id}"][data-remove]` : 'add'
     setProblem(null)
-    setRows((current) => current.filter((r) => r.key !== key))
+    setRows((current) => current.filter((r) => r.id !== key))
     if (row) toast(`Убрано: ${nameOf(row.exerciseId)}`)
   }
 
@@ -112,7 +112,7 @@ export function useTemplateDraft({ template, addId, byId, defaultRestSec }: Draf
     if (focus === 'name') nameInput.current?.focus()
     else if (focus === 'add') addButton.current?.focus()
     else {
-      const key = rows.at(focus.row)?.key
+      const key = rows.at(focus.row)?.id
       list.current
         ?.querySelector<HTMLInputElement>(`[data-row="${key ?? ''}"][data-field="${focus.field}"]`)
         ?.focus()

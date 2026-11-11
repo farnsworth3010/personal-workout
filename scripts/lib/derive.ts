@@ -46,3 +46,26 @@ export function toExercise(raw: RawExercise, override?: Override): Exercise {
     images: raw.images.map((_, n) => `${raw.id}/${n}.jpg`),
   }
 }
+
+/** An exercise of scripts/local/exercises.json: written here, not taken from the dataset. */
+export interface LocalExercise {
+  id: string
+  name: string
+  instructions: string[]
+}
+
+export const LOCAL_EYE_IMAGE = 'local/eye.svg'
+
+// The local exercises are all eye exercises: timed, no equipment, the neutral eye icon as photo.
+export function toLocalExercise(local: LocalExercise): Exercise {
+  return {
+    id: local.id,
+    name: local.name,
+    kind: 'timed',
+    primaryMuscles: ['eyes'],
+    secondaryMuscles: [],
+    equipment: null,
+    instructions: local.instructions,
+    images: [LOCAL_EYE_IMAGE],
+  }
+}

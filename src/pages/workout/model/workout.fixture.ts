@@ -11,6 +11,7 @@ const entry = (
   planned: number,
   sets: { reps?: number; weightKg?: number; durationSec?: number }[],
 ): WorkoutEntry => ({
+  id: exerciseId,
   exerciseId,
   name: exerciseId.replaceAll('_', ' '),
   kind,

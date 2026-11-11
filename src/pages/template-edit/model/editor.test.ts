@@ -15,7 +15,7 @@ const kindOf = (id: string) => kinds[id]
 const nameOf = (id: string) => id
 
 const row = (exerciseId: string, sets: string, amount: string, rest: string): Row => ({
-  key: exerciseId,
+  id: `${exerciseId}-id`,
   exerciseId,
   sets,
   amount,
@@ -48,10 +48,10 @@ describe('reps versus duration by kind', () => {
       ok: true,
       name: 'Ноги',
       entries: [
-        { exerciseId: 'Squat', sets: 4, reps: 8, restSec: 120 },
-        { exerciseId: 'Pushups', sets: 3, reps: 15, restSec: 60 },
-        { exerciseId: 'Plank', sets: 3, durationSec: 45, restSec: 30 },
-        { exerciseId: 'Run', sets: 1, durationSec: 750, restSec: 0 },
+        { id: 'Squat-id', exerciseId: 'Squat', sets: 4, reps: 8, restSec: 120 },
+        { id: 'Pushups-id', exerciseId: 'Pushups', sets: 3, reps: 15, restSec: 60 },
+        { id: 'Plank-id', exerciseId: 'Plank', sets: 3, durationSec: 45, restSec: 30 },
+        { id: 'Run-id', exerciseId: 'Run', sets: 1, durationSec: 750, restSec: 0 },
       ],
     })
     for (const entry of result.ok ? result.entries : []) templateEntrySchema.parse(entry)
@@ -59,8 +59,8 @@ describe('reps versus duration by kind', () => {
 
   it('round-trips stored entries through rows, cardio shown in minutes', () => {
     const entries = [
-      { exerciseId: 'Run', sets: 1, durationSec: 600, restSec: 60 },
-      { exerciseId: 'Squat', sets: 4, reps: 8, restSec: 120 },
+      { id: 'e1', exerciseId: 'Run', sets: 1, durationSec: 600, restSec: 60 },
+      { id: 'e2', exerciseId: 'Squat', sets: 4, reps: 8, restSec: 120 },
     ]
     const rows = entries.map((e) => rowOf(e, kindOf(e.exerciseId)))
 
@@ -72,7 +72,7 @@ describe('reps versus duration by kind', () => {
     expect(newRow('Squat', 'strength', 120)).toMatchObject({ sets: '3', amount: '10', rest: '120' })
     expect(newRow('Plank', 'timed', 120)).toMatchObject({ sets: '3', amount: '30', rest: '30' })
     expect(newRow('Run', 'cardio')).toMatchObject({ sets: '1', amount: '10', rest: '60' })
-    expect(newRow('A', 'strength').key).not.toBe(newRow('A', 'strength').key)
+    expect(newRow('A', 'strength').id).not.toBe(newRow('A', 'strength').id)
   })
 })
 
@@ -121,13 +121,13 @@ describe('previewEntries', () => {
   it('counts unreadable fields as zero and skips unknown exercises', () => {
     expect(
       previewEntries([row('Squat', '', 'abc', '60'), row('Gone', '3', '10', '90')], kindOf),
-    ).toEqual([{ exerciseId: 'Squat', sets: 0, reps: 0, restSec: 60 }])
+    ).toEqual([{ id: 'Squat-id', exerciseId: 'Squat', sets: 0, reps: 0, restSec: 60 }])
   })
 })
 
 describe('an exercise that left the catalog', () => {
   it('keeps its stored entry untouched through a save', () => {
-    const plank = { exerciseId: 'Gone_Plank', sets: 3, durationSec: 45, restSec: 30 }
+    const plank = { id: 'p1', exerciseId: 'Gone_Plank', sets: 3, durationSec: 45, restSec: 30 }
     const rows = [rowOf(plank, undefined), newRow('Squat', 'strength')]
 
     const result = validate('Мой набор', rows, kindOf, nameOf)
@@ -149,7 +149,7 @@ describe('initialRows', () => {
     images: [],
   }
   const byId = { Squat: squat }
-  const pushups = { exerciseId: 'Pushups', sets: 3, reps: 12, restSec: 60 }
+  const pushups = { id: 'u1', exerciseId: 'Pushups', sets: 3, reps: 12, restSec: 60 }
 
   it('appends the ?add exercise once and reports it', () => {
     const { rows, added } = initialRows([pushups], 'Squat', byId, 120)
@@ -163,10 +163,12 @@ describe('initialRows', () => {
     expect(added?.name).toBe('Squat')
   })
 
-  it('adds nothing for an exercise already in the set or unknown', () => {
-    const squatEntry = { exerciseId: 'Squat', sets: 3, reps: 8, restSec: 90 }
+  it('adds a second copy of an exercise the set has, with its own id, and nothing unknown', () => {
+    const squatEntry = { id: 's1', exerciseId: 'Squat', sets: 3, reps: 8, restSec: 90 }
 
-    expect(initialRows([squatEntry], 'Squat', byId, 120).added).toBeUndefined()
+    const { rows } = initialRows([squatEntry], 'Squat', byId, 120)
+    expect(rows.map((r) => r.exerciseId)).toEqual(['Squat', 'Squat'])
+    expect(rows.at(1)?.id).not.toBe('s1')
     expect(initialRows([], 'Nope', byId, 120)).toEqual({ rows: [], added: undefined })
   })
 })

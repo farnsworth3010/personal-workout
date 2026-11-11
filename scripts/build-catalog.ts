@@ -3,7 +3,14 @@
 import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 
-import { toExercise, type Override, type RawExercise } from './lib/derive.ts'
+import {
+  LOCAL_EYE_IMAGE,
+  toExercise,
+  toLocalExercise,
+  type LocalExercise,
+  type Override,
+  type RawExercise,
+} from './lib/derive.ts'
 import { CACHE_DIR, ROOT, verifyCache } from './lib/manifest.ts'
 
 const OUT_DIR = join(ROOT, 'public', 'catalog')
@@ -23,7 +30,17 @@ const overrides = JSON.parse(
   readFileSync(join(ROOT, 'scripts', 'catalog-overrides.json'), 'utf8'),
 ) as Record<string, Override>
 
+const local = JSON.parse(
+  readFileSync(join(ROOT, 'scripts', 'local', 'exercises.json'), 'utf8'),
+) as LocalExercise[]
+
 const ids = new Set(raw.map((exercise) => exercise.id))
+const clashes = local.filter((exercise) => ids.has(exercise.id))
+
+if (clashes.length > 0) {
+  console.error(`Local exercises clash with the dataset: ${clashes.map((e) => e.id).join(', ')}`)
+  process.exit(1)
+}
 const unknown = Object.keys(overrides).filter((id) => !ids.has(id))
 
 if (unknown.length > 0) {
@@ -32,7 +49,7 @@ if (unknown.length > 0) {
 }
 
 // Ids become directory names; the dataset is hash-pinned, this guards a future upgrade.
-const unsafe = raw.filter((exercise) => !/^[\w-]+$/.test(exercise.id))
+const unsafe = [...raw, ...local].filter((exercise) => !/^[\w-]+$/.test(exercise.id))
 
 if (unsafe.length > 0) {
   console.error(`Unsafe exercise ids: ${unsafe.map((exercise) => exercise.id).join(', ')}`)
@@ -53,6 +70,10 @@ const catalog = raw.map((source) => {
 
   return exercise
 })
+
+catalog.push(...local.map(toLocalExercise))
+mkdirSync(dirname(join(IMAGES_DIR, LOCAL_EYE_IMAGE)), { recursive: true })
+copyFileSync(join(ROOT, 'scripts', 'local', 'eye.svg'), join(IMAGES_DIR, LOCAL_EYE_IMAGE))
 
 // Technique steps are most of the bytes and only the details sheet reads them, so they load apart.
 const steps: Record<string, string[]> = {}

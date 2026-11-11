@@ -8,6 +8,25 @@ import { readyTemplatesSchema } from './ready-templates'
 const templates = readyTemplatesSchema.parse(readyTemplates)
 
 describe('public/catalog/templates.json', () => {
+  it('keeps the file entry ids and gives missing ones a position id, unique per set', () => {
+    const [first] = readyTemplatesSchema.parse([
+      {
+        id: 't',
+        name: 'T',
+        place: 'home',
+        entries: [
+          { id: 't-1', exerciseId: 'A', sets: 1, reps: 5, restSec: 30 },
+          { exerciseId: 'A', sets: 1, reps: 5, restSec: 30 },
+        ],
+      },
+    ])
+
+    expect(first.entries.map((e) => e.id)).toEqual(['t-1', 'e1'])
+
+    for (const t of templates)
+      expect(new Set(t.entries.map((e) => e.id)).size, t.id).toBe(t.entries.length)
+  })
+
   it('matches the schema the app parses it with', () => {
     expect(readyTemplatesSchema.safeParse(readyTemplates).success).toBe(true)
     expect(
@@ -51,7 +70,7 @@ describe('public/catalog/templates.json', () => {
       const field = usesDuration(exercise.kind) ? 'durationSec' : 'reps'
 
       expect(Object.keys(entry).sort(), entry.exerciseId).toEqual(
-        ['exerciseId', 'sets', field, 'restSec'].sort(),
+        ['id', 'exerciseId', 'sets', field, 'restSec'].sort(),
       )
     }
   })

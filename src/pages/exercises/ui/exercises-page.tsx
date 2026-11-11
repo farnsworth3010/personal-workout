@@ -4,13 +4,16 @@ import { useSearchParams } from 'react-router'
 import {
   equipmentLabels,
   equipmentList,
+  filterCatalog,
   isGymOnly,
   kindLabels,
+  muscleGroups,
   muscleLabels,
   photoUrl,
   useCatalog,
   type Equipment,
   type Exercise,
+  type MuscleGroup,
 } from '@/entities/exercise'
 import { useProfile } from '@/entities/profile'
 import type { AuthUser } from '@/shared/api'
@@ -26,15 +29,12 @@ import {
 } from '@/shared/ui'
 import { ExerciseDetails, ExerciseDetailsPanel } from '@/widgets/exercise-details'
 
-import { muscleGroups, type MuscleGroup } from '../config/groups'
-import { filterCatalog } from '../model/filter'
 import { readParams, writeParams, type CatalogParams } from '../model/params'
 
 // Rows rendered per step: the whole catalog at once makes typing lag on slow phones.
 const PAGE = 60
 const DESKTOP = '(min-width: 900px)'
 
-const labels = { muscles: muscleLabels, equipment: equipmentLabels }
 const groupList = Object.entries(muscleGroups) as [
   MuscleGroup,
   (typeof muscleGroups)[MuscleGroup],
@@ -185,7 +185,6 @@ export function ExercisesPage({ user }: { user: AuthUser }) {
               homeOnly: home,
             },
             homeEquipment,
-            labels,
           )
         : [],
     [catalog.data, deferredQuery, muscle, equipment, home, homeEquipment],

@@ -121,7 +121,8 @@ function HoldButton({
       <span
         aria-hidden
         className={cn(
-          'pointer-events-none absolute inset-0 origin-left scale-x-0 bg-primary/25',
+          // currentColor: the text colour contrasts with any button background, the accent one included.
+          'pointer-events-none absolute inset-0 origin-left scale-x-0 bg-current/25',
           holding && 'scale-x-100 transition-transform ease-linear',
         )}
         style={holding ? { transitionDuration: `${holdMs}ms` } : undefined}

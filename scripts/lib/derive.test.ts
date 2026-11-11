@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { deriveKind, toExercise, type RawExercise } from './derive.ts'
+import { deriveKind, toExercise, toLocalExercise, type RawExercise } from './derive.ts'
 
 const raw: RawExercise = {
   id: 'Pullups',
@@ -57,5 +57,22 @@ describe('toExercise', () => {
 
   it('names photos by index', () => {
     expect(toExercise({ ...raw, images: ['Pullups/a.jpg'] }).images).toEqual(['Pullups/0.jpg'])
+  })
+})
+
+describe('toLocalExercise', () => {
+  it('makes a timed eye exercise with no equipment and the eye icon', () => {
+    expect(
+      toLocalExercise({ id: 'Eye_Palming', name: 'Пальминг', instructions: ['Закройте глаза'] }),
+    ).toEqual({
+      id: 'Eye_Palming',
+      name: 'Пальминг',
+      kind: 'timed',
+      primaryMuscles: ['eyes'],
+      secondaryMuscles: [],
+      equipment: null,
+      instructions: ['Закройте глаза'],
+      images: ['local/eye.svg'],
+    })
   })
 })

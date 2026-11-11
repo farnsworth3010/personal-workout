@@ -1,7 +1,7 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 
-import { templateEntrySchema } from '@/shared/api'
+import { templateEntrySchema, withEntryIds } from '@/shared/api'
 
 import type { ReadyTemplate } from '../model/types'
 
@@ -14,7 +14,11 @@ export const readyTemplatesSchema = z.array(
     name: z.string().min(1),
     place: z.enum(['home', 'gym']),
     pairId: z.string().min(1).optional(),
-    entries: z.array(templateEntrySchema).min(1).max(40),
+    // The file's own entry ids are kept; an entry without one gets it from its position.
+    entries: z.preprocess(
+      (entries) => (Array.isArray(entries) ? withEntryIds(entries as object[]) : entries),
+      z.array(templateEntrySchema).min(1).max(40),
+    ),
   }),
 )
 

@@ -1,4 +1,4 @@
-import type { Muscle } from '@/entities/exercise'
+import type { Muscle } from '@/shared/api'
 
 // The seven chips of exercises.html; neck goes with the back because traps sit there.
 export const muscleGroups = {

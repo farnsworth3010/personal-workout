@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 
 import { muscleLabels, useCatalogById, type Exercise } from '@/entities/exercise'
@@ -18,6 +19,8 @@ import { RunningWorkoutSheet, useStartWorkout } from '@/features/start-workout'
 import type { AuthUser, Profile } from '@/shared/api'
 import { cn } from '@/shared/lib'
 import { Badge, Button, Chip, HoldButton, PageHeader, ScrollTop, toast } from '@/shared/ui'
+
+import { SetSheet } from './set-sheet'
 
 interface ListedSet {
   ref: TemplateRef
@@ -77,6 +80,7 @@ const daysText = (ref: TemplateRef, schedule: Profile['schedule'] | undefined) =
 export function TemplatesPage({ user }: { user: AuthUser }) {
   const [params, setParams] = useSearchParams()
   const startWorkout = useStartWorkout()
+  const [viewed, setViewed] = useState<ListedSet | null>(null)
 
   const { profile } = useProfile(user.uid)
   const { data: catalog } = useCatalogById()
@@ -98,6 +102,16 @@ export function TemplatesPage({ user }: { user: AuthUser }) {
   }
 
   const copiedIds = new Set(own?.map((t) => t.copiedFrom))
+
+  const summary = (set: ListedSet) =>
+    [
+      PLACE_LABEL[placeOf(set, byId, homeEquipment)],
+      exercisesWord(set.entries.length),
+      `~${estimateDurationMin(set, byId)} мин`,
+      musclesText(set.entries, byId),
+    ]
+      .filter(Boolean)
+      .join(' · ')
   const where = filter ? { home: ' для дома', gym: ' для зала' }[filter] : ''
 
   const section = (
@@ -158,11 +172,19 @@ export function TemplatesPage({ user }: { user: AuthUser }) {
                   <li
                     key={set.ref.id}
                     className={cn(
-                      'grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 border-b border-border py-3.5 min-[900px]:items-center min-[900px]:py-3',
+                      'relative grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 border-b border-border py-3.5 min-[900px]:items-center min-[900px]:py-3',
                       columns,
                     )}
                   >
-                    <span className="text-[17px] leading-tight font-bold">{set.name}</span>
+                    {/* The whole row opens the set; its own buttons sit above this layer. */}
+                    <button
+                      type="button"
+                      aria-haspopup="dialog"
+                      onClick={() => setViewed(set)}
+                      className="text-left text-[17px] leading-tight font-bold outline-none after:absolute after:inset-0 focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-ring focus-visible:after:outline-solid"
+                    >
+                      {set.name}
+                    </button>
                     <Badge
                       className={cn(
                         'col-start-2 row-start-1 self-start justify-self-end px-2.5 text-xs min-[900px]:row-span-2 min-[900px]:self-center min-[900px]:justify-self-start',
@@ -190,7 +212,7 @@ export function TemplatesPage({ user }: { user: AuthUser }) {
                     <span className="hidden text-[15px] tabular-nums min-[900px]:col-start-4 min-[900px]:row-span-2 min-[900px]:row-start-1 min-[900px]:block">
                       ~{minutes} мин
                     </span>
-                    <span className="col-span-full mt-2 flex gap-2 min-[900px]:col-span-1 min-[900px]:col-start-5 min-[900px]:row-span-2 min-[900px]:row-start-1 min-[900px]:mt-0 min-[900px]:grid min-[900px]:grid-cols-[1fr_1.6fr]">
+                    <span className="relative col-span-full mt-2 flex gap-2 min-[900px]:col-span-1 min-[900px]:col-start-5 min-[900px]:row-span-2 min-[900px]:row-start-1 min-[900px]:mt-0 min-[900px]:grid min-[900px]:grid-cols-[1fr_1.6fr]">
                       <HoldButton
                         label="Начать"
                         className={cn(action, 'bg-primary text-on-accent')}
@@ -283,6 +305,19 @@ export function TemplatesPage({ user }: { user: AuthUser }) {
 
       <ScrollTop />
 
+      <SetSheet
+        set={viewed}
+        summary={viewed ? summary(viewed) : ''}
+        byId={byId}
+        homeEquipment={homeEquipment}
+        copied={viewed !== null && copiedIds.has(viewed.ref.id)}
+        onClose={() => setViewed(null)}
+        onStart={(set) => {
+          setViewed(null)
+          start(set)
+        }}
+        onCopy={copy}
+      />
       <RunningWorkoutSheet open={startWorkout.blocked} onOpenChange={startWorkout.setBlocked} />
     </>
   )

@@ -1,11 +1,12 @@
 import { Link } from 'react-router'
 
-import { muscleLabels, photoUrl } from '@/entities/exercise'
+import { muscleLabels } from '@/entities/exercise'
 import { estimateDurationMin, muscleGroupsOf } from '@/entities/template'
 import { cn } from '@/shared/lib'
-import { Button, buttonVariants, ExercisePhoto, HoldButton } from '@/shared/ui'
+import { Button, buttonVariants, HoldButton } from '@/shared/ui'
+import { SetExercises } from '@/widgets/set-exercises'
 
-import { clock, musclesOf, placeLabel, planLine, setCount } from '../lib/format'
+import { clock, placeLabel, setCount } from '../lib/format'
 import { refKey, type ExercisesById, type SetInfo } from '../model/sets'
 
 export interface TodaySet {
@@ -73,35 +74,7 @@ function Body({
           Другая тренировка
         </Button>
       </div>
-      <ol aria-label={`Упражнения набора «${set.name}»`}>
-        {set.entries.map((entry, i) => {
-          const exercise = byId[entry.exerciseId]
-
-          return (
-            <li
-              key={`${entry.exerciseId}-${i}`}
-              className="grid grid-cols-[52px_1fr_auto] items-center gap-3 border-b border-border py-2.5 first:border-t min-[900px]:grid-cols-[64px_1fr_auto] min-[900px]:gap-4"
-            >
-              <ExercisePhoto
-                src={exercise && photoUrl(exercise, 0)}
-                loading="lazy"
-                className="size-[52px] rounded-lg bg-surface object-cover min-[900px]:size-16"
-              />
-              <div className="min-w-0">
-                <b className="block text-[15px] leading-[1.25] font-semibold">
-                  {exercise?.name ?? entry.exerciseId}
-                </b>
-                <small className="mt-0.5 block text-[13px] text-muted-foreground">
-                  {musclesOf(exercise)}
-                </small>
-              </div>
-              <span className="text-right text-[15px] font-semibold whitespace-nowrap tabular-nums min-[900px]:text-base">
-                {planLine(entry)}
-              </span>
-            </li>
-          )
-        })}
-      </ol>
+      <SetExercises name={set.name} entries={set.entries} byId={byId} />
     </div>
   )
 }

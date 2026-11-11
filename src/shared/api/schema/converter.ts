@@ -6,7 +6,13 @@ import type {
 } from 'firebase/firestore'
 import type { z } from 'zod'
 
-import { exerciseStatsSchema, profileSchema, templateSchema, workoutSchema } from './documents'
+import {
+  exerciseStatsSchema,
+  profileSchema,
+  templateSchema,
+  withEntryIds,
+  workoutSchema,
+} from './documents'
 
 // shortcut: FieldValue sentinels (deleteField, arrayUnion) fail validation; a merge write
 // validates top-level keys only, so nested objects must be complete. Use whole-document writes.
@@ -35,7 +41,13 @@ export function upgradeProfile(data: DocumentData): DocumentData {
   return { ...data, schedule: Object.fromEntries(days) }
 }
 
+export function upgradeEntries(data: DocumentData): DocumentData {
+  const entries: unknown = data.entries
+
+  return Array.isArray(entries) ? { ...data, entries: withEntryIds(entries as object[]) } : data
+}
+
 export const profileConverter = zodConverter(profileSchema, upgradeProfile)
-export const templateConverter = zodConverter(templateSchema)
-export const workoutConverter = zodConverter(workoutSchema)
+export const templateConverter = zodConverter(templateSchema, upgradeEntries)
+export const workoutConverter = zodConverter(workoutSchema, upgradeEntries)
 export const exerciseStatsConverter = zodConverter(exerciseStatsSchema)

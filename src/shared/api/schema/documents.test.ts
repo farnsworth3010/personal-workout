@@ -29,7 +29,13 @@ const profile = (): Profile => ({
   updatedAt: at,
 })
 
-const entry = (): TemplateEntry => ({ exerciseId: 'Pushups', sets: 3, reps: 10, restSec: 90 })
+const entry = (): TemplateEntry => ({
+  id: 'a1',
+  exerciseId: 'Pushups',
+  sets: 3,
+  reps: 10,
+  restSec: 90,
+})
 
 const template = (): Template => ({
   name: 'Full body',
@@ -40,6 +46,7 @@ const template = (): Template => ({
 })
 
 const workoutEntry = (): WorkoutEntry => ({
+  id: 'a1',
   exerciseId: 'Pushups',
   name: 'Pushups',
   kind: 'bodyweight',
@@ -159,7 +166,10 @@ describe('templateSchema', () => {
       ] as const
     ).map(([label, durationSec, valid]): Case => [
       label,
-      { ...template(), entries: [{ exerciseId: 'Plank', sets: 3, durationSec, restSec: 60 }] },
+      {
+        ...template(),
+        entries: [{ id: 'p1', exerciseId: 'Plank', sets: 3, durationSec, restSec: 60 }],
+      },
       valid,
     ]),
     [
@@ -213,6 +223,11 @@ describe('workoutSchema', () => {
     ['body weight 0', { ...workout(), survey: { bodyWeightKg: 0 } }, false],
     ['body weight 72.5', { ...workout(), survey: { bodyWeightKg: 72.5 } }, true],
     ['unknown survey key', { ...workout(), survey: { mood: 3 } }, false],
+    [
+      'eyes in summary (local exercises)',
+      { ...workout(), summary: { ...workout().summary, muscleSets: { eyes: 2 } } },
+      true,
+    ],
     [
       'unknown muscle in summary',
       { ...workout(), summary: { ...workout().summary, muscleSets: { wings: 1 } } },

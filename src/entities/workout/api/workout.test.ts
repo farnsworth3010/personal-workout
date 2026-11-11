@@ -39,6 +39,7 @@ const workout = (): Workout => ({
   template: { source: 'own', id: 't1', name: 'Push' },
   entries: [
     {
+      id: 'e1',
       exerciseId: 'Bench',
       name: 'Bench',
       kind: 'strength',
@@ -50,6 +51,7 @@ const workout = (): Workout => ({
       ],
     },
     {
+      id: 'e2',
       exerciseId: 'Plank',
       name: 'Plank',
       kind: 'timed',
@@ -191,6 +193,7 @@ describe('workout writes', () => {
     const twoExercises = workout()
     twoExercises.entries[1] = {
       ...twoExercises.entries[0],
+      id: 'e3',
       exerciseId: 'Squat',
       name: 'Squat',
     }
@@ -203,6 +206,33 @@ describe('workout writes', () => {
     expect(paths(fs.batch.set.mock.calls)).toEqual(['users/u1/exerciseStats/Squat'])
     expect(fs.batch.commit).toHaveBeenCalledOnce()
     stop()
+  })
+
+  it('feeds one stats document from every entry of an exercise done twice', async () => {
+    const twice = workout()
+    twice.entries[1] = {
+      ...twice.entries[0],
+      id: 'e3',
+      sets: [
+        { n: 1, reps: 3, weightKg: 70, at: at(1200) },
+        { n: 2, reps: 3, weightKg: 70, at: at(1300) },
+      ],
+    }
+
+    fs.getDoc.mockResolvedValue({ data: () => undefined })
+
+    finishWorkout(uid, 'w1', twice, {})
+    await flush()
+
+    expect(paths(fs.batch.set.mock.calls)).toEqual(['users/u1/exerciseStats/Bench'])
+    expect(fs.batch.set.mock.calls[0]?.[1]).toMatchObject({
+      // The later entry's sets, for the next prediction; records from both entries.
+      lastSets: [
+        { reps: 3, weightKg: 70 },
+        { reps: 3, weightKg: 70 },
+      ],
+      records: { maxWeightKg: 70, maxVolumeKg: 1032.5 },
+    })
   })
 
   it('resets progress: deletes workouts, stats and templates in batches of 500, empties the schedule', async () => {

@@ -48,7 +48,7 @@ export function EntryRow({
         {label}
       </small>
       <input
-        data-row={row.key}
+        data-row={row.id}
         data-field={key}
         value={row[key]}
         inputMode={decimal ? 'decimal' : 'numeric'}
@@ -64,7 +64,7 @@ export function EntryRow({
   const arrow = (delta: number, label: string, path: string, disabled: boolean) => (
     <button
       type="button"
-      data-row={row.key}
+      data-row={row.id}
       data-move={delta}
       disabled={disabled}
       aria-label={`${label}: ${name}`}
@@ -108,7 +108,7 @@ export function EntryRow({
         </div>
         <button
           type="button"
-          data-row={row.key}
+          data-row={row.id}
           data-remove
           aria-label={`Убрать «${name}»`}
           onClick={onRemove}

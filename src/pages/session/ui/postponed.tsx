@@ -28,7 +28,7 @@ interface PostponedSheetProps {
   ending: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
-  onResume: (index: number) => void
+  onResume: (entryId: string) => void
   onFinish: () => void
 }
 
@@ -59,9 +59,9 @@ export function PostponedSheet({
         dismissible={!ending}
       >
         <ul className="mt-2">
-          {entries.map((entry, index) =>
+          {entries.map((entry) =>
             entry.status === 'postponed' ? (
-              <li key={index} className="flex items-center gap-3 border-t border-border py-2.5">
+              <li key={entry.id} className="flex items-center gap-3 border-t border-border py-2.5">
                 <img
                   src={photo(entry.exerciseId)}
                   alt=""
@@ -76,7 +76,7 @@ export function PostponedSheet({
                 <button
                   type="button"
                   className="min-h-11 flex-none rounded-md bg-primary px-3.5 text-sm font-bold text-on-accent"
-                  onClick={() => onResume(index)}
+                  onClick={() => onResume(entry.id)}
                 >
                   Вернуться
                 </button>

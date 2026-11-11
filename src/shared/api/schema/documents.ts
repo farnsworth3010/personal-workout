@@ -1,7 +1,7 @@
 import { Timestamp } from 'firebase/firestore'
 import { z } from 'zod'
 
-// The 17 muscles of free-exercise-db.
+// The 17 free-exercise-db muscles plus 'eyes' for local exercises.
 export const muscleSchema = z.enum([
   'abdominals',
   'abductors',
@@ -9,6 +9,7 @@ export const muscleSchema = z.enum([
   'biceps',
   'calves',
   'chest',
+  'eyes',
   'forearms',
   'glutes',
   'hamstrings',
@@ -83,8 +84,9 @@ const hasOneTarget = (plan: { reps?: number; durationSec?: number }) =>
 
 const oneTarget = { message: 'Exactly one of reps and durationSec is required' }
 
+// Each entry has its own id, stable across edits, so one exercise can appear several times in a set.
 export const templateEntrySchema = z
-  .strictObject({ exerciseId: id, ...planShape })
+  .strictObject({ id, exerciseId: id, ...planShape })
   .refine(hasOneTarget, oneTarget)
 
 export const templateSchema = z.strictObject({
@@ -104,6 +106,7 @@ export const loggedSetSchema = z.strictObject({
 })
 
 export const workoutEntrySchema = z.strictObject({
+  id,
   exerciseId: id,
   name: z.string().min(1),
   kind: exerciseKindSchema,
@@ -156,6 +159,16 @@ export const exerciseStatsSchema = z.strictObject({
     bestSet: z.strictObject({ reps: z.int().min(0), weightKg: kg, e1rmKg: kg }).optional(),
   }),
 })
+
+// Entries written before entry ids get one from their position: stable for an unchanged document, and
+// unable to clash with the random ids of newer entries. Saving the document keeps them.
+export function withEntryIds<T>(entries: readonly T[]): (T & { id: string })[] {
+  return entries.map((entry, i) => {
+    const { id } = entry as { id?: unknown }
+
+    return { ...entry, id: typeof id === 'string' && id.length > 0 ? id : `e${String(i)}` }
+  })
+}
 
 export type Muscle = z.infer<typeof muscleSchema>
 export type Equipment = z.infer<typeof equipmentSchema>

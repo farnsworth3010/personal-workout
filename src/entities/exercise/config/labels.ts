@@ -7,6 +7,7 @@ export const muscleLabels: Record<Muscle, string> = {
   biceps: 'Бицепс',
   calves: 'Икры',
   chest: 'Грудь',
+  eyes: 'Глаза',
   forearms: 'Предплечья',
   glutes: 'Ягодицы',
   hamstrings: 'Задняя поверхность бедра',

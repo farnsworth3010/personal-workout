@@ -35,6 +35,7 @@ const at = Timestamp.fromMillis(0)
 const set = (n: number, reps: number, weightKg: number) => ({ n, reps, weightKg, at })
 
 const entry = (exerciseId: string, name: string, patch: Partial<WorkoutEntry>): WorkoutEntry => ({
+  id: `e-${exerciseId}`,
   exerciseId,
   name,
   kind: 'strength',

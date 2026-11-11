@@ -26,7 +26,7 @@ const catalog = [
   exercise('Row', 'Dumbbell Row', { primaryMuscles: ['middle back'], equipment: 'dumbbell' }),
 ]
 
-function renderSheet(onPick = vi.fn()) {
+function renderSheet(onPick = vi.fn(), onDetails?: (id: string) => void) {
   const client = createQueryClient()
   client.setQueryData(catalogQuery.queryKey, catalog)
   render(
@@ -36,7 +36,8 @@ function renderSheet(onPick = vi.fn()) {
         onOpenChange={() => undefined}
         onPick={onPick}
         homeEquipment={['dumbbell']}
-        disabledIds={['Plank']}
+        counts={{ Plank: 2 }}
+        onDetails={onDetails}
       />
     </QueryClientProvider>,
   )
@@ -45,12 +46,13 @@ function renderSheet(onPick = vi.fn()) {
 }
 
 describe('PickExerciseSheet', () => {
-  it('lists the catalog with gym marks and already added exercises', () => {
+  it('lists the catalog with gym marks and how often each is in the set', () => {
     const list = renderSheet()
 
     expect(list.getAllByRole('listitem')).toHaveLength(3)
     expect(list.getByText('Barbell Bench Press')).toContainElement(list.getByText('зал'))
-    expect(list.getByRole('button', { name: 'Уже добавлено: Plank' })).toBeDisabled()
+    expect(list.getByText('Plank')).toContainElement(list.getByText('в наборе ×2'))
+    expect(list.getByRole('button', { name: 'Добавить «Plank»' })).toBeEnabled()
     expect(screen.getByRole('searchbox')).toHaveFocus()
   })
 
@@ -65,6 +67,50 @@ describe('PickExerciseSheet', () => {
 
     await userEvent.click(list.getByRole('button', { name: 'Добавить «Dumbbell Row»' }))
     expect(onPick).toHaveBeenCalledWith('Row')
+  })
+
+  it('finds abbreviations with the best match first', async () => {
+    const list = renderSheet()
+
+    await userEvent.type(screen.getByRole('searchbox'), 'bbp')
+
+    expect(list.getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+      expect.stringContaining('Barbell Bench Press'),
+    ])
+  })
+
+  it('filters by muscle group, equipment and home equipment like the catalog', async () => {
+    const list = renderSheet()
+    await userEvent.click(
+      within(screen.getByRole('group', { name: 'Мышцы' })).getByRole('button', { name: 'Пресс' }),
+    )
+    expect(list.getAllByRole('listitem')).toHaveLength(1)
+    expect(list.getByText('Plank')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Все мышцы' }))
+    await userEvent.click(
+      within(screen.getByRole('group', { name: 'Оборудование' })).getByRole('button', {
+        name: 'Гантели',
+      }),
+    )
+    expect(list.getAllByRole('listitem')).toHaveLength(1)
+    expect(list.getByText('Dumbbell Row')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Любое оборудование' }))
+    await userEvent.click(screen.getByRole('switch', { name: 'Только для дома' }))
+    expect(list.queryByText('Barbell Bench Press')).not.toBeInTheDocument()
+    expect(list.getAllByRole('listitem')).toHaveLength(2)
+  })
+
+  it('opens the description of an exercise without picking it', async () => {
+    const onPick = vi.fn()
+    const onDetails = vi.fn()
+    const list = renderSheet(onPick, onDetails)
+
+    await userEvent.click(list.getByRole('button', { name: 'Описание «Dumbbell Row»' }))
+
+    expect(onDetails).toHaveBeenCalledWith('Row')
+    expect(onPick).not.toHaveBeenCalled()
   })
 
   it('says when nothing matches', async () => {

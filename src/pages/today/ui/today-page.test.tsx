@@ -43,7 +43,13 @@ const exercise = (id: string, equipment: Exercise['equipment']): Exercise => ({
   images: [],
 })
 
-const entry = (exerciseId: string) => ({ exerciseId, sets: 3, reps: 10, restSec: 60 })
+const entry = (exerciseId: string) => ({
+  id: exerciseId,
+  exerciseId,
+  sets: 3,
+  reps: 10,
+  restSec: 60,
+})
 
 const ready: ReadyTemplate[] = [
   { id: 'warmup', name: 'Разминка', place: 'home', entries: [entry('Pushups')] },
@@ -285,6 +291,7 @@ describe('TodayPage', () => {
       template: { source: 'ready', id: 'x', name: 'Утро' },
       entries: [
         {
+          id: 'e1',
           exerciseId: 'A',
           name: 'A',
           kind: 'strength',

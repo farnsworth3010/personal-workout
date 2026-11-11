@@ -4,14 +4,11 @@ import { formatClock, type SetValues } from '@/entities/session'
 import type { WorkoutEntry } from '@/shared/api'
 import { HoldButton, Stat, StatRow } from '@/shared/ui'
 
+import { HOLD_CTA } from '../lib/classes'
 import { setText } from '../lib/format'
 
 const NAV_BUTTON =
   'min-h-12 rounded-md border border-border bg-surface text-sm text-muted-foreground'
-
-// The hold fill is dark on the accent background.
-const CTA =
-  'min-h-16 rounded-md bg-primary text-lg font-bold text-on-accent uppercase [&>span:first-child]:bg-on-accent/25'
 
 interface WorkPanelProps {
   entry: WorkoutEntry
@@ -70,7 +67,7 @@ export function WorkPanel({
         <HoldButton label="Пропустить →" className={NAV_BUTTON} onConfirm={onPostpone} />
       </div>
 
-      <HoldButton label="Подход сделан" className={CTA} onConfirm={onDone} />
+      <HoldButton label="Подход сделан" className={HOLD_CTA} onConfirm={onDone} />
     </div>
   )
 }

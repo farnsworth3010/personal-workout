@@ -3,10 +3,12 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
 import type { Workout, WorkoutEntry } from '@/shared/api'
+import { newId } from '@/shared/lib'
 
 import { roundKg, type SetValues } from './prediction'
 
-export type NewEntry = Pick<WorkoutEntry, 'exerciseId' | 'name' | 'kind' | 'plan'>
+// `id`: the template entry's id when started from a set; quick-added entries always get a new one.
+export type NewEntry = Pick<WorkoutEntry, 'exerciseId' | 'name' | 'kind' | 'plan'> & { id?: string }
 
 export type AddMode = 'now' | 'next' | 'replace'
 
@@ -24,7 +26,8 @@ export interface SessionData {
   restEndsAt: number | null
   // Time already spent per entry, so a return to an exercise continues its clock.
   spentMs: number[]
-  // Today's weight change per exercise, added to the next predictions.
+  // Today's weight change per entry id, added to that entry's next predictions: the same exercise done
+  // twice (a light warm-up, a working part) keeps two shifts.
   shiftKg: Record<string, number>
   // The workout has ended and waits on the finish screen for the survey.
   finishing: boolean
@@ -45,7 +48,8 @@ export interface SessionActions {
   next: (now?: number) => void
   back: (now?: number) => void
   postpone: (now?: number) => void
-  resume: (index: number, now?: number) => void
+  // Continues the postponed entry with this entry id.
+  resume: (entryId: string, now?: number) => void
   addExercise: (entry: NewEntry, mode: AddMode, now?: number) => void
   // Ends the workout: the finish screen reads it through selectFinishing.
   end: (now?: number) => void
@@ -79,17 +83,24 @@ const idle: SessionData = {
 
 const ts = (ms: number) => Timestamp.fromMillis(ms)
 
-const ID_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
-
-// crypto.randomUUID needs a secure context; the owner's phone opens the dev server over plain http.
-const newId = () =>
-  Array.from(crypto.getRandomValues(new Uint8Array(20)), (byte) => ID_CHARS[byte & 63]).join('')
-
 // localStorage keeps a Timestamp as its toJSON() object; the reviver turns it back.
 const timestampType = Timestamp.fromMillis(0).toJSON().type
 
 const isTimestampJson = (value: unknown): value is object =>
   typeof value === 'object' && value !== null && 'type' in value && value.type === timestampType
+
+// Template entry ids are unique by construction; a repeated or missing one still gets its own id.
+function uniqueIds(entries: readonly NewEntry[]) {
+  const seen = new Set<string>()
+
+  return entries.map((entry) => {
+    const id = entry.id && !seen.has(entry.id) ? entry.id : newId()
+
+    seen.add(id)
+
+    return { ...entry, id }
+  })
+}
 
 const firstUndone = (entry: WorkoutEntry) => {
   const index = Array.from({ length: entry.plan.sets }, (_, i) => i).find(
@@ -176,7 +187,11 @@ export const useSessionStore = create<SessionState>()(
               startedAt: ts(now),
               endedAt: null,
               template,
-              entries: entries.map((entry) => ({ ...entry, status: 'pending', sets: [] })),
+              entries: uniqueIds(entries).map((entry) => ({
+                ...entry,
+                status: 'pending',
+                sets: [],
+              })),
               survey: {},
               summary: null,
               updatedAt: ts(now),
@@ -239,12 +254,12 @@ export const useSessionStore = create<SessionState>()(
           if (!logged) return
 
           const delta = values.weightKg === undefined ? 0 : values.weightKg - (logged.weightKg ?? 0)
-          const shift = roundKg((s.shiftKg[entry.exerciseId] ?? 0) + delta)
+          const shift = roundKg((s.shiftKg[entry.id] ?? 0) + delta)
           const sets = entry.sets.map((set) => (set.n === n ? { ...set, ...values } : set))
 
           return {
             workout: patchEntry(workout, s.current, { sets }, now),
-            shiftKg: { ...s.shiftKg, [entry.exerciseId]: shift },
+            shiftKg: { ...s.shiftKg, [entry.id]: shift },
           }
         }),
 
@@ -291,10 +306,11 @@ export const useSessionStore = create<SessionState>()(
           return advance(s, patchEntry(workout, s.current, { status: 'postponed' }, now), now)
         }),
 
-        resume: transition((s, workout, index: number, now = Date.now()) => {
+        resume: transition((s, workout, entryId: string, now = Date.now()) => {
+          const index = workout.entries.findIndex((e) => e.id === entryId)
           const entry = workout.entries.at(index)
 
-          if (entry?.status !== 'postponed') return
+          if (index < 0 || entry?.status !== 'postponed') return
 
           return {
             workout: patchEntry(workout, index, { status: 'pending' }, now),
@@ -305,7 +321,7 @@ export const useSessionStore = create<SessionState>()(
         addExercise: transition((s, workout, added: NewEntry, mode: AddMode, now = Date.now()) => {
           if (workout.entries.length >= MAX_ENTRIES) return
 
-          const entry: WorkoutEntry = { ...added, status: 'pending', sets: [] }
+          const entry: WorkoutEntry = { ...added, id: newId(), status: 'pending', sets: [] }
           const spentMs = bankSpentTime(s, now)
 
           if (s.current === null) {
@@ -384,19 +400,43 @@ export const useSessionStore = create<SessionState>()(
     },
     {
       name: 'personal-workout:session',
-      version: 2,
-      // Version 1 kept no `finished`: rebuild it for a workout that was waiting on the finish screen.
+      version: 3,
       migrate: (persisted, version) => {
-        const state = persisted as SessionData
+        let state = persisted as SessionData
 
+        // Version 1 kept no `finished`: rebuild it for a workout that was waiting on the finish screen.
         if (version < 2)
-          return {
+          state = {
             ...state,
             finished:
               state.finishing && state.workoutId && state.workout
                 ? { workoutId: state.workoutId, workout: state.workout }
                 : null,
           }
+
+        // Version 2 had no entry ids and kept the weight shift per exercise.
+        if (version < 3 && state.workout) {
+          // The position rule of the Firestore converters' upgradeEntries.
+          const workout = {
+            ...state.workout,
+            entries: state.workout.entries.map((e, i) => ({
+              ...e,
+              id: (e as Partial<WorkoutEntry>).id ?? `e${String(i)}`,
+            })),
+          }
+          const byExercise = state.shiftKg
+
+          state = {
+            ...state,
+            workout,
+            shiftKg: Object.fromEntries(
+              workout.entries.flatMap((e) =>
+                e.exerciseId in byExercise ? [[e.id, byExercise[e.exerciseId]]] : [],
+              ),
+            ),
+            finished: state.finished && { ...state.finished, workout },
+          }
+        }
 
         return state
       },

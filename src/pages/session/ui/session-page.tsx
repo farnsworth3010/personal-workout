@@ -21,8 +21,8 @@ import { ExerciseDetails } from '@/widgets/exercise-details'
 
 import { tagsText } from '../lib/format'
 import { doneValues, newEntry } from '../lib/plan'
-import { useNow } from '../lib/use-now'
 import { useAutosave } from '../model/use-autosave'
+import { useNow } from '../model/use-now'
 import { useSessionSignals } from '../model/use-session-signals'
 import { PostponedChip, PostponedSheet } from './postponed'
 import { AddModeSheet } from './quick-add'
@@ -43,6 +43,7 @@ export function SessionPage({ user }: { user: AuthUser }) {
   const ids = useMemo(() => [...new Set(entries?.map((entry) => entry.exerciseId))], [entries])
   const stats = useExerciseStats(user.uid, ids)
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [detailsId, setDetailsId] = useState<string | null>(null)
   const [postponedOpen, setPostponedOpen] = useState(false)
   const [picking, setPicking] = useState(false)
   const [picked, setPicked] = useState<Exercise>()
@@ -81,7 +82,7 @@ export function SessionPage({ user }: { user: AuthUser }) {
   const homeEquipment = profile?.homeEquipment ?? []
   const stat = stats?.[entry.exerciseId]
   const n = setIndex + 1
-  const prediction = predictSet(n, entry.plan, stat?.lastSets, session.shiftKg[entry.exerciseId])
+  const prediction = predictSet(n, entry.plan, stat?.lastSets, session.shiftKg[entry.id])
   const logged = entry.sets.find((set) => set.n === n)
   const alt = Math.floor(now / 1000) % 2 === 1
 
@@ -126,7 +127,7 @@ export function SessionPage({ user }: { user: AuthUser }) {
         {/* Photo and title are keyed by position, so a new exercise fades in; the buttons are not:
             a remounted hold button would take the click that follows a touch hold as a mouse click. */}
         <div
-          key={index}
+          key={entry.id}
           className={cn(
             'relative flex-1 overflow-hidden rounded-md border border-border bg-surface min-[900px]:flex-[1.2]',
             EXERCISE_ENTER,
@@ -166,7 +167,7 @@ export function SessionPage({ user }: { user: AuthUser }) {
         </div>
 
         <div className="flex min-w-0 flex-col gap-3 min-[900px]:flex-1 min-[900px]:justify-center min-[900px]:gap-5">
-          <div key={index} className={EXERCISE_ENTER}>
+          <div key={entry.id} className={EXERCISE_ENTER}>
             <p className="mb-1 text-[13px] text-muted-foreground">{workout.template.name}</p>
             <h1 className="text-[26px] leading-[1.1] font-extrabold tracking-[-0.02em] uppercase min-[900px]:text-[40px]">
               {entry.name}
@@ -225,8 +226,8 @@ export function SessionPage({ user }: { user: AuthUser }) {
         ending={queueOver}
         open={postponedOpen || (queueOver && postponedCount > 0)}
         onOpenChange={setPostponedOpen}
-        onResume={(i) => {
-          session.resume(i)
+        onResume={(id) => {
+          session.resume(id)
           setPostponedOpen(false)
         }}
         onFinish={endWorkout}
@@ -241,6 +242,15 @@ export function SessionPage({ user }: { user: AuthUser }) {
           setPicking(false)
           setPicked(catalog && findExercise(catalog, id))
         }}
+        onDetails={setDetailsId}
+      />
+
+      {/* The details of an exercise in the picker, over the picker. */}
+      <ExerciseDetails
+        exerciseId={detailsId ?? ''}
+        homeEquipment={homeEquipment}
+        open={detailsId !== null}
+        onOpenChange={(open) => !open && setDetailsId(null)}
       />
 
       <AddModeSheet

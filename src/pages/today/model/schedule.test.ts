@@ -35,7 +35,7 @@ const ready = (id: string, place: ReadyTemplate['place'], pairId?: string): Read
   name: id,
   place,
   ...(pairId ? { pairId } : {}),
-  entries: [{ exerciseId: 'Pushups', sets: 3, reps: 10, restSec: 90 }],
+  entries: [{ id: 'e1', exerciseId: 'Pushups', sets: 3, reps: 10, restSec: 90 }],
 })
 
 const readyTemplates = [

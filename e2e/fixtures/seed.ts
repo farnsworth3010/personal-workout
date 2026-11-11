@@ -22,6 +22,7 @@ import {
   type Template,
   type Workout,
   type WorkoutEntry,
+  withEntryIds,
 } from '@/shared/api'
 
 import { defaultProfile } from '../../src/entities/profile/model/profile'
@@ -85,7 +86,12 @@ export async function seedProfile(uid: string, profile: Partial<Profile> = {}): 
   await commit([{ path: `users/${uid}`, data }])
 }
 
-export type SeedTemplate = Pick<Template, 'name' | 'entries'> & Partial<Template> & { id: string }
+// Entry ids are optional here: entries without one get it from their position, as legacy documents do.
+export type SeedTemplate = Pick<Template, 'name'> &
+  Partial<Omit<Template, 'entries'>> & {
+    id: string
+    entries: (Omit<Template['entries'][number], 'id'> & { id?: string })[]
+  }
 
 export async function seedTemplates(uid: string, templates: SeedTemplate[]): Promise<void> {
   await commit(
@@ -96,6 +102,7 @@ export async function seedTemplates(uid: string, templates: SeedTemplate[]): Pro
         createdAt: now(),
         updatedAt: now(),
         ...template,
+        entries: withEntryIds(template.entries),
       }),
     })),
   )
@@ -134,11 +141,13 @@ export interface SeedWorkout {
 function entryOf(
   { exerciseId, sets }: SeedWorkout['entries'][number],
   startedAt: Date,
+  index: number,
 ): WorkoutEntry {
   const facts = exercise(exerciseId)
   const timed = sets[0]?.durationSec !== undefined
 
   return {
+    id: `e${String(index)}`,
     exerciseId,
     name: facts?.name ?? exerciseId,
     kind: facts?.kind ?? 'strength',
@@ -163,7 +172,7 @@ export async function seedWorkouts(uid: string, workouts: SeedWorkout[]): Promis
       const endedAt = Timestamp.fromDate(
         seed.endedAt ?? new Date(seed.startedAt.getTime() + 45 * 60_000),
       )
-      const entries = seed.entries.map((entry) => entryOf(entry, seed.startedAt))
+      const entries = seed.entries.map((entry, i) => entryOf(entry, seed.startedAt, i))
       const active: Workout = {
         status: 'active',
         startedAt,

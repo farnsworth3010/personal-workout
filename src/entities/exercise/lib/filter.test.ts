@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { equipmentLabels, muscleLabels, type Equipment, type Exercise } from '@/entities/exercise'
+import type { Equipment } from '@/shared/api'
 
-import { filterCatalog, normalize, type CatalogFilter } from './filter'
+import type { Exercise } from '../model/types'
+import { filterCatalog, noFilter, type CatalogFilter } from './filter'
 
 const exercise = (
   id: string,
@@ -29,17 +30,8 @@ const catalog = [
   exercise('Dumbbell_Row', 'dumbbell', ['middle back'], ['lats']),
 ]
 
-const labels = { muscles: muscleLabels, equipment: equipmentLabels }
-const none: CatalogFilter = { query: '', muscles: null, equipment: null, homeOnly: false }
-
 const ids = (filter: Partial<CatalogFilter>, home: Equipment[] = []) =>
-  filterCatalog(catalog, { ...none, ...filter }, home, labels).map((e) => e.id)
-
-describe('normalize', () => {
-  it('lowercases, trims and treats ё as е', () => {
-    expect(normalize('  Блочный ТренажЁр ')).toBe('блочный тренажер')
-  })
-})
+  filterCatalog(catalog, { ...noFilter, ...filter }, home).map((e) => e.id)
 
 describe('filterCatalog', () => {
   it('returns everything without filters', () => {
@@ -81,6 +73,12 @@ describe('filterCatalog', () => {
       'Childs_Pose',
       'Dumbbell_Row',
     ])
+  })
+
+  it('matches abbreviations as in-order letters, word by word', () => {
+    expect(ids({ query: 'db row' })).toEqual(['Dumbbell_Row'])
+    expect(ids({ query: 'bbp' })).toEqual(['Barbell_Bench_Press'])
+    expect(ids({ query: 'жим штанга' })).toEqual([])
   })
 
   it('combines filters', () => {

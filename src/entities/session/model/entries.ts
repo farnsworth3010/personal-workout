@@ -7,14 +7,14 @@ interface ExerciseFacts {
   kind: ExerciseKind
 }
 
-// Entries whose exercise is missing from the catalog are left out.
+// Entries whose exercise is missing from the catalog are left out; each keeps its template entry id.
 export function toSessionEntries(
   entries: readonly TemplateEntry[],
   exercisesById: Readonly<Record<string, ExerciseFacts | undefined>>,
 ): NewEntry[] {
-  return entries.flatMap(({ exerciseId, ...plan }) => {
+  return entries.flatMap(({ id, exerciseId, ...plan }) => {
     const exercise = exercisesById[exerciseId]
 
-    return exercise ? [{ exerciseId, name: exercise.name, kind: exercise.kind, plan }] : []
+    return exercise ? [{ id, exerciseId, name: exercise.name, kind: exercise.kind, plan }] : []
   })
 }

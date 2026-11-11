@@ -4,6 +4,7 @@ import { formatClock, type SetValues } from '@/entities/session'
 import type { WorkoutEntry } from '@/shared/api'
 import { HoldButton, ValueStrip } from '@/shared/ui'
 
+import { HOLD_CTA } from '../lib/classes'
 import { setText } from '../lib/format'
 
 interface RestPanelProps {
@@ -130,11 +131,7 @@ export function RestPanel({
         листайте, чтобы найти значение · тап по выбранному — ввести своё
       </p>
 
-      <HoldButton
-        label="Следующий подход"
-        className="min-h-16 rounded-md bg-primary text-lg font-bold text-on-accent uppercase [&>span:first-child]:bg-on-accent/25"
-        onConfirm={onNext}
-      />
+      <HoldButton label="Следующий подход" className={HOLD_CTA} onConfirm={onNext} />
     </div>
   )
 }

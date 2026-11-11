@@ -1,9 +1,11 @@
 import type { Exercise } from '@/entities/exercise'
 import type { ExerciseKind, TemplateEntry } from '@/shared/api'
+import { newId } from '@/shared/lib'
 
 // Field values stay text while typed, so a cleared or half-typed input is not reset under the cursor.
 export interface Row {
-  key: string
+  // The entry's own id, also the row's key: the same exercise may appear in a set more than once.
+  id: string
   exerciseId: string
   sets: string
   amount: string
@@ -36,16 +38,13 @@ const amountLimits = (kind: ExerciseKind): [min: number, max: number] =>
     number,
   ]
 
-let seq = 0
-const nextKey = () => `row-${++seq}`
-
 const text = (n: number) => String(n).replace('.', ',')
 const parse = (value: string) => Number(value.trim().replace(',', '.'))
 
 export function rowOf(entry: TemplateEntry, kind: ExerciseKind | undefined): Row {
   if (!kind) {
     return {
-      key: nextKey(),
+      id: entry.id,
       exerciseId: entry.exerciseId,
       sets: '',
       amount: '',
@@ -62,7 +61,7 @@ export function rowOf(entry: TemplateEntry, kind: ExerciseKind | undefined): Row
         : entry.durationSec
 
   return {
-    key: nextKey(),
+    id: entry.id,
     exerciseId: entry.exerciseId,
     sets: text(entry.sets),
     amount: text(amount),
@@ -74,7 +73,7 @@ export function newRow(exerciseId: string, kind: ExerciseKind, defaultRestSec?: 
   const [sets, amount, rest] = DEFAULTS[kind]
 
   return {
-    key: nextKey(),
+    id: newId(),
     exerciseId,
     sets: text(sets),
     amount: text(amount),
@@ -83,7 +82,12 @@ export function newRow(exerciseId: string, kind: ExerciseKind, defaultRestSec?: 
 }
 
 function toEntry(row: Row, kind: ExerciseKind, num = parse): TemplateEntry {
-  const base = { exerciseId: row.exerciseId, sets: num(row.sets), restSec: num(row.rest) }
+  const base = {
+    id: row.id,
+    exerciseId: row.exerciseId,
+    sets: num(row.sets),
+    restSec: num(row.rest),
+  }
   const amount = num(row.amount)
 
   if (kind === 'cardio') return { ...base, durationSec: Math.round(amount * 60) }
@@ -184,7 +188,7 @@ export function validate(
   return { ok: true, name: trimmed, entries }
 }
 
-/** The rows to start from, with ?add=<exerciseId> appended unless the set already has it. */
+/** The rows to start from, with ?add=<exerciseId> appended (a set may hold an exercise twice). */
 export function initialRows(
   entries: readonly TemplateEntry[],
   addId: string | null,
@@ -194,7 +198,7 @@ export function initialRows(
   const rows = entries.map((e) => rowOf(e, byId[e.exerciseId]?.kind))
   const exercise = addId ? byId[addId] : undefined
 
-  if (!exercise || rows.some((r) => r.exerciseId === exercise.id)) return { rows, added: undefined }
+  if (!exercise) return { rows, added: undefined }
 
   return { rows: [...rows, newRow(exercise.id, exercise.kind, defaultRestSec)], added: exercise }
 }

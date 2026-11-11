@@ -16,6 +16,9 @@ export const loadLevelLabels: Record<LoadLevel, string> = {
   3: 'высокая нагрузка',
 }
 
+// Eye exercises tag 'eyes', which is not a muscle of the map: never shown, never «untrained».
+const bodyMuscles = muscleSchema.options.filter((m) => m !== 'eyes')
+
 /** Sets per muscle from Monday to today, from the summaries written at finish. */
 export function weekMuscleLoad(workouts: readonly Workout[], now = new Date()) {
   const from = weekStart(now)
@@ -33,6 +36,6 @@ export function weekMuscleLoad(workouts: readonly Workout[], now = new Date()) {
     from,
     workouts: week.length,
     sets,
-    untrained: muscleSchema.options.filter((m) => sets[m] === 0),
+    untrained: bodyMuscles.filter((m) => sets[m] === 0),
   }
 }

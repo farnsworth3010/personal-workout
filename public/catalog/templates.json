@@ -5,46 +5,116 @@
     "place": "home",
     "entries": [
       {
+        "id": "neck-1",
         "exerciseId": "Shoulder_Circles",
         "sets": 1,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "neck-2",
         "exerciseId": "Side_Neck_Stretch",
         "sets": 2,
         "durationSec": 20,
         "restSec": 10
       },
       {
+        "id": "neck-3",
         "exerciseId": "Chin_To_Chest_Stretch",
         "sets": 2,
         "durationSec": 20,
         "restSec": 10
       },
       {
+        "id": "neck-4",
         "exerciseId": "Isometric_Neck_Exercise_-_Front_And_Back",
         "sets": 2,
         "durationSec": 15,
         "restSec": 20
       },
       {
+        "id": "neck-5",
         "exerciseId": "Isometric_Neck_Exercise_-_Sides",
         "sets": 2,
         "durationSec": 15,
         "restSec": 20
       },
       {
+        "id": "neck-6",
         "exerciseId": "Upper_Back_Stretch",
         "sets": 2,
         "durationSec": 20,
         "restSec": 10
       },
       {
+        "id": "neck-7",
         "exerciseId": "Elbows_Back",
         "sets": 2,
         "durationSec": 20,
         "restSec": 10
+      }
+    ]
+  },
+  {
+    "id": "eyes",
+    "name": "Глаза",
+    "place": "home",
+    "entries": [
+      {
+        "id": "eyes-1",
+        "exerciseId": "Eye_Palming",
+        "sets": 1,
+        "durationSec": 60,
+        "restSec": 5
+      },
+      {
+        "id": "eyes-2",
+        "exerciseId": "Eye_Blinking",
+        "sets": 1,
+        "durationSec": 20,
+        "restSec": 5
+      },
+      {
+        "id": "eyes-3",
+        "exerciseId": "Eye_Up_Down",
+        "sets": 1,
+        "durationSec": 20,
+        "restSec": 5
+      },
+      {
+        "id": "eyes-4",
+        "exerciseId": "Eye_Side_To_Side",
+        "sets": 1,
+        "durationSec": 20,
+        "restSec": 5
+      },
+      {
+        "id": "eyes-5",
+        "exerciseId": "Eye_Circles",
+        "sets": 1,
+        "durationSec": 30,
+        "restSec": 5
+      },
+      {
+        "id": "eyes-6",
+        "exerciseId": "Eye_Figure_Eight",
+        "sets": 1,
+        "durationSec": 30,
+        "restSec": 5
+      },
+      {
+        "id": "eyes-7",
+        "exerciseId": "Eye_Near_Far_Focus",
+        "sets": 1,
+        "durationSec": 50,
+        "restSec": 5
+      },
+      {
+        "id": "eyes-8",
+        "exerciseId": "Eye_20_20_20",
+        "sets": 1,
+        "durationSec": 20,
+        "restSec": 5
       }
     ]
   },
@@ -54,54 +124,63 @@
     "place": "home",
     "entries": [
       {
+        "id": "back-care-1",
         "exerciseId": "Cat_Stretch",
         "sets": 2,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "back-care-2",
         "exerciseId": "Childs_Pose",
         "sets": 1,
         "durationSec": 40,
         "restSec": 10
       },
       {
+        "id": "back-care-3",
         "exerciseId": "Rhomboids-SMR",
         "sets": 1,
         "durationSec": 40,
         "restSec": 10
       },
       {
+        "id": "back-care-4",
         "exerciseId": "Isometric_Neck_Exercise_-_Front_And_Back",
         "sets": 2,
         "durationSec": 15,
         "restSec": 10
       },
       {
+        "id": "back-care-5",
         "exerciseId": "Elbows_Back",
         "sets": 2,
         "durationSec": 20,
         "restSec": 10
       },
       {
+        "id": "back-care-6",
         "exerciseId": "Lower_Back_Curl",
         "sets": 2,
         "durationSec": 15,
         "restSec": 15
       },
       {
+        "id": "back-care-7",
         "exerciseId": "Dead_Bug",
         "sets": 2,
         "reps": 8,
         "restSec": 15
       },
       {
+        "id": "back-care-8",
         "exerciseId": "Side_Bridge",
         "sets": 4,
         "durationSec": 20,
         "restSec": 10
       },
       {
+        "id": "back-care-9",
         "exerciseId": "Hug_Knees_To_Chest",
         "sets": 1,
         "durationSec": 30,
@@ -115,48 +194,56 @@
     "place": "home",
     "entries": [
       {
+        "id": "stretching-1",
         "exerciseId": "Cat_Stretch",
         "sets": 2,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "stretching-2",
         "exerciseId": "Childs_Pose",
         "sets": 2,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "stretching-3",
         "exerciseId": "Upper_Back_Stretch",
         "sets": 2,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "stretching-4",
         "exerciseId": "Shoulder_Stretch",
         "sets": 2,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "stretching-5",
         "exerciseId": "Triceps_Stretch",
         "sets": 2,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "stretching-6",
         "exerciseId": "Kneeling_Hip_Flexor",
         "sets": 2,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "stretching-7",
         "exerciseId": "Hamstring_Stretch",
         "sets": 2,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "stretching-8",
         "exerciseId": "Standing_Gastrocnemius_Calf_Stretch",
         "sets": 2,
         "durationSec": 30,
@@ -170,42 +257,49 @@
     "place": "home",
     "entries": [
       {
+        "id": "abs-1",
         "exerciseId": "Crunches",
         "sets": 3,
         "reps": 15,
         "restSec": 45
       },
       {
+        "id": "abs-2",
         "exerciseId": "Reverse_Crunch",
         "sets": 3,
         "reps": 12,
         "restSec": 45
       },
       {
+        "id": "abs-3",
         "exerciseId": "Oblique_Crunches_-_On_The_Floor",
         "sets": 3,
         "reps": 12,
         "restSec": 45
       },
       {
+        "id": "abs-4",
         "exerciseId": "Dead_Bug",
         "sets": 3,
         "reps": 10,
         "restSec": 45
       },
       {
+        "id": "abs-5",
         "exerciseId": "Scissor_Kick",
         "sets": 3,
         "durationSec": 30,
         "restSec": 30
       },
       {
+        "id": "abs-6",
         "exerciseId": "Side_Bridge",
         "sets": 2,
         "durationSec": 30,
         "restSec": 30
       },
       {
+        "id": "abs-7",
         "exerciseId": "Plank",
         "sets": 3,
         "durationSec": 40,
@@ -219,42 +313,49 @@
     "place": "home",
     "entries": [
       {
+        "id": "warm-up-1",
         "exerciseId": "Shoulder_Circles",
         "sets": 1,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "warm-up-2",
         "exerciseId": "Arm_Circles",
         "sets": 1,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "warm-up-3",
         "exerciseId": "Dynamic_Chest_Stretch",
         "sets": 1,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "warm-up-4",
         "exerciseId": "Cat_Stretch",
         "sets": 1,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "warm-up-5",
         "exerciseId": "Standing_Hip_Circles",
         "sets": 1,
         "durationSec": 40,
         "restSec": 10
       },
       {
+        "id": "warm-up-6",
         "exerciseId": "Bodyweight_Squat",
         "sets": 1,
         "reps": 10,
         "restSec": 10
       },
       {
+        "id": "warm-up-7",
         "exerciseId": "Inchworm",
         "sets": 1,
         "durationSec": 40,
@@ -268,42 +369,49 @@
     "place": "home",
     "entries": [
       {
+        "id": "cool-down-1",
         "exerciseId": "One_Knee_To_Chest",
         "sets": 1,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "cool-down-2",
         "exerciseId": "Hug_Knees_To_Chest",
         "sets": 1,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "cool-down-3",
         "exerciseId": "Lying_Glute",
         "sets": 1,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "cool-down-4",
         "exerciseId": "Seated_Floor_Hamstring_Stretch",
         "sets": 1,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "cool-down-5",
         "exerciseId": "On_Your_Side_Quad_Stretch",
         "sets": 1,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "cool-down-6",
         "exerciseId": "Calf_Stretch_Hands_Against_Wall",
         "sets": 1,
         "durationSec": 30,
         "restSec": 10
       },
       {
+        "id": "cool-down-7",
         "exerciseId": "Overhead_Stretch",
         "sets": 1,
         "durationSec": 20,
@@ -318,42 +426,49 @@
     "pairId": "full-body",
     "entries": [
       {
+        "id": "home-bodyweight-1",
         "exerciseId": "Bodyweight_Squat",
         "sets": 3,
         "reps": 15,
         "restSec": 60
       },
       {
+        "id": "home-bodyweight-2",
         "exerciseId": "Pushups",
         "sets": 3,
         "reps": 10,
         "restSec": 60
       },
       {
+        "id": "home-bodyweight-3",
         "exerciseId": "Butt_Lift_Bridge",
         "sets": 3,
         "reps": 15,
         "restSec": 45
       },
       {
+        "id": "home-bodyweight-4",
         "exerciseId": "Superman",
         "sets": 3,
         "durationSec": 20,
         "restSec": 30
       },
       {
+        "id": "home-bodyweight-5",
         "exerciseId": "Dead_Bug",
         "sets": 3,
         "reps": 10,
         "restSec": 45
       },
       {
+        "id": "home-bodyweight-6",
         "exerciseId": "Crunches",
         "sets": 3,
         "reps": 15,
         "restSec": 45
       },
       {
+        "id": "home-bodyweight-7",
         "exerciseId": "Plank",
         "sets": 3,
         "durationSec": 30,
@@ -367,48 +482,56 @@
     "place": "home",
     "entries": [
       {
+        "id": "home-dumbbells-bar-1",
         "exerciseId": "Dumbbell_Squat",
         "sets": 3,
         "reps": 12,
         "restSec": 90
       },
       {
+        "id": "home-dumbbells-bar-2",
         "exerciseId": "Pushups",
         "sets": 3,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "home-dumbbells-bar-3",
         "exerciseId": "Chin-Up",
         "sets": 3,
         "reps": 6,
         "restSec": 120
       },
       {
+        "id": "home-dumbbells-bar-4",
         "exerciseId": "Bent_Over_Two-Dumbbell_Row",
         "sets": 3,
         "reps": 10,
         "restSec": 90
       },
       {
+        "id": "home-dumbbells-bar-5",
         "exerciseId": "Stiff-Legged_Dumbbell_Deadlift",
         "sets": 3,
         "reps": 10,
         "restSec": 90
       },
       {
+        "id": "home-dumbbells-bar-6",
         "exerciseId": "Standing_Dumbbell_Press",
         "sets": 3,
         "reps": 10,
         "restSec": 90
       },
       {
+        "id": "home-dumbbells-bar-7",
         "exerciseId": "Dumbbell_Bicep_Curl",
         "sets": 2,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "home-dumbbells-bar-8",
         "exerciseId": "Plank",
         "sets": 3,
         "durationSec": 40,
@@ -423,48 +546,56 @@
     "pairId": "full-body",
     "entries": [
       {
+        "id": "gym-full-body-1",
         "exerciseId": "Barbell_Squat",
         "sets": 3,
         "reps": 8,
         "restSec": 120
       },
       {
+        "id": "gym-full-body-2",
         "exerciseId": "Barbell_Bench_Press_-_Medium_Grip",
         "sets": 3,
         "reps": 8,
         "restSec": 120
       },
       {
+        "id": "gym-full-body-3",
         "exerciseId": "Wide-Grip_Lat_Pulldown",
         "sets": 3,
         "reps": 10,
         "restSec": 90
       },
       {
+        "id": "gym-full-body-4",
         "exerciseId": "Seated_Cable_Rows",
         "sets": 3,
         "reps": 10,
         "restSec": 90
       },
       {
+        "id": "gym-full-body-5",
         "exerciseId": "Romanian_Deadlift",
         "sets": 3,
         "reps": 10,
         "restSec": 120
       },
       {
+        "id": "gym-full-body-6",
         "exerciseId": "Dumbbell_Shoulder_Press",
         "sets": 3,
         "reps": 10,
         "restSec": 90
       },
       {
+        "id": "gym-full-body-7",
         "exerciseId": "Barbell_Curl",
         "sets": 2,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "gym-full-body-8",
         "exerciseId": "Plank",
         "sets": 3,
         "durationSec": 40,
@@ -479,42 +610,49 @@
     "pairId": "legs",
     "entries": [
       {
+        "id": "legs-a-1",
         "exerciseId": "Bodyweight_Squat",
         "sets": 3,
         "reps": 20,
         "restSec": 60
       },
       {
+        "id": "legs-a-2",
         "exerciseId": "Bodyweight_Walking_Lunge",
         "sets": 3,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "legs-a-3",
         "exerciseId": "Step-up_with_Knee_Raise",
         "sets": 3,
         "reps": 10,
         "restSec": 60
       },
       {
+        "id": "legs-a-4",
         "exerciseId": "Single_Leg_Glute_Bridge",
         "sets": 3,
         "reps": 12,
         "restSec": 45
       },
       {
+        "id": "legs-a-5",
         "exerciseId": "Glute_Kickback",
         "sets": 3,
         "reps": 15,
         "restSec": 45
       },
       {
+        "id": "legs-a-6",
         "exerciseId": "Side_Leg_Raises",
         "sets": 2,
         "durationSec": 30,
         "restSec": 30
       },
       {
+        "id": "legs-a-7",
         "exerciseId": "Sit_Squats",
         "sets": 3,
         "durationSec": 30,
@@ -528,42 +666,49 @@
     "place": "home",
     "entries": [
       {
+        "id": "legs-b-1",
         "exerciseId": "Plie_Dumbbell_Squat",
         "sets": 3,
         "reps": 12,
         "restSec": 90
       },
       {
+        "id": "legs-b-2",
         "exerciseId": "Split_Squat_with_Dumbbells",
         "sets": 3,
         "reps": 10,
         "restSec": 90
       },
       {
+        "id": "legs-b-3",
         "exerciseId": "Stiff-Legged_Dumbbell_Deadlift",
         "sets": 3,
         "reps": 10,
         "restSec": 90
       },
       {
+        "id": "legs-b-4",
         "exerciseId": "Dumbbell_Step_Ups",
         "sets": 3,
         "reps": 10,
         "restSec": 60
       },
       {
+        "id": "legs-b-5",
         "exerciseId": "Dumbbell_Rear_Lunge",
         "sets": 2,
         "reps": 10,
         "restSec": 60
       },
       {
+        "id": "legs-b-6",
         "exerciseId": "Butt_Lift_Bridge",
         "sets": 3,
         "reps": 15,
         "restSec": 45
       },
       {
+        "id": "legs-b-7",
         "exerciseId": "Standing_Dumbbell_Calf_Raise",
         "sets": 3,
         "reps": 15,
@@ -578,42 +723,49 @@
     "pairId": "legs",
     "entries": [
       {
+        "id": "gym-legs-1",
         "exerciseId": "Barbell_Squat",
         "sets": 4,
         "reps": 8,
         "restSec": 150
       },
       {
+        "id": "gym-legs-2",
         "exerciseId": "Leg_Press",
         "sets": 3,
         "reps": 12,
         "restSec": 120
       },
       {
+        "id": "gym-legs-3",
         "exerciseId": "Romanian_Deadlift",
         "sets": 3,
         "reps": 10,
         "restSec": 120
       },
       {
+        "id": "gym-legs-4",
         "exerciseId": "Dumbbell_Lunges",
         "sets": 2,
         "reps": 10,
         "restSec": 90
       },
       {
+        "id": "gym-legs-5",
         "exerciseId": "Lying_Leg_Curls",
         "sets": 3,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "gym-legs-6",
         "exerciseId": "Leg_Extensions",
         "sets": 3,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "gym-legs-7",
         "exerciseId": "Standing_Calf_Raises",
         "sets": 3,
         "reps": 15,
@@ -628,42 +780,49 @@
     "pairId": "arms",
     "entries": [
       {
+        "id": "arms-a-1",
         "exerciseId": "Shoulder_Press_-_With_Bands",
         "sets": 3,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "arms-a-2",
         "exerciseId": "Lateral_Raise_-_With_Bands",
         "sets": 3,
         "reps": 15,
         "restSec": 45
       },
       {
+        "id": "arms-a-3",
         "exerciseId": "Band_Pull_Apart",
         "sets": 3,
         "reps": 15,
         "restSec": 45
       },
       {
+        "id": "arms-a-4",
         "exerciseId": "External_Rotation_with_Band",
         "sets": 2,
         "reps": 15,
         "restSec": 30
       },
       {
+        "id": "arms-a-5",
         "exerciseId": "Bench_Dips",
         "sets": 3,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "arms-a-6",
         "exerciseId": "Push-Ups_-_Close_Triceps_Position",
         "sets": 3,
         "reps": 10,
         "restSec": 60
       },
       {
+        "id": "arms-a-7",
         "exerciseId": "Band_Skull_Crusher",
         "sets": 3,
         "reps": 12,
@@ -677,42 +836,49 @@
     "place": "home",
     "entries": [
       {
+        "id": "arms-b-1",
         "exerciseId": "Arnold_Dumbbell_Press",
         "sets": 3,
         "reps": 10,
         "restSec": 90
       },
       {
+        "id": "arms-b-2",
         "exerciseId": "Side_Lateral_Raise",
         "sets": 3,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "arms-b-3",
         "exerciseId": "Reverse_Flyes",
         "sets": 3,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "arms-b-4",
         "exerciseId": "Hammer_Curls",
         "sets": 3,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "arms-b-5",
         "exerciseId": "Concentration_Curls",
         "sets": 2,
         "reps": 12,
         "restSec": 45
       },
       {
+        "id": "arms-b-6",
         "exerciseId": "Standing_Dumbbell_Triceps_Extension",
         "sets": 3,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "arms-b-7",
         "exerciseId": "Tricep_Dumbbell_Kickback",
         "sets": 2,
         "reps": 12,
@@ -727,42 +893,49 @@
     "pairId": "arms",
     "entries": [
       {
+        "id": "arms-c-1",
         "exerciseId": "Seated_Barbell_Military_Press",
         "sets": 3,
         "reps": 8,
         "restSec": 120
       },
       {
+        "id": "arms-c-2",
         "exerciseId": "Cable_Seated_Lateral_Raise",
         "sets": 3,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "arms-c-3",
         "exerciseId": "Face_Pull",
         "sets": 3,
         "reps": 15,
         "restSec": 60
       },
       {
+        "id": "arms-c-4",
         "exerciseId": "Barbell_Curl",
         "sets": 3,
         "reps": 10,
         "restSec": 60
       },
       {
+        "id": "arms-c-5",
         "exerciseId": "Preacher_Curl",
         "sets": 2,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "arms-c-6",
         "exerciseId": "Triceps_Pushdown_-_Rope_Attachment",
         "sets": 3,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "arms-c-7",
         "exerciseId": "Close-Grip_Barbell_Bench_Press",
         "sets": 3,
         "reps": 8,
@@ -777,42 +950,49 @@
     "pairId": "chest",
     "entries": [
       {
+        "id": "chest-a-1",
         "exerciseId": "Incline_Push-Up",
         "sets": 2,
         "reps": 12,
         "restSec": 45
       },
       {
+        "id": "chest-a-2",
         "exerciseId": "Pushups",
         "sets": 3,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "chest-a-3",
         "exerciseId": "Push-Up_Wide",
         "sets": 3,
         "reps": 10,
         "restSec": 60
       },
       {
+        "id": "chest-a-4",
         "exerciseId": "Decline_Push-Up",
         "sets": 3,
         "reps": 8,
         "restSec": 60
       },
       {
+        "id": "chest-a-5",
         "exerciseId": "Isometric_Chest_Squeezes",
         "sets": 3,
         "durationSec": 20,
         "restSec": 30
       },
       {
+        "id": "chest-a-6",
         "exerciseId": "Bench_Dips",
         "sets": 3,
         "reps": 10,
         "restSec": 60
       },
       {
+        "id": "chest-a-7",
         "exerciseId": "Dynamic_Chest_Stretch",
         "sets": 1,
         "durationSec": 30,
@@ -826,36 +1006,42 @@
     "place": "home",
     "entries": [
       {
+        "id": "chest-b-1",
         "exerciseId": "Dumbbell_Bench_Press",
         "sets": 4,
         "reps": 10,
         "restSec": 90
       },
       {
+        "id": "chest-b-2",
         "exerciseId": "Incline_Dumbbell_Press",
         "sets": 3,
         "reps": 10,
         "restSec": 90
       },
       {
+        "id": "chest-b-3",
         "exerciseId": "Dumbbell_Flyes",
         "sets": 3,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "chest-b-4",
         "exerciseId": "Straight-Arm_Dumbbell_Pullover",
         "sets": 3,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "chest-b-5",
         "exerciseId": "Close-Grip_Dumbbell_Press",
         "sets": 3,
         "reps": 10,
         "restSec": 60
       },
       {
+        "id": "chest-b-6",
         "exerciseId": "Push-Ups_With_Feet_Elevated",
         "sets": 2,
         "reps": 10,
@@ -870,36 +1056,42 @@
     "pairId": "chest",
     "entries": [
       {
+        "id": "gym-push-1",
         "exerciseId": "Barbell_Bench_Press_-_Medium_Grip",
         "sets": 4,
         "reps": 8,
         "restSec": 120
       },
       {
+        "id": "gym-push-2",
         "exerciseId": "Barbell_Incline_Bench_Press_-_Medium_Grip",
         "sets": 3,
         "reps": 8,
         "restSec": 120
       },
       {
+        "id": "gym-push-3",
         "exerciseId": "Cable_Crossover",
         "sets": 3,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "gym-push-4",
         "exerciseId": "Butterfly",
         "sets": 3,
         "reps": 12,
         "restSec": 60
       },
       {
+        "id": "gym-push-5",
         "exerciseId": "Dips_-_Chest_Version",
         "sets": 3,
         "reps": 8,
         "restSec": 90
       },
       {
+        "id": "gym-push-6",
         "exerciseId": "Triceps_Pushdown",
         "sets": 3,
         "reps": 12,

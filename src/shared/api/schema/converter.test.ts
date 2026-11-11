@@ -10,7 +10,7 @@ const at = Timestamp.fromMillis(1_700_000_123_456)
 
 const template = (): Template => ({
   name: 'Push',
-  entries: [{ exerciseId: 'Pushups', sets: 3, reps: 10, restSec: 90 }],
+  entries: [{ id: 'a1', exerciseId: 'Pushups', sets: 3, reps: 10, restSec: 90 }],
   copiedFrom: null,
   createdAt: at,
   updatedAt: at,
@@ -23,6 +23,7 @@ const workout = (): Workout => ({
   template: { source: 'own', id: 't1', name: 'Push' },
   entries: [
     {
+      id: 'a1',
       exerciseId: 'Pushups',
       name: 'Pushups',
       kind: 'bodyweight',
@@ -73,6 +74,48 @@ describe('profileConverter', () => {
     expect(() =>
       profileConverter.fromFirestore(snapshotOf({ ...legacy, schedule: { mon: null } })),
     ).toThrow()
+  })
+})
+
+describe('entry ids', () => {
+  const omitId = (entry: object) =>
+    Object.fromEntries(Object.entries(entry).filter(([k]) => k !== 'id'))
+  const withoutIds = <T extends { entries: object[] }>(doc: T) => ({
+    ...doc,
+    entries: doc.entries.map(omitId),
+  })
+
+  it('gives entries written before entry ids one from their position, the same on every read', () => {
+    const stored = withoutIds({
+      ...template(),
+      entries: [...template().entries, ...template().entries],
+    })
+
+    const first = templateConverter.fromFirestore(snapshotOf(stored))
+    const again = templateConverter.fromFirestore(snapshotOf(stored))
+
+    expect(first.entries.map((e) => e.id)).toEqual(['e0', 'e1'])
+    expect(again.entries).toEqual(first.entries)
+    expect(workoutConverter.fromFirestore(snapshotOf(withoutIds(workout()))).entries[0]?.id).toBe(
+      'e0',
+    )
+  })
+
+  it('keeps existing ids and allows one exercise twice', () => {
+    const twice = {
+      ...template(),
+      entries: [template().entries[0], { ...template().entries[0], id: 'b2' }],
+    }
+
+    expect(templateConverter.fromFirestore(snapshotOf(twice)).entries.map((e) => e.id)).toEqual([
+      'a1',
+      'b2',
+    ])
+    expect(templateConverter.toFirestore(twice)).toEqual(twice)
+  })
+
+  it('requires an id on write', () => {
+    expect(() => templateConverter.toFirestore(withoutIds(template()) as never)).toThrow()
   })
 })
 

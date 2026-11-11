@@ -32,6 +32,7 @@ const entry = (
   weightKg: number | null,
   at: Timestamp,
 ): WorkoutEntry => ({
+  id: exerciseId,
   exerciseId,
   name,
   kind: weightKg === null ? 'bodyweight' : 'strength',

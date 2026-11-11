@@ -24,6 +24,10 @@ vi.mock('@/entities/exercise', async (importOriginal) => ({
   }),
 }))
 vi.mock('@/entities/profile', () => ({ useProfile: mocks.useProfile }))
+vi.mock('@/widgets/exercise-details', () => ({
+  ExerciseDetails: ({ exerciseId, open }: { exerciseId: string; open: boolean }) =>
+    open && <p>Подробности {exerciseId}</p>,
+}))
 vi.mock('@/entities/template', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   useReadyTemplates: mocks.useReadyTemplates,
@@ -42,8 +46,8 @@ const exercise = (id: string, equipment: Exercise['equipment']): Exercise => ({
   images: [],
 })
 
-const pushups = { exerciseId: 'Pushups', sets: 3, reps: 12, restSec: 60 }
-const squat = { exerciseId: 'Barbell_Squat', sets: 3, reps: 8, restSec: 120 }
+const pushups = { id: 'e1', exerciseId: 'Pushups', sets: 3, reps: 12, restSec: 60 }
+const squat = { id: 'e2', exerciseId: 'Barbell_Squat', sets: 3, reps: 8, restSec: 120 }
 const ready = [
   { id: 'r-home', name: 'Дом: отжимания', place: 'home', entries: [pushups] },
   { id: 'r-gym', name: 'Зал: присед', place: 'gym', entries: [squat] },
@@ -120,6 +124,46 @@ describe('TemplatesPage', () => {
       name: 'Зал: присед',
       entries: [squat],
     })
+  })
+
+  it('opens a ready-made set read-only with its exercises, details and copy', async () => {
+    renderPage()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Зал: присед' }))
+
+    const sheet = screen.getByRole('dialog', { name: 'Зал: присед' })
+    expect(sheet).toHaveTextContent('Зал · 1 упражнение')
+    const list = within(sheet).getByRole('list', { name: 'Упражнения набора «Зал: присед»' })
+    expect(list).toHaveTextContent('3 × 8')
+    expect(list).toHaveTextContent('отдых 120 с')
+    expect(within(sheet).queryByRole('link', { name: 'Изменить' })).not.toBeInTheDocument()
+
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Barbell_Squat: подробнее' }))
+    expect(screen.getByText('Подробности Barbell_Squat')).toBeInTheDocument()
+
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Скопировать к себе' }))
+    expect(mocks.copyTemplate).toHaveBeenCalledWith('u1', {
+      id: 'r-gym',
+      name: 'Зал: присед',
+      entries: [squat],
+    })
+  })
+
+  it('opens an own set with edit and starts it from the sheet', async () => {
+    renderPage()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Мой набор' }))
+
+    const sheet = screen.getByRole('dialog', { name: 'Мой набор' })
+    expect(within(sheet).getByRole('link', { name: 'Изменить' })).toHaveAttribute(
+      'href',
+      '/templates/o1',
+    )
+
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Начать «Мой набор»' }))
+
+    expect(url()).toBe('/session')
+    expect(useSessionStore.getState().workout?.template).toMatchObject({ source: 'own', id: 'o1' })
   })
 
   it('starts a set and opens the session', async () => {

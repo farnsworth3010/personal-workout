@@ -52,8 +52,8 @@ const template = {
   name: 'Утро',
   copiedFrom: null,
   entries: [
-    { exerciseId: 'Pushups', sets: 3, reps: 12, restSec: 60 },
-    { exerciseId: 'Gone_Run', sets: 1, durationSec: 600, restSec: 0 },
+    { id: 'e1', exerciseId: 'Pushups', sets: 3, reps: 12, restSec: 60 },
+    { id: 'e2', exerciseId: 'Gone_Run', sets: 1, durationSec: 600, restSec: 0 },
   ],
 }
 const user = { uid: 'u1', displayName: null, email: null, photoURL: null }
@@ -90,8 +90,8 @@ describe('TemplateEditPage', () => {
     expect(mocks.updateTemplate).toHaveBeenCalledWith('u1', template, {
       name: 'Утро',
       entries: [
-        { exerciseId: 'Pushups', sets: 3, reps: 15, restSec: 60 },
-        { exerciseId: 'Gone_Run', sets: 1, durationSec: 600, restSec: 0 },
+        { id: 'e1', exerciseId: 'Pushups', sets: 3, reps: 15, restSec: 60 },
+        { id: 'e2', exerciseId: 'Gone_Run', sets: 1, durationSec: 600, restSec: 0 },
       ],
     })
     expect(screen.getByText('Список наборов')).toBeInTheDocument()

@@ -31,6 +31,21 @@ describe.skipIf(!existsSync(CATALOG))('built catalog', () => {
     expect(Object.keys(steps).sort()).toEqual(catalog.map((e) => e.id).sort())
   })
 
+  it('includes every local eye exercise with its icon', () => {
+    const local = JSON.parse(
+      readFileSync(join(import.meta.dirname, 'local', 'exercises.json'), 'utf8'),
+    ) as { id: string }[]
+    const built = catalog.filter((e) => local.some((l) => l.id === e.id))
+
+    expect(built).toHaveLength(local.length)
+
+    for (const exercise of built) {
+      expect(
+        exercise.images.every((image) => existsSync(join(CATALOG, '..', 'images', image))),
+      ).toBe(true)
+    }
+  })
+
   it('uses only the four kinds', () => {
     const kinds = new Set(catalog.map((e) => e.kind))
 

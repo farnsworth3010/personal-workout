@@ -16,7 +16,8 @@ import { useExerciseStats } from '@/entities/workout'
 import { PickExerciseSheet } from '@/features/pick-exercise'
 import type { Equipment } from '@/shared/api'
 import { cn } from '@/shared/lib'
-import { HoldButton, toast } from '@/shared/ui'
+import { Button, HoldButton, toast } from '@/shared/ui'
+import { ExerciseDetails } from '@/widgets/exercise-details'
 
 import { previewEntries, type Field } from '../../model/editor'
 import { useTemplateDraft } from '../../model/use-template-draft'
@@ -39,12 +40,16 @@ export function Editor({ uid, template, addId, byId, homeEquipment, defaultRestS
   const draft = useTemplateDraft({ template, addId, byId, defaultRestSec })
   const { rows, problem, listRef, nameInputRef, addButtonRef } = draft
   const [picking, setPicking] = useState(false)
+  // The id stays while the description closes, so its content does not vanish mid-animation.
+  const [details, setDetails] = useState<{ id: string; open: boolean } | null>(null)
 
   const stats = useExerciseStats(
     uid,
     rows.map((r) => r.exerciseId),
   )
   const entries = previewEntries(rows, draft.kindOf)
+  const counts: Record<string, number> = {}
+  for (const row of rows) counts[row.exerciseId] = (counts[row.exerciseId] ?? 0) + 1
   const gymCount = gymOnlyCount({ entries }, byId, homeEquipment)
   const groups = muscleGroupsOf({ entries }, byId).map((m) =>
     muscleLabels[m].toLocaleLowerCase('ru'),
@@ -161,7 +166,7 @@ export function Editor({ uid, template, addId, byId, homeEquipment, defaultRestS
 
               return (
                 <EntryRow
-                  key={row.key}
+                  key={row.id}
                   row={row}
                   index={index}
                   last={index === rows.length - 1}
@@ -172,9 +177,9 @@ export function Editor({ uid, template, addId, byId, homeEquipment, defaultRestS
                   )}
                   gym={exercise !== undefined && needsGym(exercise, homeEquipment)}
                   invalid={(field) => invalid(index, field)}
-                  onEdit={(field, value) => draft.edit(row.key, field, value)}
-                  onMove={(delta) => draft.reorder(row.key, delta)}
-                  onRemove={() => draft.remove(row.key)}
+                  onEdit={(field, value) => draft.edit(row.id, field, value)}
+                  onMove={(delta) => draft.reorder(row.id, delta)}
+                  onRemove={() => draft.remove(row.id)}
                 />
               )
             })}
@@ -220,9 +225,28 @@ export function Editor({ uid, template, addId, byId, homeEquipment, defaultRestS
         open={picking}
         onOpenChange={setPicking}
         onPick={draft.add}
+        onDetails={(id) => setDetails({ id, open: true })}
         homeEquipment={homeEquipment}
-        disabledIds={rows.map((r) => r.exerciseId)}
+        counts={counts}
       />
+      {details && (
+        <ExerciseDetails
+          exerciseId={details.id}
+          homeEquipment={homeEquipment}
+          open={details.open}
+          onOpenChange={(open) => setDetails({ ...details, open })}
+        >
+          <Button
+            className="mt-2.5 min-h-14 rounded-lg text-[17px] font-bold uppercase"
+            onClick={() => {
+              draft.add(details.id)
+              setDetails({ ...details, open: false })
+            }}
+          >
+            Добавить в набор
+          </Button>
+        </ExerciseDetails>
+      )}
     </div>
   )
 }

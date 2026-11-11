@@ -1,6 +1,9 @@
-import { equipmentLabels, type Equipment } from '@/entities/exercise'
-
-import { muscleGroups, type MuscleGroup } from '../config/groups'
+import {
+  equipmentLabels,
+  muscleGroups,
+  type Equipment,
+  type MuscleGroup,
+} from '@/entities/exercise'
 
 export interface CatalogParams {
   q: string

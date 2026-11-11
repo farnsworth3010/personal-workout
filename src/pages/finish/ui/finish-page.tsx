@@ -23,8 +23,6 @@ import { setsLine } from '../lib/format'
 import { emptySurvey, surveyAnswers } from '../lib/survey'
 import { Survey } from './survey'
 
-const cta = 'h-auto min-h-16 w-full rounded-lg border-0 text-lg font-bold uppercase'
-
 const day = (date: Date) =>
   date.toLocaleDateString('ru', { weekday: 'long', day: 'numeric', month: 'long' })
 
@@ -174,13 +172,13 @@ export function FinishPage({ user }: { user: AuthUser }) {
             Упражнения
           </h2>
           <ul>
-            {entries.map((entry, i) => {
+            {entries.map((entry) => {
               const line = setsLine(entry)
               const exercise = byId?.[entry.exerciseId]
 
               return (
                 <li
-                  key={`${entry.exerciseId}-${i}`}
+                  key={entry.id}
                   className="grid grid-cols-[48px_minmax(0,1fr)_auto] items-center gap-3 border-t border-border py-2.5 last:border-b"
                 >
                   <ExercisePhoto
@@ -218,7 +216,8 @@ export function FinishPage({ user }: { user: AuthUser }) {
         <Survey value={survey} onChange={setSurvey} previousWeight={previousWeight} />
         {/* Muscle load is computed from the catalog at save time; a failed load saves without it. */}
         <Button
-          className={cta}
+          size="cta"
+          className="w-full"
           disabled={!byId && !catalogFailed}
           onClick={() => (setsDone(entries) === 0 ? setConfirmEmpty(true) : save())}
         >
@@ -231,10 +230,10 @@ export function FinishPage({ user }: { user: AuthUser }) {
           title="Ни одного подхода"
           description="В этой тренировке нет записанных подходов. Удалить её или сохранить как есть?"
         >
-          <Button className={cta} onClick={discard}>
+          <Button size="cta" className="w-full" onClick={discard}>
             Удалить тренировку
           </Button>
-          <Button variant="outline" className="h-auto min-h-12 rounded-lg" onClick={save}>
+          <Button variant="outline" size="ghost" onClick={save}>
             Сохранить всё равно
           </Button>
         </SheetContent>

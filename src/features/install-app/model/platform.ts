@@ -21,7 +21,9 @@ export function detectPlatform(
 }
 
 /** Opened from the home screen icon rather than in a browser tab. */
+// matchMedia is missing in jsdom and some embedded webviews.
 export const isStandalone = () =>
-  matchMedia('(display-mode: standalone)').matches ||
-  matchMedia('(display-mode: fullscreen)').matches ||
+  (typeof matchMedia === 'function' &&
+    (matchMedia('(display-mode: standalone)').matches ||
+      matchMedia('(display-mode: fullscreen)').matches)) ||
   (navigator as { standalone?: boolean }).standalone === true

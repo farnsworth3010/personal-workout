@@ -17,7 +17,10 @@ export function RootLayout() {
       <OfflineStrip />
       <AuthProvider>
         <MotionPreference />
-        <Outlet />
+        {/* Clear of Safari's top bar on phones (viewport-fit=cover); the offline strip pads the inset itself. */}
+        <div className="max-[900px]:pt-[max(env(safe-area-inset-top),12px)] max-[900px]:[[data-offline-strip]+&]:pt-0">
+          <Outlet />
+        </div>
         <PwaUpdate />
       </AuthProvider>
       <Toaster />

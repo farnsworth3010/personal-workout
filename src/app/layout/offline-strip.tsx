@@ -20,6 +20,7 @@ export function OfflineStrip() {
 
   return (
     <div
+      data-offline-strip
       role="status"
       className="border-b border-border bg-surface-2 px-4 pt-[calc(4px+env(safe-area-inset-top))] pb-1 text-center text-xs text-muted-foreground"
     >

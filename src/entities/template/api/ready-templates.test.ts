@@ -27,11 +27,15 @@ describe('public/catalog/templates.json', () => {
     }
   })
 
-  it.each(['warm-up', 'back-care'])('%s needs no equipment', (id) => {
+  // The back set may use a foam roll, which the owner counts as home equipment like a mat.
+  it.each([
+    ['warm-up', []],
+    ['back-care', ['foam roll']],
+  ] as const)('%s needs no equipment beyond %j', (id, allowed) => {
     const template = templates.find((t) => t.id === id)
 
     expect(template?.place).toBe('home')
-    expect(template && gymOnlyCount(template, exercisesFixture, [])).toBe(0)
+    expect(template && gymOnlyCount(template, exercisesFixture, allowed)).toBe(0)
   })
 
   it.each(templates.map((t) => [t.id, t] as const))('%s uses valid catalog entries', (_, t) => {

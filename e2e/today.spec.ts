@@ -70,7 +70,7 @@ test('two sets today: the finished one is marked, the other waits, clearing empt
   await expect(
     todaySets(page)
       .nth(1)
-      .getByRole('button', { name: /^Спина/, expanded: true }),
+      .getByRole('button', { name: /^Спина: профилактика/, expanded: true }),
   ).toBeVisible()
   await expect(
     todaySets(page).nth(1).getByRole('button', { name: 'Начать тренировку' }),
@@ -92,11 +92,11 @@ test('the day sheet adds, reorders and removes sets and keeps them', async ({ pa
 
   await todayRow(page).click()
   await page.getByRole('button', { name: '+ Добавить набор' }).click()
-  await page.getByRole('button', { name: /^Спина/ }).click()
-  await page.getByRole('button', { name: 'Выше: Спина' }).click()
+  await page.getByRole('button', { name: /^Спина: профилактика/ }).click()
+  await page.getByRole('button', { name: 'Выше: Спина: профилактика' }).click()
 
   const slots = page.getByRole('list', { name: 'Наборы дня' }).locator(':scope > li')
-  await expect(slots).toHaveText([/1\. Спина/, /2\. Разминка/])
+  await expect(slots).toHaveText([/1\. Спина: профилактика/, /2\. Разминка/])
   await page.keyboard.press('Escape')
 
   // Writes are fired, not awaited: a reload must not race the last one.

@@ -50,50 +50,62 @@
   },
   {
     "id": "back-care",
-    "name": "Спина",
+    "name": "Спина: профилактика",
     "place": "home",
     "entries": [
       {
         "exerciseId": "Cat_Stretch",
         "sets": 2,
-        "durationSec": 20,
-        "restSec": 20
+        "durationSec": 30,
+        "restSec": 10
       },
       {
-        "exerciseId": "Superman",
+        "exerciseId": "Childs_Pose",
+        "sets": 1,
+        "durationSec": 40,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Rhomboids-SMR",
+        "sets": 1,
+        "durationSec": 40,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Isometric_Neck_Exercise_-_Front_And_Back",
         "sets": 2,
-        "durationSec": 20,
-        "restSec": 20
-      },
-      {
-        "exerciseId": "Lower_Back_Curl",
-        "sets": 2,
-        "durationSec": 20,
-        "restSec": 20
-      },
-      {
-        "exerciseId": "Dead_Bug",
-        "sets": 2,
-        "reps": 8,
-        "restSec": 20
-      },
-      {
-        "exerciseId": "Plank",
-        "sets": 2,
-        "durationSec": 20,
-        "restSec": 20
-      },
-      {
-        "exerciseId": "Side_Bridge",
-        "sets": 4,
-        "durationSec": 20,
-        "restSec": 20
+        "durationSec": 15,
+        "restSec": 10
       },
       {
         "exerciseId": "Elbows_Back",
         "sets": 2,
         "durationSec": 20,
-        "restSec": 20
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Lower_Back_Curl",
+        "sets": 2,
+        "durationSec": 15,
+        "restSec": 15
+      },
+      {
+        "exerciseId": "Dead_Bug",
+        "sets": 2,
+        "reps": 8,
+        "restSec": 15
+      },
+      {
+        "exerciseId": "Side_Bridge",
+        "sets": 4,
+        "durationSec": 20,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Hug_Knees_To_Chest",
+        "sets": 1,
+        "durationSec": 30,
+        "restSec": 0
       }
     ]
   },

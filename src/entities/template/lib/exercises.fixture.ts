@@ -132,6 +132,7 @@ export const exercisesFixture: Record<string, ExerciseFacts> = {
   Pushups: { kind: 'bodyweight', primaryMuscles: ['chest'], equipment: 'body only' },
   Reverse_Crunch: { kind: 'bodyweight', primaryMuscles: ['abdominals'], equipment: 'body only' },
   Reverse_Flyes: { kind: 'strength', primaryMuscles: ['shoulders'], equipment: 'dumbbell' },
+  'Rhomboids-SMR': { kind: 'timed', primaryMuscles: ['middle back'], equipment: 'foam roll' },
   Romanian_Deadlift: { kind: 'strength', primaryMuscles: ['hamstrings'], equipment: 'barbell' },
   Scissor_Kick: { kind: 'timed', primaryMuscles: ['abdominals'], equipment: 'body only' },
   Seated_Barbell_Military_Press: {

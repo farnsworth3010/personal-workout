@@ -1,0 +1,34 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+@import './tokens.css';
+@import './motion.css';
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans antialiased;
+    /* A classic scrollbar on every page, so the layout does not shift between short and long ones;
+       scrollbar-gutter: stable did not reserve the space here. Overlay scrollbars are unaffected. */
+    overflow-y: scroll;
+  }
+
+  body {
+    @apply min-h-dvh bg-background text-foreground;
+  }
+
+  /* Radix's scroll lock pads the body by the scrollbar width, but html keeps its scrollbar, so the
+     margin would only shift the page under every modal; layered !important beats the injected one. */
+  body[data-scroll-locked] {
+    margin-right: 0 !important;
+  }
+
+  /* Preflight resets buttons to the default cursor; disabled ones keep it. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+}

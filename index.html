@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Personal Workout</title>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Workout" />
+    <!-- Opaque bar: the layouts pad only the bottom safe area, so content must not slide under the top one. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <!-- Splash until React mounts (src/app/routes/splash.tsx takes over); fallbacks repeat tokens.css for dev, where CSS arrives with the JS. -->
+    <style>
+      html {
+        background: var(--background, #0a0a0a);
+        /* The scrollbar of index.css from the first paint, so the splash does not move when it loads. */
+        overflow-y: scroll;
+      }
+      .splash {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        justify-items: center;
+        gap: 14px;
+        background: var(--background, #0a0a0a);
+        color: var(--foreground, #fafafa);
+        font:
+          800 22px/1.1 'Inter',
+          system-ui,
+          sans-serif;
+        letter-spacing: -0.02em;
+        text-transform: uppercase;
+        text-align: center;
+      }
+      .splash i {
+        width: 48px;
+        height: 3px;
+        border-radius: 2px;
+        background: var(--primary, #c6ff3d);
+        animation: splash-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      @keyframes splash-pulse {
+        50% {
+          opacity: 0.5;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .splash i {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="splash" role="status" aria-label="Загрузка">
+        <span>Personal<br />Workout</span><i></i>
+      </div>
+    </div>
+    <script type="module" src="/src/app/index.tsx"></script>
+  </body>
+</html>

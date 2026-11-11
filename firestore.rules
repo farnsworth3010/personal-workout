@@ -1,0 +1,105 @@
+rules_version = '2';
+
+// Contract: specs/001-workout-app/contracts/firestore-access.md, research R8.
+// Shape checks stay shallow (rules cannot iterate lists) and mirror src/shared/api/schema;
+// tests/rules checks that they agree. No catch-all: any matching allow would skip validation.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function hasExactly(m, keys) {
+      return m is map && m.keys().hasAll(keys) && m.keys().hasOnly(keys);
+    }
+
+    function isId(v) {
+      return v is string && v.size() > 0;
+    }
+
+    function isName(v) {
+      return v is string && v.size() >= 1 && v.size() <= 60;
+    }
+
+    function isListUpTo(v, max) {
+      return v is list && v.size() <= max;
+    }
+
+    function isSource(v) {
+      return v in ['own', 'ready'];
+    }
+
+    function validProfile(d) {
+      return hasExactly(d, ['homeEquipment', 'defaultRestSec', 'defaultWeightStepKg', 'sounds',
+          'animations', 'schedule', 'activeWorkoutId', 'updatedAt'])
+        && d.homeEquipment is list
+        && d.homeEquipment.hasOnly(['bands', 'barbell', 'body only', 'cable', 'dumbbell',
+          'e-z curl bar', 'exercise ball', 'foam roll', 'kettlebells', 'machine', 'medicine ball',
+          'other', 'pull-up bar'])
+        && d.defaultRestSec is int && d.defaultRestSec >= 0 && d.defaultRestSec <= 900
+        && d.defaultWeightStepKg in [0.5, 1, 2.5, 5]
+        && d.sounds is bool
+        && d.animations is bool
+        && hasExactly(d.schedule, ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'])
+        && isListUpTo(d.schedule.mon, 5) && isListUpTo(d.schedule.tue, 5)
+        && isListUpTo(d.schedule.wed, 5) && isListUpTo(d.schedule.thu, 5)
+        && isListUpTo(d.schedule.fri, 5) && isListUpTo(d.schedule.sat, 5)
+        && isListUpTo(d.schedule.sun, 5)
+        && (d.activeWorkoutId == null || isId(d.activeWorkoutId))
+        && d.updatedAt is timestamp;
+    }
+
+    function validTemplate(d) {
+      return hasExactly(d, ['name', 'entries', 'copiedFrom', 'createdAt', 'updatedAt'])
+        && isName(d.name)
+        && isListUpTo(d.entries, 40) && d.entries.size() >= 1
+        && (d.copiedFrom == null || isId(d.copiedFrom))
+        && d.createdAt is timestamp
+        && d.updatedAt is timestamp;
+    }
+
+    function validWorkout(d) {
+      return hasExactly(d, ['status', 'startedAt', 'endedAt', 'template', 'entries', 'survey',
+          'summary', 'updatedAt'])
+        && d.status in ['active', 'done']
+        && d.startedAt is timestamp
+        && (d.endedAt == null || d.endedAt is timestamp)
+        && hasExactly(d.template, ['source', 'id', 'name'])
+        && isSource(d.template.source) && isId(d.template.id) && isName(d.template.name)
+        && isListUpTo(d.entries, 60)
+        && d.survey is map && d.survey.keys().hasOnly(['wellbeing', 'energy', 'bodyWeightKg'])
+        && (d.summary == null
+          || hasExactly(d.summary, ['durationSec', 'volumeKg', 'setsDone', 'muscleSets']))
+        && d.updatedAt is timestamp;
+    }
+
+    function validExerciseStats(d) {
+      return hasExactly(d, ['weightStepKg', 'lastSets', 'lastWorkoutId', 'lastAt', 'records'])
+        && (d.weightStepKg == null || (d.weightStepKg is number && d.weightStepKg > 0))
+        && isListUpTo(d.lastSets, 20)
+        && isId(d.lastWorkoutId)
+        && d.lastAt is timestamp
+        && d.records is map && d.records.keys().hasOnly(['maxWeightKg', 'maxVolumeKg', 'bestSet']);
+    }
+
+    match /users/{uid} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid) && validProfile(request.resource.data);
+
+      match /templates/{templateId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validTemplate(request.resource.data);
+      }
+
+      match /workouts/{workoutId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validWorkout(request.resource.data);
+      }
+
+      match /exerciseStats/{exerciseId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validExerciseStats(request.resource.data);
+      }
+    }
+  }
+}

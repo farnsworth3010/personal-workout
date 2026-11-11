@@ -1,0 +1,19 @@
+# https://lefthook.dev/configuration/
+# No stage_fixed anywhere: hooks only check, the owner stages by hand.
+pre-commit:
+  parallel: true
+  jobs:
+    - name: eslint
+      glob: '*.{ts,tsx}'
+      run: pnpm exec eslint --no-warn-ignored -- {staged_files}
+
+    - name: prettier
+      run: pnpm exec prettier --check --ignore-unknown -- {staged_files}
+
+    - name: typecheck
+      run: pnpm run typecheck
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: pnpm exec commitlint --edit {1}

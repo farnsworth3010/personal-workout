@@ -1,0 +1,126 @@
+{
+  "Chin-Up": { "equipment": "pull-up bar", "reason": "pull-up bar exercise labelled body only" },
+  "Pullups": { "equipment": "pull-up bar", "reason": "pull-up bar exercise labelled body only" },
+  "V-Bar_Pullup": {
+    "equipment": "pull-up bar",
+    "reason": "pull-up bar exercise labelled body only"
+  },
+  "Wide-Grip_Rear_Pull-Up": {
+    "equipment": "pull-up bar",
+    "reason": "pull-up bar exercise labelled body only"
+  },
+  "Gorilla_Chin_Crunch": {
+    "equipment": "pull-up bar",
+    "reason": "hangs from a chin-up bar, labelled body only"
+  },
+  "Hanging_Leg_Raise": {
+    "equipment": "pull-up bar",
+    "reason": "hangs from a pull-up bar, labelled body only"
+  },
+  "Hanging_Pike": {
+    "equipment": "pull-up bar",
+    "reason": "hangs from a pull-up bar, labelled body only"
+  },
+  "Wind_Sprints": {
+    "equipment": "pull-up bar",
+    "reason": "hangs from a pull-up bar, labelled body only"
+  },
+  "Mixed_Grip_Chin": {
+    "equipment": "pull-up bar",
+    "reason": "pull-up bar exercise labelled other; body weight"
+  },
+  "Side_To_Side_Chins": {
+    "equipment": "pull-up bar",
+    "reason": "pull-up bar exercise labelled other; body weight"
+  },
+  "Gironda_Sternum_Chins": {
+    "equipment": "pull-up bar",
+    "reason": "pull-up bar exercise labelled other; body weight"
+  },
+  "One_Arm_Chin-Up": {
+    "equipment": "pull-up bar",
+    "reason": "chin-up bar exercise labelled other; body weight"
+  },
+  "Rocky_Pull-Ups_Pulldowns": {
+    "equipment": "pull-up bar",
+    "reason": "pull-up bar exercise labelled other; body weight"
+  },
+  "Band_Assisted_Pull-Up": {
+    "equipment": "pull-up bar",
+    "reason": "pull-up bar with a band, labelled other; body weight"
+  },
+  "Scapular_Pull-Up": {
+    "equipment": "pull-up bar",
+    "reason": "pull-up bar exercise with no equipment; body weight"
+  },
+  "Weighted_Pull_Ups": {
+    "equipment": "pull-up bar",
+    "kind": "strength",
+    "reason": "pull-up bar exercise labelled other; logged with added weight"
+  },
+  "One_Handed_Hang": {
+    "equipment": "pull-up bar",
+    "reason": "hangs from a chin-up bar, labelled other; stays timed as a stretch"
+  },
+  "Plank": { "kind": "timed", "reason": "static hold" },
+  "Side_Bridge": { "kind": "timed", "reason": "side plank, static hold" },
+  "Isometric_Neck_Exercise_-_Front_And_Back": { "kind": "timed", "reason": "isometric hold" },
+  "Isometric_Neck_Exercise_-_Sides": { "kind": "timed", "reason": "isometric hold" },
+  "Isometric_Chest_Squeezes": { "kind": "timed", "reason": "isometric hold" },
+  "Crucifix": { "kind": "timed", "reason": "weights held out to the side for time" },
+  "Plate_Pinch": { "kind": "timed", "reason": "grip hold for as long as possible" },
+  "Downward_Facing_Balance": { "kind": "timed", "reason": "balance hold on an exercise ball" },
+  "Alternate_Leg_Diagonal_Bound": {
+    "equipment": "body only",
+    "reason": "no equipment in the dataset; body weight drill"
+  },
+  "Bodyweight_Walking_Lunge": {
+    "equipment": "body only",
+    "reason": "no equipment in the dataset; body weight"
+  },
+  "Carioca_Quick_Step": {
+    "equipment": "body only",
+    "reason": "no equipment in the dataset; body weight drill"
+  },
+  "Decline_Push-Up": {
+    "equipment": "body only",
+    "reason": "no equipment in the dataset; body weight"
+  },
+  "Floor_Glute-Ham_Raise": {
+    "equipment": "body only",
+    "reason": "no equipment in the dataset; body weight, feet braced"
+  },
+  "Kneeling_Arm_Drill": {
+    "equipment": "body only",
+    "reason": "no equipment in the dataset; body weight drill"
+  },
+  "Linear_3-Part_Start_Technique": {
+    "equipment": "body only",
+    "reason": "no equipment in the dataset; body weight drill"
+  },
+  "Linear_Acceleration_Wall_Drill": {
+    "equipment": "body only",
+    "reason": "no equipment in the dataset; body weight drill"
+  },
+  "Mountain_Climbers": {
+    "equipment": "body only",
+    "reason": "no equipment in the dataset; body weight"
+  },
+  "Moving_Claw_Series": {
+    "equipment": "body only",
+    "reason": "no equipment in the dataset; body weight drill"
+  },
+  "Side_Standing_Long_Jump": {
+    "equipment": "body only",
+    "reason": "no equipment in the dataset; body weight"
+  },
+  "Prone_Manual_Hamstring": {
+    "kind": "bodyweight",
+    "reason": "partner provides the resistance; no weight to log"
+  },
+  "Inverted_Row": {
+    "equipment": "other",
+    "kind": "bodyweight",
+    "reason": "body weight row under a bar in a rack or Smith machine"
+  }
+}

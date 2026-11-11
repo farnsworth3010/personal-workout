@@ -1,0 +1,25 @@
+/* FR-041: transitions are instant with reduced motion or with the profile's animations switch off.
+   0.01ms rather than 0, so Radix still receives animationend and unmounts closing sheets. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+:root[data-motion-off] *,
+:root[data-motion-off] ::before,
+:root[data-motion-off] ::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+}

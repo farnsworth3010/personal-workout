@@ -1,0 +1,33 @@
+# Dependencies and build output
+node_modules
+dist
+dist-e2e*
+dist-remote
+*.tsbuildinfo
+
+# Generated exercise catalog
+public/catalog/exercises.json
+public/catalog/instructions.json
+public/catalog/images
+.catalog-cache
+
+# Firebase emulator data and logs
+.firebase
+emulator-data
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# Test output
+coverage
+test-results
+playwright-report
+blob-report
+
+# Logs and local env
+*.log
+.env*.local
+.DS_Store
+
+# Agent tooling
+.playwright-cli

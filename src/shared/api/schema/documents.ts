@@ -1,0 +1,170 @@
+import { Timestamp } from 'firebase/firestore'
+import { z } from 'zod'
+
+// The 17 muscles of free-exercise-db.
+export const muscleSchema = z.enum([
+  'abdominals',
+  'abductors',
+  'adductors',
+  'biceps',
+  'calves',
+  'chest',
+  'forearms',
+  'glutes',
+  'hamstrings',
+  'lats',
+  'lower back',
+  'middle back',
+  'neck',
+  'quadriceps',
+  'shoulders',
+  'traps',
+  'triceps',
+])
+
+// free-exercise-db values plus `pull-up bar` from the catalog overrides (research R11).
+export const equipmentSchema = z.enum([
+  'bands',
+  'barbell',
+  'body only',
+  'cable',
+  'dumbbell',
+  'e-z curl bar',
+  'exercise ball',
+  'foam roll',
+  'kettlebells',
+  'machine',
+  'medicine ball',
+  'other',
+  'pull-up bar',
+])
+
+export const exerciseKindSchema = z.enum(['strength', 'bodyweight', 'timed', 'cardio'])
+
+const timestamp = z.instanceof(Timestamp)
+const id = z.string().min(1)
+const templateName = z.string().min(1).max(60)
+const templateSource = z.enum(['own', 'ready'])
+const kg = z.number().nonnegative()
+
+export const templateRefSchema = z.strictObject({ source: templateSource, id })
+
+// Up to five sets per weekday, in the order the user arranged them.
+const scheduleDay = z.array(templateRefSchema).max(5)
+
+export const profileSchema = z.strictObject({
+  homeEquipment: z.array(equipmentSchema),
+  defaultRestSec: z.int().min(0).max(900),
+  defaultWeightStepKg: z.union([z.literal(0.5), z.literal(1), z.literal(2.5), z.literal(5)]),
+  sounds: z.boolean(),
+  animations: z.boolean(),
+  schedule: z.strictObject({
+    mon: scheduleDay,
+    tue: scheduleDay,
+    wed: scheduleDay,
+    thu: scheduleDay,
+    fri: scheduleDay,
+    sat: scheduleDay,
+    sun: scheduleDay,
+  }),
+  activeWorkoutId: id.nullable(),
+  updatedAt: timestamp,
+})
+
+const planShape = {
+  sets: z.int().min(1).max(20),
+  reps: z.int().min(1).max(200).optional(),
+  durationSec: z.int().min(5).max(7200).optional(),
+  restSec: z.int().min(0).max(900),
+}
+
+const hasOneTarget = (plan: { reps?: number; durationSec?: number }) =>
+  (plan.reps === undefined) !== (plan.durationSec === undefined)
+
+const oneTarget = { message: 'Exactly one of reps and durationSec is required' }
+
+export const templateEntrySchema = z
+  .strictObject({ exerciseId: id, ...planShape })
+  .refine(hasOneTarget, oneTarget)
+
+export const templateSchema = z.strictObject({
+  name: templateName,
+  entries: z.array(templateEntrySchema).min(1).max(40),
+  copiedFrom: id.nullable(),
+  createdAt: timestamp,
+  updatedAt: timestamp,
+})
+
+export const loggedSetSchema = z.strictObject({
+  n: z.int().min(1).max(20),
+  reps: z.int().min(0).max(200).optional(),
+  weightKg: kg.optional(),
+  durationSec: z.int().min(0).max(7200).optional(),
+  at: timestamp,
+})
+
+export const workoutEntrySchema = z.strictObject({
+  exerciseId: id,
+  name: z.string().min(1),
+  kind: exerciseKindSchema,
+  status: z.enum(['pending', 'postponed', 'done', 'skipped']),
+  plan: z.strictObject(planShape).refine(hasOneTarget, oneTarget),
+  sets: z.array(loggedSetSchema).max(20),
+})
+
+const rating = z.int().min(1).max(5)
+
+export const workoutSchema = z.strictObject({
+  status: z.enum(['active', 'done']),
+  startedAt: timestamp,
+  endedAt: timestamp.nullable(),
+  template: z.strictObject({ source: templateSource, id, name: templateName }),
+  entries: z.array(workoutEntrySchema).max(60),
+  survey: z.strictObject({
+    wellbeing: rating.optional(),
+    energy: rating.optional(),
+    bodyWeightKg: z.number().positive().optional(),
+  }),
+  // null until the workout is finished.
+  summary: z
+    .strictObject({
+      durationSec: z.int().nonnegative(),
+      volumeKg: kg,
+      setsDone: z.int().nonnegative(),
+      muscleSets: z.partialRecord(muscleSchema, z.number().nonnegative()),
+    })
+    .nullable(),
+  updatedAt: timestamp,
+})
+
+export const exerciseStatsSchema = z.strictObject({
+  weightStepKg: z.number().positive().nullable(),
+  lastSets: z
+    .array(
+      z.strictObject({
+        reps: z.int().min(0).max(200).optional(),
+        weightKg: kg.optional(),
+        durationSec: z.int().min(0).max(7200).optional(),
+      }),
+    )
+    .max(20),
+  lastWorkoutId: id,
+  lastAt: timestamp,
+  records: z.strictObject({
+    maxWeightKg: kg.optional(),
+    maxVolumeKg: kg.optional(),
+    bestSet: z.strictObject({ reps: z.int().min(0), weightKg: kg, e1rmKg: kg }).optional(),
+  }),
+})
+
+export type Muscle = z.infer<typeof muscleSchema>
+export type Equipment = z.infer<typeof equipmentSchema>
+export type ExerciseKind = z.infer<typeof exerciseKindSchema>
+export type TemplateRef = z.infer<typeof templateRefSchema>
+export type Profile = z.infer<typeof profileSchema>
+export type TemplateEntry = z.infer<typeof templateEntrySchema>
+export type Template = z.infer<typeof templateSchema>
+export type LoggedSet = z.infer<typeof loggedSetSchema>
+export type WorkoutEntry = z.infer<typeof workoutEntrySchema>
+export type Workout = z.infer<typeof workoutSchema>
+export type ExerciseStats = z.infer<typeof exerciseStatsSchema>

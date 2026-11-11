@@ -1,0 +1,14 @@
+dist
+dist-e2e*
+coverage
+playwright-report
+test-results
+public/catalog
+.catalog-cache
+.claude
+.specify
+pnpm-lock.yaml
+*.log
+# Agent-written prose: table padding would bloat every diff.
+docs
+specs

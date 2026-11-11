@@ -1,0 +1,76 @@
+import {
+  getRedirectResult,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut,
+} from 'firebase/auth'
+
+import { auth } from './firebase'
+
+export interface AuthUser {
+  uid: string
+  displayName: string | null
+  email: string | null
+  photoURL: string | null
+}
+
+export type AuthErrorListener = (error: unknown) => void
+
+const listeners = new Set<AuthErrorListener>()
+
+export function onAuthError(listener: AuthErrorListener): () => void {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
+function report(error: unknown) {
+  if (listeners.size === 0) console.error('Auth failed', error)
+  for (const listener of listeners) listener(error)
+}
+
+// The page that completes sign-in: the Auth emulator, or the authDomain host in production.
+function handlerOrigin(): string {
+  const emulator = auth.emulatorConfig
+  const url = emulator
+    ? `${emulator.protocol}://${emulator.host}${emulator.port === null ? '' : `:${String(emulator.port)}`}`
+    : `https://${auth.app.options.authDomain ?? ''}`
+
+  return new URL(url).origin
+}
+
+// Research R3: a redirect result reaches the app through a handler-origin iframe, whose storage
+// Safari partitions unless the handler is the app's own origin; elsewhere use a popup.
+export function signInWithGoogle(): void {
+  const provider = new GoogleAuthProvider()
+  const flow =
+    import.meta.env.VITE_AUTH_FLOW ?? (handlerOrigin() === location.origin ? 'redirect' : 'popup')
+  const start = flow === 'popup' ? signInWithPopup : signInWithRedirect
+
+  start(auth, provider).catch(report)
+}
+
+export function completeRedirectSignIn(): Promise<void> {
+  return getRedirectResult(auth).then(() => undefined, report)
+}
+
+export function signOutUser(): void {
+  signOut(auth).catch(report)
+}
+
+export function subscribeAuth(listener: (user: AuthUser | null) => void): () => void {
+  return onAuthStateChanged(
+    auth,
+    (user) =>
+      listener(
+        user && {
+          uid: user.uid,
+          displayName: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+        },
+      ),
+    report,
+  )
+}

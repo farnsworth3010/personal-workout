@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "demo-workout",
+    "prod": "personal-workout-1b06f"
+  }
+}

@@ -1,0 +1,898 @@
+[
+  {
+    "id": "neck",
+    "name": "Шея",
+    "place": "home",
+    "entries": [
+      {
+        "exerciseId": "Shoulder_Circles",
+        "sets": 1,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Side_Neck_Stretch",
+        "sets": 2,
+        "durationSec": 20,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Chin_To_Chest_Stretch",
+        "sets": 2,
+        "durationSec": 20,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Isometric_Neck_Exercise_-_Front_And_Back",
+        "sets": 2,
+        "durationSec": 15,
+        "restSec": 20
+      },
+      {
+        "exerciseId": "Isometric_Neck_Exercise_-_Sides",
+        "sets": 2,
+        "durationSec": 15,
+        "restSec": 20
+      },
+      {
+        "exerciseId": "Upper_Back_Stretch",
+        "sets": 2,
+        "durationSec": 20,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Elbows_Back",
+        "sets": 2,
+        "durationSec": 20,
+        "restSec": 10
+      }
+    ]
+  },
+  {
+    "id": "back-care",
+    "name": "Спина",
+    "place": "home",
+    "entries": [
+      {
+        "exerciseId": "Cat_Stretch",
+        "sets": 2,
+        "durationSec": 20,
+        "restSec": 20
+      },
+      {
+        "exerciseId": "Superman",
+        "sets": 2,
+        "durationSec": 20,
+        "restSec": 20
+      },
+      {
+        "exerciseId": "Lower_Back_Curl",
+        "sets": 2,
+        "durationSec": 20,
+        "restSec": 20
+      },
+      {
+        "exerciseId": "Dead_Bug",
+        "sets": 2,
+        "reps": 8,
+        "restSec": 20
+      },
+      {
+        "exerciseId": "Plank",
+        "sets": 2,
+        "durationSec": 20,
+        "restSec": 20
+      },
+      {
+        "exerciseId": "Side_Bridge",
+        "sets": 4,
+        "durationSec": 20,
+        "restSec": 20
+      },
+      {
+        "exerciseId": "Elbows_Back",
+        "sets": 2,
+        "durationSec": 20,
+        "restSec": 20
+      }
+    ]
+  },
+  {
+    "id": "stretching",
+    "name": "Растяжка",
+    "place": "home",
+    "entries": [
+      {
+        "exerciseId": "Cat_Stretch",
+        "sets": 2,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Childs_Pose",
+        "sets": 2,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Upper_Back_Stretch",
+        "sets": 2,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Shoulder_Stretch",
+        "sets": 2,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Triceps_Stretch",
+        "sets": 2,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Kneeling_Hip_Flexor",
+        "sets": 2,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Hamstring_Stretch",
+        "sets": 2,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Standing_Gastrocnemius_Calf_Stretch",
+        "sets": 2,
+        "durationSec": 30,
+        "restSec": 10
+      }
+    ]
+  },
+  {
+    "id": "abs",
+    "name": "Пресс",
+    "place": "home",
+    "entries": [
+      {
+        "exerciseId": "Crunches",
+        "sets": 3,
+        "reps": 15,
+        "restSec": 45
+      },
+      {
+        "exerciseId": "Reverse_Crunch",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 45
+      },
+      {
+        "exerciseId": "Oblique_Crunches_-_On_The_Floor",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 45
+      },
+      {
+        "exerciseId": "Dead_Bug",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 45
+      },
+      {
+        "exerciseId": "Scissor_Kick",
+        "sets": 3,
+        "durationSec": 30,
+        "restSec": 30
+      },
+      {
+        "exerciseId": "Side_Bridge",
+        "sets": 2,
+        "durationSec": 30,
+        "restSec": 30
+      },
+      {
+        "exerciseId": "Plank",
+        "sets": 3,
+        "durationSec": 40,
+        "restSec": 45
+      }
+    ]
+  },
+  {
+    "id": "warm-up",
+    "name": "Разминка",
+    "place": "home",
+    "entries": [
+      {
+        "exerciseId": "Shoulder_Circles",
+        "sets": 1,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Arm_Circles",
+        "sets": 1,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Dynamic_Chest_Stretch",
+        "sets": 1,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Cat_Stretch",
+        "sets": 1,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Standing_Hip_Circles",
+        "sets": 1,
+        "durationSec": 40,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Bodyweight_Squat",
+        "sets": 1,
+        "reps": 10,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Inchworm",
+        "sets": 1,
+        "durationSec": 40,
+        "restSec": 15
+      }
+    ]
+  },
+  {
+    "id": "cool-down",
+    "name": "Заминка",
+    "place": "home",
+    "entries": [
+      {
+        "exerciseId": "One_Knee_To_Chest",
+        "sets": 1,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Hug_Knees_To_Chest",
+        "sets": 1,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Lying_Glute",
+        "sets": 1,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Seated_Floor_Hamstring_Stretch",
+        "sets": 1,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "On_Your_Side_Quad_Stretch",
+        "sets": 1,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Calf_Stretch_Hands_Against_Wall",
+        "sets": 1,
+        "durationSec": 30,
+        "restSec": 10
+      },
+      {
+        "exerciseId": "Overhead_Stretch",
+        "sets": 1,
+        "durationSec": 20,
+        "restSec": 10
+      }
+    ]
+  },
+  {
+    "id": "home-bodyweight",
+    "name": "Всё тело · A",
+    "place": "home",
+    "pairId": "full-body",
+    "entries": [
+      {
+        "exerciseId": "Bodyweight_Squat",
+        "sets": 3,
+        "reps": 15,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Pushups",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Butt_Lift_Bridge",
+        "sets": 3,
+        "reps": 15,
+        "restSec": 45
+      },
+      {
+        "exerciseId": "Superman",
+        "sets": 3,
+        "durationSec": 20,
+        "restSec": 30
+      },
+      {
+        "exerciseId": "Dead_Bug",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 45
+      },
+      {
+        "exerciseId": "Crunches",
+        "sets": 3,
+        "reps": 15,
+        "restSec": 45
+      },
+      {
+        "exerciseId": "Plank",
+        "sets": 3,
+        "durationSec": 30,
+        "restSec": 45
+      }
+    ]
+  },
+  {
+    "id": "home-dumbbells-bar",
+    "name": "Всё тело · B",
+    "place": "home",
+    "entries": [
+      {
+        "exerciseId": "Dumbbell_Squat",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 90
+      },
+      {
+        "exerciseId": "Pushups",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Chin-Up",
+        "sets": 3,
+        "reps": 6,
+        "restSec": 120
+      },
+      {
+        "exerciseId": "Bent_Over_Two-Dumbbell_Row",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 90
+      },
+      {
+        "exerciseId": "Stiff-Legged_Dumbbell_Deadlift",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 90
+      },
+      {
+        "exerciseId": "Standing_Dumbbell_Press",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 90
+      },
+      {
+        "exerciseId": "Dumbbell_Bicep_Curl",
+        "sets": 2,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Plank",
+        "sets": 3,
+        "durationSec": 40,
+        "restSec": 45
+      }
+    ]
+  },
+  {
+    "id": "gym-full-body",
+    "name": "Всё тело · C",
+    "place": "gym",
+    "pairId": "full-body",
+    "entries": [
+      {
+        "exerciseId": "Barbell_Squat",
+        "sets": 3,
+        "reps": 8,
+        "restSec": 120
+      },
+      {
+        "exerciseId": "Barbell_Bench_Press_-_Medium_Grip",
+        "sets": 3,
+        "reps": 8,
+        "restSec": 120
+      },
+      {
+        "exerciseId": "Wide-Grip_Lat_Pulldown",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 90
+      },
+      {
+        "exerciseId": "Seated_Cable_Rows",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 90
+      },
+      {
+        "exerciseId": "Romanian_Deadlift",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 120
+      },
+      {
+        "exerciseId": "Dumbbell_Shoulder_Press",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 90
+      },
+      {
+        "exerciseId": "Barbell_Curl",
+        "sets": 2,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Plank",
+        "sets": 3,
+        "durationSec": 40,
+        "restSec": 45
+      }
+    ]
+  },
+  {
+    "id": "legs-a",
+    "name": "День ног · A",
+    "place": "home",
+    "pairId": "legs",
+    "entries": [
+      {
+        "exerciseId": "Bodyweight_Squat",
+        "sets": 3,
+        "reps": 20,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Bodyweight_Walking_Lunge",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Step-up_with_Knee_Raise",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Single_Leg_Glute_Bridge",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 45
+      },
+      {
+        "exerciseId": "Glute_Kickback",
+        "sets": 3,
+        "reps": 15,
+        "restSec": 45
+      },
+      {
+        "exerciseId": "Side_Leg_Raises",
+        "sets": 2,
+        "durationSec": 30,
+        "restSec": 30
+      },
+      {
+        "exerciseId": "Sit_Squats",
+        "sets": 3,
+        "durationSec": 30,
+        "restSec": 45
+      }
+    ]
+  },
+  {
+    "id": "legs-b",
+    "name": "День ног · B",
+    "place": "home",
+    "entries": [
+      {
+        "exerciseId": "Plie_Dumbbell_Squat",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 90
+      },
+      {
+        "exerciseId": "Split_Squat_with_Dumbbells",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 90
+      },
+      {
+        "exerciseId": "Stiff-Legged_Dumbbell_Deadlift",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 90
+      },
+      {
+        "exerciseId": "Dumbbell_Step_Ups",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Dumbbell_Rear_Lunge",
+        "sets": 2,
+        "reps": 10,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Butt_Lift_Bridge",
+        "sets": 3,
+        "reps": 15,
+        "restSec": 45
+      },
+      {
+        "exerciseId": "Standing_Dumbbell_Calf_Raise",
+        "sets": 3,
+        "reps": 15,
+        "restSec": 45
+      }
+    ]
+  },
+  {
+    "id": "gym-legs",
+    "name": "День ног · C",
+    "place": "gym",
+    "pairId": "legs",
+    "entries": [
+      {
+        "exerciseId": "Barbell_Squat",
+        "sets": 4,
+        "reps": 8,
+        "restSec": 150
+      },
+      {
+        "exerciseId": "Leg_Press",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 120
+      },
+      {
+        "exerciseId": "Romanian_Deadlift",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 120
+      },
+      {
+        "exerciseId": "Dumbbell_Lunges",
+        "sets": 2,
+        "reps": 10,
+        "restSec": 90
+      },
+      {
+        "exerciseId": "Lying_Leg_Curls",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Leg_Extensions",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Standing_Calf_Raises",
+        "sets": 3,
+        "reps": 15,
+        "restSec": 60
+      }
+    ]
+  },
+  {
+    "id": "arms-a",
+    "name": "День рук и плеч · A",
+    "place": "home",
+    "pairId": "arms",
+    "entries": [
+      {
+        "exerciseId": "Shoulder_Press_-_With_Bands",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Lateral_Raise_-_With_Bands",
+        "sets": 3,
+        "reps": 15,
+        "restSec": 45
+      },
+      {
+        "exerciseId": "Band_Pull_Apart",
+        "sets": 3,
+        "reps": 15,
+        "restSec": 45
+      },
+      {
+        "exerciseId": "External_Rotation_with_Band",
+        "sets": 2,
+        "reps": 15,
+        "restSec": 30
+      },
+      {
+        "exerciseId": "Bench_Dips",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Push-Ups_-_Close_Triceps_Position",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Band_Skull_Crusher",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 45
+      }
+    ]
+  },
+  {
+    "id": "arms-b",
+    "name": "День рук и плеч · B",
+    "place": "home",
+    "entries": [
+      {
+        "exerciseId": "Arnold_Dumbbell_Press",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 90
+      },
+      {
+        "exerciseId": "Side_Lateral_Raise",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Reverse_Flyes",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Hammer_Curls",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Concentration_Curls",
+        "sets": 2,
+        "reps": 12,
+        "restSec": 45
+      },
+      {
+        "exerciseId": "Standing_Dumbbell_Triceps_Extension",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Tricep_Dumbbell_Kickback",
+        "sets": 2,
+        "reps": 12,
+        "restSec": 45
+      }
+    ]
+  },
+  {
+    "id": "arms-c",
+    "name": "День рук и плеч · C",
+    "place": "gym",
+    "pairId": "arms",
+    "entries": [
+      {
+        "exerciseId": "Seated_Barbell_Military_Press",
+        "sets": 3,
+        "reps": 8,
+        "restSec": 120
+      },
+      {
+        "exerciseId": "Cable_Seated_Lateral_Raise",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Face_Pull",
+        "sets": 3,
+        "reps": 15,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Barbell_Curl",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Preacher_Curl",
+        "sets": 2,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Triceps_Pushdown_-_Rope_Attachment",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Close-Grip_Barbell_Bench_Press",
+        "sets": 3,
+        "reps": 8,
+        "restSec": 90
+      }
+    ]
+  },
+  {
+    "id": "chest-a",
+    "name": "День груди · A",
+    "place": "home",
+    "pairId": "chest",
+    "entries": [
+      {
+        "exerciseId": "Incline_Push-Up",
+        "sets": 2,
+        "reps": 12,
+        "restSec": 45
+      },
+      {
+        "exerciseId": "Pushups",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Push-Up_Wide",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Decline_Push-Up",
+        "sets": 3,
+        "reps": 8,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Isometric_Chest_Squeezes",
+        "sets": 3,
+        "durationSec": 20,
+        "restSec": 30
+      },
+      {
+        "exerciseId": "Bench_Dips",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Dynamic_Chest_Stretch",
+        "sets": 1,
+        "durationSec": 30,
+        "restSec": 10
+      }
+    ]
+  },
+  {
+    "id": "chest-b",
+    "name": "День груди · B",
+    "place": "home",
+    "entries": [
+      {
+        "exerciseId": "Dumbbell_Bench_Press",
+        "sets": 4,
+        "reps": 10,
+        "restSec": 90
+      },
+      {
+        "exerciseId": "Incline_Dumbbell_Press",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 90
+      },
+      {
+        "exerciseId": "Dumbbell_Flyes",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Straight-Arm_Dumbbell_Pullover",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Close-Grip_Dumbbell_Press",
+        "sets": 3,
+        "reps": 10,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Push-Ups_With_Feet_Elevated",
+        "sets": 2,
+        "reps": 10,
+        "restSec": 60
+      }
+    ]
+  },
+  {
+    "id": "gym-push",
+    "name": "День груди · C",
+    "place": "gym",
+    "pairId": "chest",
+    "entries": [
+      {
+        "exerciseId": "Barbell_Bench_Press_-_Medium_Grip",
+        "sets": 4,
+        "reps": 8,
+        "restSec": 120
+      },
+      {
+        "exerciseId": "Barbell_Incline_Bench_Press_-_Medium_Grip",
+        "sets": 3,
+        "reps": 8,
+        "restSec": 120
+      },
+      {
+        "exerciseId": "Cable_Crossover",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Butterfly",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      },
+      {
+        "exerciseId": "Dips_-_Chest_Version",
+        "sets": 3,
+        "reps": 8,
+        "restSec": 90
+      },
+      {
+        "exerciseId": "Triceps_Pushdown",
+        "sets": 3,
+        "reps": 12,
+        "restSec": 60
+      }
+    ]
+  }
+]

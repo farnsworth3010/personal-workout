@@ -292,7 +292,7 @@ The owner confirmed these on 2026-11-11.
 
 - Sign-in is Google only; there is no email/password and no account deletion flow in this version.
 - Weights are in kilograms; there is no unit setting.
-- Muscle load counts a set as 1 for each primary muscle of the exercise and ½ for each secondary muscle, as in the approved statistics prototype.
+- Muscle load counts a set as 1 for each primary muscle of the exercise and ½ for each secondary muscle, as in the approved statistics prototype. The weekly map groups it into four levels: none, 1–9, 10–20 and more than 20 sets.
 - Estimated duration of a set is computed from planned sets, reps or time and rests; it is an estimate, not a promise.
 - "Gym" means "needs equipment that is not in the person's home equipment list"; a set is a "home" set when none of its exercises is marked "gym".
 - The home/gym switch on the "today" screen swaps between paired ready-made variants; for the person's own sets it is shown only when a counterpart exists.

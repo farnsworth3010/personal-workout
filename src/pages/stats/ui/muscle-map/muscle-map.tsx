@@ -8,10 +8,9 @@ import { figure, midlineSpan, silhouette, type FigureView } from './shapes'
 
 const levelFill: Record<LoadLevel, string> = {
   0: 'fill-surface-2',
-  1: 'fill-primary/30',
-  2: 'fill-primary/50',
-  3: 'fill-primary/75',
-  4: 'fill-primary',
+  1: 'fill-primary/35',
+  2: 'fill-primary/65',
+  3: 'fill-primary',
 }
 
 // Untrained muscles get a dashed outline so they read as "not done".
@@ -114,18 +113,16 @@ export function MuscleMap({ load, selected, onSelect }: MuscleMapProps) {
 
 const legend: [LoadLevel, string][] = [
   [0, 'нет'],
-  [1, '1–3'],
-  [2, '4–7'],
-  [3, '8–11'],
-  [4, '12+ подходов'],
+  [1, '1–9'],
+  [2, '10–20'],
+  [3, '20+ подходов'],
 ]
 
 const swatchOpacity: Record<LoadLevel, string> = {
   0: 'hidden',
-  1: 'opacity-30',
-  2: 'opacity-50',
-  3: 'opacity-75',
-  4: '',
+  1: 'opacity-35',
+  2: 'opacity-65',
+  3: '',
 }
 
 export function MuscleLegend() {

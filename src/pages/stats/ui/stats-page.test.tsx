@@ -125,7 +125,7 @@ describe('StatsPage', () => {
       expect(screen.getByText('9–11 ноября · 2 тренировки')).toBeInTheDocument()
 
       await userEvent.click(screen.getByRole('button', { name: 'Грудь: 8 подходов' }))
-      expect(screen.getByText('высокая нагрузка')).toBeInTheDocument()
+      expect(screen.getByText('лёгкая нагрузка')).toBeInTheDocument()
 
       const untrained = screen.getByRole('list', { name: '' })
       expect(within(untrained).getByRole('button', { name: 'Шея' })).toBeInTheDocument()

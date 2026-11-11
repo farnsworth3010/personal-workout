@@ -2,6 +2,7 @@ import { equipmentLabels, type Equipment } from '@/entities/exercise'
 import { defaultProfile, useProfile } from '@/entities/profile'
 import { useSessionStore } from '@/entities/session'
 import { resetProgress } from '@/entities/workout'
+import { InstallSettings } from '@/features/install-app'
 import { signOutUser, type AuthUser } from '@/shared/api'
 import { cn } from '@/shared/lib'
 import { Badge, Button, Chip, HoldButton, PageHeader, Switch, toast, ValueStrip } from '@/shared/ui'
@@ -127,6 +128,7 @@ export function SettingsPage({ user }: { user: AuthUser }) {
               </Button>
             </div>
           </section>
+          <InstallSettings />
         </div>
 
         {/* Disables every control inside until the profile has loaded; role none keeps an unnamed group out of the tree. */}

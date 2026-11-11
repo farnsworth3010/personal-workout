@@ -2,18 +2,17 @@ import { muscleSchema, type Muscle, type Workout } from '@/shared/api'
 
 import { addDays, between, startOfDay, weekStart } from './dates'
 
-export type LoadLevel = 0 | 1 | 2 | 3 | 4
+export type LoadLevel = 0 | 1 | 2 | 3
 
-// Sets per week: 0 none, under 4 light, under 8 medium, under 12 high, 12+ heavy.
+// Sets per week (owner's scale): 0 none, 1–9 light, 10–20 working, over 20 heavy.
 export const loadLevel = (sets: number): LoadLevel =>
-  sets <= 0 ? 0 : sets < 4 ? 1 : sets < 8 ? 2 : sets < 12 ? 3 : 4
+  sets <= 0 ? 0 : sets < 10 ? 1 : sets <= 20 ? 2 : 3
 
 export const loadLevelLabels: Record<LoadLevel, string> = {
   0: 'не тренировали',
   1: 'лёгкая нагрузка',
-  2: 'средняя нагрузка',
+  2: 'рабочая нагрузка',
   3: 'высокая нагрузка',
-  4: 'тяжёлая нагрузка',
 }
 
 /** Sets per muscle from Monday to today, from the summaries written at finish. */

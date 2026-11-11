@@ -95,7 +95,7 @@ local read. It is rebuilt from workouts if missing.
 | Prediction for set N | `lastSets[N-1]`, else the last known set, else the plan with no weight; plus the weight shift chosen earlier in this exercise today |
 | Volume | Σ reps × weightKg over logged sets |
 | Best set | highest estimated 1RM, Epley: `weight × (1 + reps / 30)` |
-| Muscle load | per logged set: +1 for each primary muscle, +0.5 for each secondary |
+| Muscle load | per logged set: +1 for each primary muscle, +0.5 for each secondary; the weekly map shows four levels per muscle: 0, under 10, 10–20 and over 20 sets (owner, 2026-11-11) |
 | "Gym" mark | exercise equipment not in `homeEquipment` and not body weight |
 | Estimated duration | Σ over entries: sets × (work time + rest), where work time is `durationSec` or `reps × 4 s`, plus 1 min per exercise for the transition to it (kept by the owner, 2026-11-11) |
 

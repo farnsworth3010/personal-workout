@@ -32,13 +32,11 @@ describe('loadLevel', () => {
   it.each([
     [0, 0],
     [0.5, 1],
-    [3.5, 1],
-    [4, 2],
-    [7.5, 2],
-    [8, 3],
-    [11.5, 3],
-    [12, 4],
-    [30, 4],
+    [9.5, 1],
+    [10, 2],
+    [20, 2],
+    [20.5, 3],
+    [30, 3],
   ])('%s sets → level %s', (sets, level) => {
     expect(loadLevel(sets)).toBe(level)
   })
@@ -85,15 +83,14 @@ describe('MuscleMap', () => {
 })
 
 describe('MuscleLegend', () => {
-  it('shows the five levels', () => {
+  it('shows the four levels', () => {
     render(<MuscleLegend />)
 
     expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual([
       'нет',
-      '1–3',
-      '4–7',
-      '8–11',
-      '12+ подходов',
+      '1–9',
+      '10–20',
+      '20+ подходов',
     ])
   })
 })

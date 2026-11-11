@@ -11,6 +11,7 @@ import {
 } from '@/entities/session'
 import type { Place, TemplateRef } from '@/entities/template'
 import { useWorkoutHistory } from '@/entities/workout'
+import { InstallHint } from '@/features/install-app'
 import type { AuthUser, WithId, Workout } from '@/shared/api'
 import { unlockAudio } from '@/shared/lib'
 import { Button, Sheet, SheetContent } from '@/shared/ui'
@@ -162,6 +163,7 @@ export function TodayPage({ user }: { user: AuthUser }) {
 
       <div className="flex flex-col gap-7 min-[900px]:grid min-[900px]:grid-cols-[minmax(0,1.5fr)_minmax(300px,1fr)] min-[900px]:items-start min-[900px]:gap-12">
         <div className="flex min-w-0 flex-col gap-7">
+          <InstallHint />
           {(active || finishing) && (
             <section aria-labelledby="running-title" className="flex flex-col gap-3.5">
               <div>

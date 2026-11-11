@@ -1,0 +1,28 @@
+# The root pnpm-workspace.yaml's supply-chain settings; this file makes deploy/ its own workspace.
+minimumReleaseAge: 10080
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
+trustPolicy: no-downgrade
+trustLockfile: false
+blockExoticSubdeps: true
+strictDepBuilds: true
+allowBuilds:
+  '@firebase/util': false
+  protobufjs: false
+  lefthook: true
+  # optional native dependency of firebase-tools (superstatic), approved by the owner 2026-11-11
+  're2@1.27.0': true
+trustPolicyExclude:
+  # chokidar 4.0.2+ lost provenance; needed by steiger and firebase-tools, approved by the owner 2026-11-11
+  - chokidar@4.0.3
+  # workbox-build fork dep without provenance; needed by vite-plugin-pwa, approved by the owner 2026-11-11
+  - '@trickfilm400/rollup-plugin-off-main-thread@3.0.0-pre1'
+saveExact: true
+engineStrict: true
+verifyDepsBeforeRun: install
+pmOnFail: download
+audit:
+  level: high
+  ignore:
+    # grpc-js pinned by the Firebase SDK, Node build of Firestore only, not in the browser bundle; approved by the owner 2026-11-11
+    - GHSA-m9gg-hp2v-232j

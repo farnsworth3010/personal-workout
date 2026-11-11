@@ -126,17 +126,20 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      # pnpm and Node from deploy/package.json; the install below skips the app's dependencies.
+      - uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
         with:
-          node-version-file: .nvmrc
+          working-directory: deploy
+          install: false
 
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: dist
           path: dist/
 
-      # The devDependencies version; deploy needs no native module, so install scripts stay off.
-      - run: npm install --global --ignore-scripts --no-audit --no-fund firebase-tools@15.34.2
+      # Only firebase-tools, from the committed deploy/pnpm-lock.yaml under the root's supply-chain settings.
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+        working-directory: deploy
 
       - name: Deploy rules and hosting
         env:
@@ -144,4 +147,4 @@ jobs:
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/service-account.json"
           printf '%s' "$SERVICE_ACCOUNT" > "$GOOGLE_APPLICATION_CREDENTIALS"
-          firebase deploy --only firestore:rules,hosting --project personal-workout-1b06f --non-interactive
+          deploy/node_modules/.bin/firebase deploy --only firestore:rules,hosting --project personal-workout-1b06f --non-interactive

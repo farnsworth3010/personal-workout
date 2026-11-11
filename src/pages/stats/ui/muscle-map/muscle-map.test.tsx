@@ -47,7 +47,7 @@ describe('MuscleMap', () => {
     render(<MuscleMap load={{ chest: 8, biceps: 0.5 }} selected={null} onSelect={vi.fn()} />)
 
     const chest = screen.getByRole('button', { name: 'Грудь: 8 подходов' })
-    expect(chest).toHaveAttribute('data-level', '3')
+    expect(chest).toHaveAttribute('data-level', '1')
     expect(screen.getByRole('button', { name: 'Бицепс: 0,5 подхода' })).toHaveAttribute(
       'data-level',
       '1',

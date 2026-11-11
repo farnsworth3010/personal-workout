@@ -1,22 +1,73 @@
 # Personal Workout
 
-Workout app for home and gym: React + Vite, Feature-Sliced Design, shadcn/ui, Tailwind CSS,
-Firebase (Spark plan: Hosting, Auth, Firestore). Russian UI, one dark theme, installable PWA.
+A workout planner and logger for home and the gym. Plan the week from ready-made or your own sets,
+follow a set exercise by exercise with photos, timers and one-tap logging, and see how you progress:
+weekly muscle load, regularity, working weights and body weight. It is a dark, phone-first PWA in
+Russian that installs to the home screen and keeps working mid-workout without a network.
 
-## Prerequisites
+## Features
+
+- **Today**: the day's sets in order, a home / gym switch that swaps a set for its counterpart, the
+  week at a glance and the last workout.
+- **Workout session**: a card per exercise with start and end photos, planned reps or time, a rest
+  timer with sound, and reps and weight pickers that predict the next set from your history. Back,
+  skip, add an exercise and finish early are always one tap (or a hold on touch) away.
+- **Finish**: duration, volume, done and skipped exercises, new records, and a short survey
+  (wellbeing, energy, body weight; each item can be skipped).
+- **Sets**: 18 ready-made sets (full body, leg, arm and shoulder, chest days in three variants each,
+  plus neck, back care, stretching, abs, warm-up and cool-down), copied and edited into your own; a
+  weekly schedule with up to five sets per day.
+- **Exercise catalog**: 876 exercises from free-exercise-db with photos, muscles, equipment and
+  steps; search and filters live in the URL, and "home only" hides what needs gym equipment.
+- **Statistics**: a front and back muscle map of the week's sets, a calendar of workouts, progress
+  charts per exercise (weight, volume, reps), personal records and body weight; every finished
+  workout opens in full.
+- **Offline and installable**: the session never waits for the network, Firestore syncs when it is
+  back, and a hint explains how to install the app on iOS and Android.
+
+## Screenshots
+
+|                                                 Today                                                 |                                                Session                                                |                                              Rest                                               |                                        Finish                                        |
+| :---------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------: |
+| <img src="docs/screenshots/today.jpg" width="200" alt="Today: the day's sets with the next one open"> | <img src="docs/screenshots/session.jpg" width="200" alt="Session: exercise card with photo and plan"> | <img src="docs/screenshots/rest.jpg" width="200" alt="Rest timer with reps and weight pickers"> | <img src="docs/screenshots/finish.jpg" width="200" alt="Finish: summary and survey"> |
+
+|                                Muscle load                                 |                                                  Progress                                                  |                                        Past workout                                         |                                         Sets                                         |                                          Catalog                                           |
+| :------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------: |
+| <img src="docs/screenshots/stats.jpg" width="160" alt="Weekly muscle map"> | <img src="docs/screenshots/stats-progress.jpg" width="160" alt="Exercise progress and body weight charts"> | <img src="docs/screenshots/workout.jpg" width="160" alt="A finished workout with its sets"> | <img src="docs/screenshots/templates.jpg" width="160" alt="Own and ready-made sets"> | <img src="docs/screenshots/exercises.jpg" width="160" alt="Exercise catalog with filters"> |
+
+On a desktop, navigation moves to a sidebar and the screens use two columns:
+
+<img src="docs/screenshots/today-desktop.jpg" width="640" alt="Today on a desktop">
+<img src="docs/screenshots/stats-desktop.jpg" width="640" alt="Statistics on a desktop">
+
+The screenshots use demo data seeded into the Firebase emulators.
+
+## Stack
+
+React 19, Vite, TypeScript (strict), React Router (data mode), TanStack Query, Zod, Tailwind CSS 4 with
+shadcn/ui on Radix, recharts, Firebase (Spark plan: Hosting, Auth with Google, Firestore; no Cloud
+Functions or Storage), vite-plugin-pwa. Tests: Vitest (unit and jsdom UI projects), Playwright (mobile
+390×844, desktop 1280×800, offline), Firestore rules tests on the emulator. Linting: ESLint, Prettier,
+Steiger for Feature-Sliced Design, commitlint with Lefthook.
+
+## Requirements
 
 - Node 24 via nvm (`nvm use`, version in `.nvmrc`).
 - pnpm: any pnpm on PATH switches itself to the version pinned in `package.json` (`devEngines`).
 - Java 21 for the Firebase emulators.
 
+## Setup
+
 ```sh
 pnpm install --frozen-lockfile
 pnpm catalog   # first run downloads about 100 MB from GitHub into .catalog-cache/
+pnpm dev       # emulators (UI on :4000) and Vite on 127.0.0.1:5173
 ```
 
-Firebase settings are optional in development: see `.env.example`.
+Firebase settings are optional in development: without them the app talks to the emulators. See
+`.env.example`.
 
-## Commands
+## Scripts
 
 | Command                        | What it does                                                               |
 | ------------------------------ | -------------------------------------------------------------------------- |
@@ -31,41 +82,23 @@ Firebase settings are optional in development: see `.env.example`.
 | `pnpm test`, `pnpm test:watch` | Vitest projects `unit` and `ui`                                            |
 | `pnpm test:rules`              | Firestore rules tests on the emulator                                      |
 | `pnpm e2e`, `pnpm e2e:ui`      | Playwright, mobile 390×844 and desktop 1280×800; starts `pnpm dev`         |
+| `pnpm e2e:offline`             | The offline Playwright project alone, over a production build              |
 | `pnpm check`                   | catalog, typecheck, test, build, lint, test:rules, e2e, audits             |
+
+In development `/dev/ui` shows every shared UI component; the route is not in production builds.
+
+## Tests and test ports
 
 `pnpm test:rules` and `pnpm e2e` start their own emulators on the ports of `firebase.json`, so stop
 `pnpm dev` before `pnpm check`.
-`TEST_PORT_OFFSET=<1-999> pnpm test:rules` (or `pnpm e2e`) shifts every emulator, Vite and preview port by the offset
-(`scripts/lib/test-ports.ts`), so several runs can go side by side; 0, the default, keeps the ports above.
-Offsets that would hit a `pnpm dev:remote` port (100, for example) are refused with a message.
-`pnpm e2e` skips `e2e/offline.spec.ts` and its production build; `pnpm e2e:offline` runs it alone, CI and `pnpm check` run both.
 
-In development `/dev/ui` shows every shared UI component; the route is not in production builds.
-The dev server also answers on Tailscale names (`*.ts.net`).
-`DEV_HOST=<tailscale-ip> pnpm dev:remote` serves Vite (optional `DEV_PORT`, default 5173) and the emulators
-(Auth :9199, Firestore :8180) on that address only, so a phone or another computer on the tailnet can sign in.
-Vite proxies the Auth emulator on the app's own origin (`scripts/vite.remote.config.ts`), so sign-in is the
-same-origin redirect production uses, not a popup.
-`DEV_HOST=<tailscale-ip> pnpm preview:remote` is the same over a production bundle: it builds
-`dist-remote/` in mode `e2e` with the remote emulators and project `demo-workout-remote` (never
-`.env.production.local`) and serves it with `vite preview`, so a phone loads a few bundled files instead of
-the dev server's hundreds of modules. No hot reload; rerun it after changes. Over plain http the service
-worker stays off. `TEST_PORT_OFFSET=<n>` moves its emulators to that test environment's ports, to try it
-beside a running demo.
+`TEST_PORT_OFFSET=<1-999> pnpm test:rules` (or `pnpm e2e`) shifts every emulator, Vite and preview port
+by the offset (`scripts/lib/test-ports.ts`), so several runs can go side by side; 0, the default, keeps
+the ports above. Offsets that would hit a `pnpm dev:remote` port (100, for example) are refused with a
+message.
 
-## PWA and offline
-
-The service worker (vite-plugin-pwa, `generateSW`) exists only in production builds and is registered
-by `src/app/layout/pwa-update.tsx` with the platform API (no workbox-window); `pnpm dev` and
-the e2e runs on the dev server have none. Service workers and installation need a secure context:
-`localhost`/`127.0.0.1` or HTTPS. Over plain http on a Tailscale address the app runs, but it neither
-installs nor works offline, and `navigator.storage.persist()` is skipped; check those on the deployed
-HTTPS site.
-
-Icons: `public/icon.svg` is the source. The PNGs were rendered with Inkscape 1.4:
-`inkscape public/icon.svg -w 192 -h 192 -o public/pwa-192x192.png` (and 512); the maskable 512 and
-the 180 Apple touch icon come from the same drawing without the rounded corners (`rx`), so iOS and
-Android launchers apply their own mask.
+`pnpm e2e` skips `e2e/offline.spec.ts` and its production build; `pnpm e2e:offline` runs it alone, and
+CI and `pnpm check` run both.
 
 ### Offline e2e
 
@@ -75,41 +108,98 @@ Android launchers apply their own mask.
 mode `e2e` with a project id that does not start with `demo-`, so this build can never reach a real
 project. The output goes to `dist-e2e*/`, never to the `dist/` that `pnpm deploy` uploads.
 
-Run it with `pnpm e2e:offline` (alone, the `offline` Playwright project) or as part of `pnpm check`;
 Playwright builds and serves the preview itself, on 4173 plus `TEST_PORT_OFFSET`, with service workers
 allowed. `pnpm preview:e2e` serves the same build by hand, for trying installation and offline mode in
 local Chrome.
 
+## Emulators on another device
+
+The dev server also answers on Tailscale names (`*.ts.net`).
+
+- `DEV_HOST=<tailscale-ip> pnpm dev:remote` serves Vite (optional `DEV_PORT`, default 5173) and the
+  emulators (Auth :9199, Firestore :8180) on that address only, so a phone or another computer on the
+  tailnet can sign in. Vite proxies the Auth emulator on the app's own origin
+  (`scripts/vite.remote.config.ts`), so sign-in is the same-origin redirect production uses, not a
+  popup.
+- `DEV_HOST=<tailscale-ip> pnpm preview:remote` does the same over a production bundle. It builds
+  `dist-remote/` in mode `e2e` with the remote emulators and project `demo-workout-remote` (never
+  `.env.production.local`) and serves it with `vite preview`, so a phone loads a few bundled files
+  instead of the dev server's hundreds of modules. There is no hot reload: rerun it after changes.
+  Over plain http the service worker stays off. `TEST_PORT_OFFSET=<n>` moves its emulators to that test
+  environment's ports, to try it beside a running demo.
+
+## PWA and offline
+
+The service worker (vite-plugin-pwa, `generateSW`) exists only in production builds and is registered
+by `src/app/layout/pwa-update.tsx` with the platform API (no workbox-window); `pnpm dev` and the e2e runs
+on the dev server have none. Service workers and installation need a secure context: `localhost`,
+`127.0.0.1` or HTTPS. Over plain http on a Tailscale address the app runs, but it neither installs nor
+works offline, and `navigator.storage.persist()` is skipped; check those on the deployed HTTPS site.
+
+Icons: `public/icon.svg` is the source. The PNGs were rendered with Inkscape 1.4:
+`inkscape public/icon.svg -w 192 -h 192 -o public/pwa-192x192.png` (and 512). The maskable 512 and the
+180 Apple touch icon come from the same drawing without the rounded corners (`rx`), so iOS and Android
+launchers apply their own mask.
+
 ## Deploy
 
-Every push to `main` deploys once `.github/workflows/ci.yml` passes: job `build-prod` (needs `check`, no
-secrets) writes `.env.production.local` from the variables below, runs `pnpm catalog` and `pnpm build` and
-uploads `dist/`; job `deploy` downloads it and runs `firebase-tools` installed from `deploy/` (its own lockfile and a copy
-of the root supply-chain settings, without the app's dependencies) with
-`firebase deploy --only firestore:rules,hosting --project personal-workout-1b06f`.
-To change its version, edit `deploy/package.json` to match the root, copy `pnpm-lock.yaml` into `deploy/`
-and run `pnpm install --lockfile-only` there: pnpm keeps the root's resolutions and drops the rest.
+Every push to `main` deploys once `.github/workflows/ci.yml` passes:
+
+1. Job `build-prod` (needs `check`, no secrets) writes `.env.production.local` from the variables below,
+   runs `pnpm catalog` and `pnpm build`, and uploads `dist/`.
+2. Job `deploy` downloads it and runs `firebase-tools`, installed from `deploy/` (its own lockfile and a
+   copy of the root supply-chain settings, without the app's dependencies), with
+   `firebase deploy --only firestore:rules,hosting --project personal-workout-1b06f`.
+
+To change the `firebase-tools` version, edit `deploy/package.json` to match the root, copy
+`pnpm-lock.yaml` into `deploy/` and run `pnpm install --lockfile-only` there: pnpm keeps the root's
+resolutions and drops the rest.
+
 Add in GitHub, Settings → Secrets and variables → Actions:
 
-- secret `FIREBASE_SERVICE_ACCOUNT_PERSONAL_WORKOUT_1B06F`: the deploy service account's JSON key (the one
-  `firebase init hosting:github` creates);
+- secret `FIREBASE_SERVICE_ACCOUNT_PERSONAL_WORKOUT_1B06F`: the deploy service account's JSON key (the
+  one `firebase init hosting:github` creates);
 - variables `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`,
   `VITE_FIREBASE_APP_ID`: the web app config, the values of `.env.production.local`.
 
-## Adding a shadcn component
+## Project structure
+
+The app follows [Feature-Sliced Design](https://feature-sliced.design/): layers import only downwards
+and only through a slice's `index.ts`; Steiger checks it in `pnpm lint`.
+
+```text
+src/
+  app/        entry, router, layouts (auth gate, navigation, session guard), styles and theme tokens
+  pages/      today, session, finish, templates, template-edit, exercises, stats, workout, settings, login
+  widgets/    app-nav, exercise-details
+  features/   pick-exercise, install-app
+  entities/   exercise, template, workout, session, profile
+  shared/     api (Firebase, Zod schemas), lib, ui (shadcn components)
+e2e/          Playwright specs and emulator fixtures
+scripts/      catalog build, test environment and ports, remote dev server
+specs/        spec, plan, data model, contracts and tasks
+```
+
+Colours come only from the theme tokens in `src/app/styles/tokens.css`; `pnpm lint` rejects colour
+literals elsewhere.
+
+### Adding a shadcn component
 
 Every component in `src/shared/ui` lives in its own folder: `<name>/<name>.tsx`, its test and an
-`index.ts` with its public names, re-exported from `src/shared/ui/index.ts`. The shadcn CLI writes
-flat files, so either run `pnpm exec shadcn add <name>` in a scratch copy of the project and copy the
-file over, or let it write `src/shared/ui/<name>.tsx` here and move it into `src/shared/ui/<name>/`.
-Then add the folder's `index.ts` and the re-export. Inside `shared/ui`, import a sibling component
-through its folder (`../button`), never its file.
+`index.ts` with its public names, re-exported from `src/shared/ui/index.ts`. The shadcn CLI writes flat
+files, so either run `pnpm exec shadcn add <name>` in a scratch copy of the project and copy the file
+over, or let it write `src/shared/ui/<name>.tsx` here and move it into `src/shared/ui/<name>/`. Then add
+the folder's `index.ts` and the re-export. Inside `shared/ui`, import a sibling component through its
+folder (`../button`), never its file.
 
 ## Supply chain
 
-- pnpm only, lockfile committed, installs frozen; dependency install scripts blocked unless allow-listed.
-- A version must be 7 days old, publisher trust must not drop, versions are saved exact; exceptions are commented entries.
-- Settings live in `pnpm-workspace.yaml`; the rules are principle VIII of `.specify/memory/constitution.md`.
+- pnpm only, lockfile committed, installs frozen; dependency install scripts are blocked unless
+  allow-listed.
+- A version must be 7 days old, publisher trust must not drop, and versions are saved exact; exceptions
+  are commented entries.
+- Settings live in `pnpm-workspace.yaml`; the rules are principle VIII of
+  `.specify/memory/constitution.md`.
 
 ## First commit and Lefthook
 
@@ -119,6 +209,6 @@ commit with `LEFTHOOK=0`. Later commits run the hooks normally.
 
 ## Docs
 
-- `docs/requirements.md` — requirements and backlog.
-- `specs/001-workout-app/` — spec, plan, data model, contracts, tasks.
-- `docs/skills.md` — installed agent skills and their local patches.
+- `docs/requirements.md`: requirements and backlog.
+- `specs/001-workout-app/`: spec, plan, data model, contracts, tasks.
+- `docs/skills.md`: installed agent skills and their local patches.

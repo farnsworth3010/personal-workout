@@ -80,9 +80,12 @@ local Chrome.
 
 ## Deploy
 
-`.github/workflows/deploy.yml` deploys on every push to `main` (or by hand, "Run workflow"): it builds the
-catalog and the app, then runs the pinned `firebase-tools` with `firebase deploy --only firestore:rules,hosting`
-to `personal-workout-1b06f`. Add in GitHub, Settings → Secrets and variables → Actions:
+Every push to `main` deploys once `.github/workflows/ci.yml` passes: job `build-prod` (needs `check`, no
+secrets) writes `.env.production.local` from the variables below, runs `pnpm catalog` and `pnpm build` and
+uploads `dist/`; job `deploy` downloads it and runs `firebase-tools@15.34.2` (installed alone, without the
+project's dependencies; keep it equal to `devDependencies`) with
+`firebase deploy --only firestore:rules,hosting --project personal-workout-1b06f`.
+Add in GitHub, Settings → Secrets and variables → Actions:
 
 - secret `FIREBASE_SERVICE_ACCOUNT_PERSONAL_WORKOUT_1B06F`: the deploy service account's JSON key (the one
   `firebase init hosting:github` creates);

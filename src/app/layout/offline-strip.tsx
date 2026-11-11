@@ -22,7 +22,7 @@ export function OfflineStrip() {
     <div
       data-offline-strip
       role="status"
-      className="border-b border-border bg-surface-2 px-4 pt-[calc(4px+env(safe-area-inset-top))] pb-1 text-center text-xs text-muted-foreground"
+      className="border-b border-border bg-surface-2 px-4 pt-1 pb-1 text-center text-xs text-muted-foreground max-[900px]:pt-[calc(env(safe-area-inset-top)+16px)]"
     >
       Офлайн · данные сохранятся и отправятся при подключении
     </div>

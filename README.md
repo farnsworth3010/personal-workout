@@ -5,6 +5,8 @@ follow a set exercise by exercise with photos, timers and one-tap logging, and s
 weekly muscle load, regularity, working weights and body weight. It is a dark, phone-first PWA in
 Russian that installs to the home screen and keeps working mid-workout without a network.
 
+**Live app:** https://personal-workout-1b06f.web.app
+
 ## Features
 
 - **Today**: the day's sets in order, a home / gym switch that swaps a set for its counterpart, the

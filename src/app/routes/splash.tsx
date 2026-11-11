@@ -32,7 +32,7 @@ export function PendingBar() {
         aria-label="Загрузка страницы"
         aria-hidden={!pending}
         className={cn(
-          'pointer-events-none fixed inset-x-0 top-0 z-50 h-0.5 transition-opacity',
+          'pointer-events-none fixed inset-x-0 top-0 z-50 h-0.5 transition-opacity max-[900px]:top-[env(safe-area-inset-top)]',
           pending ? 'opacity-100 delay-200' : 'opacity-0',
         )}
       >

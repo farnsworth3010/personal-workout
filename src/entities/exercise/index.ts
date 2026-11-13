@@ -1,14 +1,9 @@
-export {
-  catalogQuery,
-  findExercise,
-  instructionsQuery,
-  useCatalog,
-  useCatalogById,
-  useExercise,
-} from './api/catalog'
+export { catalogQuery, findExercise, useCatalog, useCatalogById, useExercise } from './api/catalog'
 export { muscleGroups, type MuscleGroup } from './config/groups'
 export { equipmentLabels, equipmentList, kindLabels, muscleLabels } from './config/labels'
 export { isGymOnly, photoUrl } from './lib/exercise'
-export { filterCatalog, noFilter, type CatalogFilter } from './lib/filter'
-export type { Equipment, ExerciseKind, Muscle } from '@/shared/api'
-export type { Exercise } from './model/types'
+export { filterCatalog } from './lib/filter'
+export { muscleGroupsText, muscleLine } from './lib/muscles'
+export type { Equipment } from '@/shared/api'
+export type { CatalogChoice, Exercise, ExercisesById } from './model/types'
+export { CatalogFilters } from './ui/catalog-filters'

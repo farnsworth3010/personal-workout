@@ -29,12 +29,7 @@ import {
 
 import type { MuscleFacts } from '../model/summary'
 import { exerciseStatsAfter, finishedWorkout } from './documents'
-
-const workoutQueryKey = (uid: string, workoutId: string) => ['workout', uid, workoutId] as const
-
-const activeWorkoutQueryKey = (uid: string) => ['workout', uid, 'active'] as const
-
-const exerciseStatsQueryKey = (uid: string) => ['exerciseStats', uid] as const
+import { workoutKeys } from './keys'
 
 // Called after every logged set.
 export function saveActiveWorkout(uid: string, workoutId: string, workout: Workout): void {
@@ -109,7 +104,7 @@ const BATCH_LIMIT = 500
 const emptySchedule = { mon: [], tue: [], wed: [], thu: [], fri: [], sat: [], sun: [] }
 
 // «Сбросить прогресс»: deletes every workout, exerciseStats and own template document, empties the
-// schedule and clears activeWorkoutId; the rest of the profile stays. Offline it deletes what the cache knows.
+// schedule; the rest of the profile stays. Offline it deletes what the cache knows.
 export function resetProgress(uid: string): void {
   fireWrite(async () => {
     const snapshots = await Promise.all([
@@ -136,23 +131,19 @@ export function resetProgress(uid: string): void {
 
     if (cached && !cached.exists()) return
 
-    await setDoc(
-      ref,
-      { activeWorkoutId: null, schedule: emptySchedule, updatedAt: Timestamp.now() },
-      { merge: true },
-    )
+    await setDoc(ref, { schedule: emptySchedule, updatedAt: Timestamp.now() }, { merge: true })
   }, 'reset')
 }
 
 export function useWorkout(uid: string, workoutId: string): Workout | null | undefined {
-  return useSnapshotQuery(workoutQueryKey(uid, workoutId), docSource(workoutRef(uid, workoutId)))
+  return useSnapshotQuery(workoutKeys.one(uid, workoutId), docSource(workoutRef(uid, workoutId)))
     .data
 }
 
-// The server copy of a running workout, found by status (profile.activeWorkoutId is no longer written).
+// The server copy of a running workout, found by its status.
 export function useActiveWorkout(uid: string): (Workout & { id: string }) | null | undefined {
   const { data } = useSnapshotQuery(
-    activeWorkoutQueryKey(uid),
+    workoutKeys.active(uid),
     querySource(query(workoutsRef(uid), where('status', '==', 'active'))),
   )
 
@@ -168,7 +159,10 @@ export function useExerciseStats(
   uid: string,
   exerciseIds: readonly string[],
 ): Record<string, ExerciseStats | undefined> | undefined {
-  const { data } = useSnapshotQuery(exerciseStatsQueryKey(uid), querySource(exerciseStatsRef(uid)))
+  const { data } = useSnapshotQuery(
+    workoutKeys.exerciseStats(uid),
+    querySource(exerciseStatsRef(uid)),
+  )
   const key = exerciseIds.join('\n')
 
   return useMemo(() => {

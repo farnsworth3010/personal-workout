@@ -1,0 +1,1 @@
+export { prefersStill } from './motion'

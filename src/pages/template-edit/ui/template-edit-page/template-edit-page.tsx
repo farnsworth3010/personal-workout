@@ -1,54 +1,29 @@
-import { useEffect, useState, type ReactNode } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router'
+import { useParams } from 'react-router'
 
 import { useCatalogById } from '@/entities/exercise'
 import { useProfile } from '@/entities/profile'
 import { useOwnTemplates } from '@/entities/template'
 import type { AuthUser } from '@/shared/api'
-import { cn } from '@/shared/lib'
 import { EmptyState } from '@/shared/ui'
+import { TemplateEditSkeleton } from '@/widgets/page-skeletons'
 
+import { useAddedToast, useAddParam } from '../../model/use-add-param'
+import { BackLink } from '../back-link'
 import { Editor } from '../editor'
-import { focusRing } from '../styles'
-import { Title } from '../title'
-
-// The back link and the title around every state before the editor opens.
-function Shell({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <>
-      <BackLink />
-      <Title>{title}</Title>
-      {children}
-    </>
-  )
-}
-
-const BackLink = () => (
-  <Link
-    to="/templates"
-    className={cn(
-      'inline-flex min-h-11 items-center self-start text-[15px] text-muted-foreground',
-      focusRing,
-    )}
-  >
-    ← Наборы
-  </Link>
-)
+import { Shell } from '../shell'
 
 // template-edit.html for /templates/new and /templates/:id; ?add=<exerciseId> comes from the catalog.
 export function TemplateEditPage({ user }: { user: AuthUser }) {
   const { id } = useParams()
-  const [params, setParams] = useSearchParams()
   const { profile } = useProfile(user.uid)
   const { data: byId } = useCatalogById()
   const { data: own, error } = useOwnTemplates(user.uid)
-  const [addId] = useState(() => params.get('add'))
+  const addId = useAddParam()
   const title = id ? 'Редактор набора' : 'Новый набор'
+  const template = id ? own?.find((t) => t.id === id) : undefined
+  const editing = !error && byId && profile && (id ? template : true)
 
-  // The appended exercise is part of the draft now; a reload must not add it again.
-  useEffect(() => {
-    if (addId) setParams({}, { replace: true })
-  }, [addId, setParams])
+  useAddedToast(editing && addId ? byId[addId]?.name : undefined)
 
   if (error) {
     return (
@@ -59,14 +34,8 @@ export function TemplateEditPage({ user }: { user: AuthUser }) {
   }
 
   if (!byId || !profile || (id && !own)) {
-    return (
-      <Shell title={title}>
-        <p className="text-[15px] text-muted-foreground">Загрузка…</p>
-      </Shell>
-    )
+    return <TemplateEditSkeleton header={<BackLink />} />
   }
-
-  const template = id ? own?.find((t) => t.id === id) : undefined
 
   if (id && !template) {
     return (

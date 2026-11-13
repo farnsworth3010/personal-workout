@@ -207,4 +207,13 @@ describe('HoldButton', () => {
       expect(onConfirm).not.toHaveBeenCalled()
     })
   })
+
+  it('draws the cta variant as the main button with a dark fill', () => {
+    render(<HoldButton label="Подход сделан" variant="cta" onConfirm={vi.fn()} />)
+    const button = screen.getByRole('button', { name: 'Подход сделан' })
+
+    expect(button).toHaveClass('min-h-16', 'uppercase')
+    expect(button.firstElementChild).toHaveClass('bg-on-accent/25')
+    expect(button.firstElementChild).not.toHaveClass('bg-current/25')
+  })
 })

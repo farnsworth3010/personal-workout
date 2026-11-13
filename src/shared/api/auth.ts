@@ -18,7 +18,7 @@ export interface AuthUser {
   photoURL: string | null
 }
 
-export type AuthErrorListener = (error: unknown) => void
+type AuthErrorListener = (error: unknown) => void
 
 const listeners = new Set<AuthErrorListener>()
 
@@ -31,6 +31,10 @@ function report(error: unknown) {
   if (listeners.size === 0) console.error('Auth failed', error)
   for (const listener of listeners) listener(error)
 }
+
+// Set right before signInWithRedirect; completeRedirectSignIn skips getRedirectResult when absent,
+// so a cold start with no sign-in in progress never waits on the handler iframe.
+const REDIRECT_PENDING_KEY = 'pw:redirect'
 
 // The page that completes sign-in: the Auth emulator, or the authDomain host in production.
 function handlerOrigin(): string {
@@ -48,12 +52,17 @@ export function signInWithGoogle(): void {
   const provider = new GoogleAuthProvider()
   const flow =
     import.meta.env.VITE_AUTH_FLOW ?? (handlerOrigin() === location.origin ? 'redirect' : 'popup')
+
+  if (flow === 'redirect') sessionStorage.setItem(REDIRECT_PENDING_KEY, '1')
   const start = flow === 'popup' ? signInWithPopup : signInWithRedirect
 
   start(auth, provider).catch(report)
 }
 
 export function completeRedirectSignIn(): Promise<void> {
+  if (sessionStorage.getItem(REDIRECT_PENDING_KEY) === null) return Promise.resolve()
+
+  sessionStorage.removeItem(REDIRECT_PENDING_KEY)
   return getRedirectResult(auth).then(() => undefined, report)
 }
 

@@ -1,7 +1,8 @@
 import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { getDocFromServer, setDoc, Timestamp } from 'firebase/firestore'
+import { runTransaction, setDoc, Timestamp } from 'firebase/firestore'
 
 import {
+  db,
   docSource,
   fireWrite,
   profileRef,
@@ -15,10 +16,17 @@ import { defaultProfile, mergeProfile, withDefaults, type ProfilePatch } from '.
 
 export const profileQueryKey = (uid: string) => ['profile', uid] as const
 
+// 'not-loaded': the screens show defaults because the server has not answered, so nothing was written.
+type ProfileUpdate = 'queued' | 'not-loaded'
+
 // The server's profile gets only the edited top-level keys (merge), so edits made on another device to the
 // rest survive; a profile the server says is missing is created whole. Validated before the cache, so a
 // change the converter would reject is reported instead of showing until reload.
-export function updateProfile(client: QueryClient, uid: string, patch: ProfilePatch) {
+export function updateProfile(
+  client: QueryClient,
+  uid: string,
+  patch: ProfilePatch,
+): ProfileUpdate {
   const key = profileQueryKey(uid)
   const current = client.getQueryData<Profile | null>(key)
 
@@ -26,17 +34,15 @@ export function updateProfile(client: QueryClient, uid: string, patch: ProfilePa
   if (current === undefined) throw new Error('Profile is not loaded yet')
 
   // Shown as defaults while the server has not answered: an edit now could only guess the real document.
-  if (current === defaultProfile) {
-    toast('Профиль ещё не загрузился с сервера. Повторите, когда появится связь.')
-    return
-  }
+  if (current === defaultProfile) return 'not-loaded'
 
   const now = Timestamp.now()
   const parsed = profileSchema.safeParse(mergeProfile(withDefaults(current), patch, now))
 
+  // Reported through the write error listeners, like a rejected write.
   if (!parsed.success) {
     fireWrite(() => Promise.reject(parsed.error), 'profile')
-    return
+    return 'queued'
   }
 
   const next = parsed.data
@@ -46,7 +52,7 @@ export function updateProfile(client: QueryClient, uid: string, patch: ProfilePa
 
   if (current === null) {
     fireWrite(() => setDoc(profileRef(uid), next), 'profile')
-    return
+    return 'queued'
   }
 
   const edited = Object.fromEntries(
@@ -57,16 +63,29 @@ export function updateProfile(client: QueryClient, uid: string, patch: ProfilePa
     () => setDoc(profileRef(uid), { ...edited, updatedAt: now }, { merge: true }),
     'profile',
   )
+
+  return 'queued'
 }
 
 // Creates the profile with defaults on first sign-in. Only the server can say it is missing: offline,
-// or with a stale cache, defaults could overwrite a profile made on another device, so nothing is written.
+// or with a stale cache, defaults could overwrite a profile made on another device, so nothing is
+// written. A transaction, so a write landing between the read and this one (another device's first
+// sign-in, a seed in tests) is caught: Firestore retries the read, finds the profile already there
+// and skips the write, instead of the two racing and whichever lands last winning.
 export function ensureProfile(uid: string): void {
   fireWrite(async () => {
-    const snapshot = await getDocFromServer(profileRef(uid)).catch(() => undefined)
+    try {
+      await runTransaction(db, async (tx) => {
+        const snapshot = await tx.get(profileRef(uid))
 
-    if (snapshot && !snapshot.exists())
-      await setDoc(profileRef(uid), { ...defaultProfile, updatedAt: Timestamp.now() })
+        if (!snapshot.exists())
+          tx.set(profileRef(uid), { ...defaultProfile, updatedAt: Timestamp.now() })
+      })
+    } catch (error) {
+      // By code: SDK errors are not reliably instances of the exported FirestoreError class.
+      // Offline is expected and silent; anything else (e.g. permission-denied) is a real failure.
+      if ((error as { code?: unknown } | null)?.code !== 'unavailable') throw error
+    }
   }, 'profile')
 }
 
@@ -80,7 +99,8 @@ export function useProfile(uid: string) {
     isPending: query.isPending,
     error: query.error,
     update: (patch: ProfilePatch) => {
-      updateProfile(client, uid, patch)
+      if (updateProfile(client, uid, patch) === 'not-loaded')
+        toast('Профиль ещё не загрузился с сервера. Повторите, когда появится связь.')
     },
   }
 }

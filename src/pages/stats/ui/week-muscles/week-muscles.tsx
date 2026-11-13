@@ -2,14 +2,14 @@ import { useState } from 'react'
 
 import { muscleLabels } from '@/entities/exercise'
 import type { Muscle } from '@/shared/api'
-import { cn, n1 } from '@/shared/lib'
+import { Section } from '@/shared/ui'
 
-import { dayRange, formatSets, formatWorkouts, plural } from '../../model/format'
-import { loadLevel, loadLevelLabels, type weekMuscleLoad } from '../../model/muscle-load'
-import { MuscleLegend, MuscleMap, offFigureMuscles } from '../muscle-map'
-import { note, Section, subheading } from '../section'
-
-type WeekLoad = ReturnType<typeof weekMuscleLoad>
+import { offFigureMuscles } from '../../config/shapes'
+import { dayRange, formatSets, formatWorkouts } from '../../lib/format'
+import type { WeekLoad } from '../../model/types'
+import { MuscleLegend } from '../muscle-legend'
+import { MuscleMap } from '../muscle-map'
+import { PickedMuscle } from '../picked-muscle'
 
 export function WeekMuscles({
   load,
@@ -46,7 +46,7 @@ export function WeekMuscles({
           <PickedMuscle muscle={picked} sets={picked ? load.sets[picked] : 0} />
 
           {trainedOffFigure.length > 0 && (
-            <p className={note}>
+            <p className="text-xs text-muted-foreground">
               Нет на фигуре:{' '}
               {trainedOffFigure
                 .map((m) => `${muscleLabels[m].toLowerCase()} — ${formatSets(load.sets[m])}`)
@@ -55,9 +55,11 @@ export function WeekMuscles({
           )}
 
           <div>
-            <h3 className={cn(subheading, 'mb-2')}>Ещё не тренировали на этой неделе</h3>
+            <h3 className="mb-2 text-[13px] font-semibold text-muted-foreground">
+              Ещё не тренировали на этой неделе
+            </h3>
             {load.untrained.length === 0 ? (
-              <p className={note}>Все группы мышц получили нагрузку.</p>
+              <p className="text-xs text-muted-foreground">Все группы мышц получили нагрузку.</p>
             ) : (
               <ul className="flex flex-wrap gap-2">
                 {load.untrained.map((m) => (
@@ -78,37 +80,9 @@ export function WeekMuscles({
         </>
       )}
 
-      <p className={note}>
+      <p className="text-xs text-muted-foreground">
         Основная мышца упражнения получает целый подход, вспомогательная — половину.
       </p>
     </Section>
-  )
-}
-
-function PickedMuscle({ muscle, sets }: { muscle: Muscle | null; sets: number }) {
-  return (
-    <div
-      aria-live="polite"
-      className="grid min-h-16 grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 border-y border-border py-2.5"
-    >
-      {muscle === null ? (
-        <b className="text-[15px] font-normal text-muted-foreground">
-          Нажмите на мышцу, чтобы увидеть подходы
-        </b>
-      ) : (
-        <>
-          <b className="text-lg font-bold">{muscleLabels[muscle]}</b>
-          <span className="row-span-2 text-right text-[26px] font-bold tabular-nums">
-            {n1(sets)}
-            <small className="block text-xs font-normal text-muted-foreground">
-              {plural(sets, ['подход', 'подхода', 'подходов'])} за неделю
-            </small>
-          </span>
-          <small className="col-start-1 text-[13px] text-muted-foreground">
-            {loadLevelLabels[loadLevel(sets)]}
-          </small>
-        </>
-      )}
-    </div>
   )
 }

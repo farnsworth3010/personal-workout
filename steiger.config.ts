@@ -7,10 +7,6 @@ const recommended = fsd.configs.recommended as Parameters<typeof defineConfig>[0
 export default defineConfig([
   ...recommended,
   {
-    // Slices are built a phase before their second consumer; restored to error in Phase 11 (T079).
-    rules: { 'fsd/insignificant-slice': 'warn' },
-  },
-  {
     ignores: [
       '**/*.test.*',
       '**/*.spec.*',

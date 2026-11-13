@@ -40,7 +40,7 @@ export default defineConfig({
     VitePWA({
       strategies: 'generateSW',
       registerType: 'prompt',
-      // src/app/layout/pwa-update.tsx registers sw.js; the plugin's helper needs workbox-window.
+      // src/app/model/service-worker.ts registers sw.js; the plugin's helper needs workbox-window.
       injectRegister: false,
       // globPatterns already precache every icon; listing them again would duplicate entries.
       includeManifestIcons: false,

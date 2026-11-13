@@ -1,12 +1,16 @@
 import * as React from 'react'
 import { cn } from 'cn'
 
+import { buttonVariants } from '../button'
+
 type HoldButtonProps = Omit<React.ComponentProps<'button'>, 'children' | 'onClick'> & {
   label: React.ReactNode
   onConfirm: () => void
   holdMs?: number
   // Destructive actions: mouse, pen and a held Space or Enter must hold too, with a countdown.
   holdAlways?: boolean
+  // The main action of a screen: the cta button with a dark fill on the accent background.
+  variant?: 'plain' | 'cta'
 }
 
 const HINT_MS = 1200
@@ -19,6 +23,7 @@ function HoldButton({
   onConfirm,
   holdMs = 1000,
   holdAlways = false,
+  variant = 'plain',
   className,
   ...props
 }: HoldButtonProps) {
@@ -90,7 +95,11 @@ function HoldButton({
       type="button"
       data-slot="hold-button"
       data-holding={holding || undefined}
-      className={cn('relative overflow-hidden select-none [-webkit-touch-callout:none]', className)}
+      className={cn(
+        variant === 'cta' && buttonVariants({ size: 'cta' }),
+        'relative overflow-hidden select-none [-webkit-touch-callout:none]',
+        className,
+      )}
       onPointerDown={onPointerDown}
       onPointerUp={release}
       onPointerCancel={stop}
@@ -122,7 +131,8 @@ function HoldButton({
         aria-hidden
         className={cn(
           // currentColor: the text colour contrasts with any button background, the accent one included.
-          'pointer-events-none absolute inset-0 origin-left scale-x-0 bg-current/25',
+          'pointer-events-none absolute inset-0 origin-left scale-x-0',
+          variant === 'cta' ? 'bg-on-accent/25' : 'bg-current/25',
           holding && 'scale-x-100 transition-transform ease-linear',
         )}
         style={holding ? { transitionDuration: `${holdMs}ms` } : undefined}

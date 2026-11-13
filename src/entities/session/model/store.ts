@@ -1,166 +1,22 @@
-import { Timestamp } from 'firebase/firestore'
 import { create } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
+import { persist } from 'zustand/middleware'
 
-import type { Workout, WorkoutEntry } from '@/shared/api'
+import type { Workout } from '@/shared/api'
 import { newId } from '@/shared/lib'
 
-import { roundKg, type SetValues } from './prediction'
+import { migrate, SESSION_VERSION, storage } from './persist'
+import * as t from './transitions'
+import type { SessionData, SessionState } from './types'
 
-// `id`: the template entry's id when started from a set; quick-added entries always get a new one.
-export type NewEntry = Pick<WorkoutEntry, 'exerciseId' | 'name' | 'kind' | 'plan'> & { id?: string }
-
-export type AddMode = 'now' | 'next' | 'replace'
-
-export interface SessionData {
-  workoutId: string | null
-  // The Firestore document as it should be written now; null without a running session.
-  workout: Workout | null
-  // Entry on screen; null when the queue is over (postponed entries may remain).
-  current: number | null
-  // 0-based set of the current entry: in work, or just logged while resting.
-  setIndex: number
-  // Epoch ms; timers are derived from these.
-  exerciseStartedAt: number | null
-  setStartedAt: number | null
-  restEndsAt: number | null
-  // Time already spent per entry, so a return to an exercise continues its clock.
-  spentMs: number[]
-  // Today's weight change per entry id, added to that entry's next predictions: the same exercise done
-  // twice (a light warm-up, a working part) keeps two shifts.
-  shiftKg: Record<string, number>
-  // The workout has ended and waits on the finish screen for the survey.
-  finishing: boolean
-  // The ended workout while finishing, so selectFinishing is a plain field read.
-  finished: FinishedWorkout | null
-}
-
-export interface SessionActions {
-  // False, and nothing changes, while a workout runs or waits on the finish screen, or without entries.
-  start: (template: Workout['template'], entries: NewEntry[], now?: number) => boolean
-  // Continues a workout known only from its server document (status active); false unless idle.
-  restore: (workoutId: string, workout: Workout, now?: number) => boolean
-  // Logs the current set (the prediction unless changed) and starts the rest.
-  completeSet: (values: SetValues, now?: number) => void
-  // Corrects the logged current set; a weight change shifts the next predictions.
-  editSet: (values: SetValues, now?: number) => void
-  // Ends the rest: the first set not yet logged, else the next pending exercise.
-  next: (now?: number) => void
-  back: (now?: number) => void
-  postpone: (now?: number) => void
-  // Continues the postponed entry with this entry id.
-  resume: (entryId: string, now?: number) => void
-  addExercise: (entry: NewEntry, mode: AddMode, now?: number) => void
-  // Ends the workout: the finish screen reads it through selectFinishing.
-  end: (now?: number) => void
-  // Adds the survey, clears the session and returns the document for the caller to write.
-  finish: (survey: Workout['survey']) => FinishedWorkout | null
-  discard: () => void
-}
-
-export type SessionState = SessionData & SessionActions
-
-export interface FinishedWorkout {
-  workoutId: string
-  workout: Workout
-}
-
-const MAX_ENTRIES = 60
-
-const idle: SessionData = {
-  workoutId: null,
-  workout: null,
-  current: null,
-  setIndex: 0,
-  exerciseStartedAt: null,
-  setStartedAt: null,
-  restEndsAt: null,
-  spentMs: [],
-  shiftKg: {},
-  finishing: false,
-  finished: null,
-}
-
-const ts = (ms: number) => Timestamp.fromMillis(ms)
-
-// localStorage keeps a Timestamp as its toJSON() object; the reviver turns it back.
-const timestampType = Timestamp.fromMillis(0).toJSON().type
-
-const isTimestampJson = (value: unknown): value is object =>
-  typeof value === 'object' && value !== null && 'type' in value && value.type === timestampType
-
-// Template entry ids are unique by construction; a repeated or missing one still gets its own id.
-function uniqueIds(entries: readonly NewEntry[]) {
-  const seen = new Set<string>()
-
-  return entries.map((entry) => {
-    const id = entry.id && !seen.has(entry.id) ? entry.id : newId()
-
-    seen.add(id)
-
-    return { ...entry, id }
-  })
-}
-
-const firstUndone = (entry: WorkoutEntry) => {
-  const index = Array.from({ length: entry.plan.sets }, (_, i) => i).find(
-    (i) => !entry.sets.some((set) => set.n === i + 1),
-  )
-
-  return index ?? entry.plan.sets - 1
-}
-
-const allLogged = (entry: WorkoutEntry, sets = entry.sets) => sets.length >= entry.plan.sets
-
-const withEntries = (workout: Workout, entries: WorkoutEntry[], now: number): Workout => ({
-  ...workout,
-  entries,
-  updatedAt: ts(now),
-})
-
-const patchEntry = (workout: Workout, index: number, patch: Partial<WorkoutEntry>, now: number) =>
-  withEntries(
-    workout,
-    workout.entries.map((entry, i) => (i === index ? { ...entry, ...patch } : entry)),
-    now,
-  )
-
-// Stores the time spent on the entry being left.
-const bankSpentTime = (s: SessionData, now: number) =>
-  s.current === null || s.exerciseStartedAt === null
-    ? s.spentMs
-    : s.spentMs.with(s.current, now - s.exerciseStartedAt)
-
-const moveTo = (
-  spentMs: number[],
-  current: number | null,
-  setIndex: number,
-  now: number,
-): Partial<SessionData> => ({
-  spentMs,
-  current,
-  setIndex,
-  restEndsAt: null,
-  setStartedAt: now,
-  exerciseStartedAt: current === null ? null : now - (spentMs[current] ?? 0),
-})
-
-// The first pending entry in queue order, or the end of the queue.
-function advance(s: SessionData, workout: Workout, now: number): Partial<SessionData> {
-  const index = workout.entries.findIndex((entry) => entry.status === 'pending')
-
-  const target = index < 0 ? null : index
-
-  return {
-    workout,
-    ...moveTo(
-      bankSpentTime(s, now),
-      target,
-      target === null ? 0 : firstUndone(workout.entries[index]),
-      now,
-    ),
-  }
-}
+export { selectActive, selectFinishing } from './selectors'
+export type {
+  AddMode,
+  FinishedWorkout,
+  NewEntry,
+  SessionActions,
+  SessionData,
+  SessionState,
+} from './types'
 
 export const useSessionStore = create<SessionState>()(
   persist(
@@ -171,36 +27,15 @@ export const useSessionStore = create<SessionState>()(
           fn: (s: SessionData, workout: Workout, ...args: A) => Partial<SessionData> | undefined,
         ) =>
         (...args: A) =>
-          set((s) => (s.workout && !s.finishing ? (fn(s, s.workout, ...args) ?? s) : s))
+          set((s) => (s.workout && !s.finished ? (fn(s, s.workout, ...args) ?? s) : s))
 
       return {
-        ...idle,
+        ...t.idle,
 
         start: (template, entries, now = Date.now()) => {
           if (get().workout || entries.length === 0) return false
 
-          set({
-            ...idle,
-            workoutId: newId(),
-            workout: {
-              status: 'active',
-              startedAt: ts(now),
-              endedAt: null,
-              template,
-              entries: uniqueIds(entries).map((entry) => ({
-                ...entry,
-                status: 'pending',
-                sets: [],
-              })),
-              survey: {},
-              summary: null,
-              updatedAt: ts(now),
-            },
-            current: 0,
-            exerciseStartedAt: now,
-            setStartedAt: now,
-            spentMs: entries.map(() => 0),
-          })
+          set(t.start(newId(), template, entries, now))
 
           return true
         },
@@ -208,247 +43,31 @@ export const useSessionStore = create<SessionState>()(
         restore: (workoutId, workout, now = Date.now()) => {
           if (get().workout || workout.status !== 'active') return false
 
-          const index = workout.entries.findIndex((entry) => entry.status === 'pending')
-
-          set({
-            ...idle,
-            workoutId,
-            workout,
-            ...moveTo(
-              workout.entries.map(() => 0),
-              index < 0 ? null : index,
-              index < 0 ? 0 : firstUndone(workout.entries[index]),
-              now,
-            ),
-          })
+          set(t.restore(workoutId, workout, now))
 
           return true
         },
 
-        completeSet: transition((s, workout, values: SetValues, now = Date.now()) => {
-          if (s.current === null) return
-
-          const entry = workout.entries[s.current]
-          const n = s.setIndex + 1
-
-          const sets = [
-            ...entry.sets.filter((logged) => logged.n !== n),
-            { n, ...values, at: ts(now) },
-          ].sort((a, b) => a.n - b.n)
-
-          const status = allLogged(entry, sets) ? 'done' : entry.status
-
-          return {
-            workout: patchEntry(workout, s.current, { sets, status }, now),
-            restEndsAt: now + entry.plan.restSec * 1000,
-          }
-        }),
-
-        editSet: transition((s, workout, values: SetValues, now = Date.now()) => {
-          if (s.current === null) return
-
-          const entry = workout.entries[s.current]
-          const n = s.setIndex + 1
-          const logged = entry.sets.find((set) => set.n === n)
-
-          if (!logged) return
-
-          const delta = values.weightKg === undefined ? 0 : values.weightKg - (logged.weightKg ?? 0)
-          const shift = roundKg((s.shiftKg[entry.id] ?? 0) + delta)
-          const sets = entry.sets.map((set) => (set.n === n ? { ...set, ...values } : set))
-
-          return {
-            workout: patchEntry(workout, s.current, { sets }, now),
-            shiftKg: { ...s.shiftKg, [entry.id]: shift },
-          }
-        }),
-
-        next: transition((s, workout, now = Date.now()) => {
-          if (s.current === null) return
-
-          const entry = workout.entries[s.current]
-
-          if (!allLogged(entry))
-            return { setIndex: firstUndone(entry), restEndsAt: null, setStartedAt: now }
-
-          return advance(s, patchEntry(workout, s.current, { status: 'done' }, now), now)
-        }),
-
-        // During rest: back to the set just logged; in work: the previous set, else the
-        // previous finished exercise, reopened on its last set.
-        back: transition((s, workout, now = Date.now()) => {
-          if (s.current !== null && s.restEndsAt !== null)
-            return {
-              workout: patchEntry(workout, s.current, { status: 'pending' }, now),
-              restEndsAt: null,
-              setStartedAt: now,
-            }
-
-          if (s.current !== null && s.setIndex > 0)
-            return { setIndex: s.setIndex - 1, setStartedAt: now }
-
-          const before = s.current ?? workout.entries.length
-          const index = workout.entries.findLastIndex(
-            (entry, i) => i < before && entry.status === 'done',
-          )
-
-          if (index < 0) return
-
-          return {
-            workout: patchEntry(workout, index, { status: 'pending' }, now),
-            ...moveTo(bankSpentTime(s, now), index, workout.entries[index].plan.sets - 1, now),
-          }
-        }),
-
-        postpone: transition((s, workout, now = Date.now()) => {
-          if (s.current === null || workout.entries[s.current].status !== 'pending') return
-
-          return advance(s, patchEntry(workout, s.current, { status: 'postponed' }, now), now)
-        }),
-
-        resume: transition((s, workout, entryId: string, now = Date.now()) => {
-          const index = workout.entries.findIndex((e) => e.id === entryId)
-          const entry = workout.entries.at(index)
-
-          if (index < 0 || entry?.status !== 'postponed') return
-
-          return {
-            workout: patchEntry(workout, index, { status: 'pending' }, now),
-            ...moveTo(bankSpentTime(s, now), index, firstUndone(entry), now),
-          }
-        }),
-
-        addExercise: transition((s, workout, added: NewEntry, mode: AddMode, now = Date.now()) => {
-          if (workout.entries.length >= MAX_ENTRIES) return
-
-          const entry: WorkoutEntry = { ...added, id: newId(), status: 'pending', sets: [] }
-          const spentMs = bankSpentTime(s, now)
-
-          if (s.current === null) {
-            const index = workout.entries.length
-
-            return {
-              workout: withEntries(workout, [...workout.entries, entry], now),
-              ...moveTo([...spentMs, 0], index, 0, now),
-            }
-          }
-
-          const at = s.current + 1
-          const replaced = workout.entries[s.current]
-
-          // A replaced exercise with logged sets is kept as skipped, so nothing logged is lost.
-          if (mode === 'replace' && replaced.sets.length === 0)
-            return {
-              workout: withEntries(workout, workout.entries.toSpliced(s.current, 1, entry), now),
-              ...moveTo(spentMs.toSpliced(s.current, 1, 0), s.current, 0, now),
-            }
-
-          // A replaced entry with every set logged counts as done, as the workout page derives it.
-          const entries = workout.entries
-            .toSpliced(at, 0, entry)
-            .map((e, i) =>
-              mode === 'replace' && i === s.current
-                ? { ...e, status: allLogged(e) ? ('done' as const) : ('skipped' as const) }
-                : e,
-            )
-
-          if (mode === 'next')
-            return {
-              workout: withEntries(workout, entries, now),
-              spentMs: s.spentMs.toSpliced(at, 0, 0),
-            }
-
-          return {
-            workout: withEntries(workout, entries, now),
-            ...moveTo(spentMs.toSpliced(at, 0, 0), at, 0, now),
-          }
-        }),
-
-        end: transition((s, workout, now = Date.now()) => {
-          const ended: Workout = {
-            ...workout,
-            status: 'done',
-            endedAt: ts(now),
-            updatedAt: ts(now),
-            // Postponed, unfinished and untouched entries all end as skipped, with their sets.
-            entries: workout.entries.map((entry) =>
-              entry.status === 'done' ? entry : { ...entry, status: 'skipped' },
-            ),
-          }
-
-          return s.workoutId === null
-            ? undefined
-            : {
-                ...idle,
-                workoutId: s.workoutId,
-                workout: ended,
-                finishing: true,
-                finished: { workoutId: s.workoutId, workout: ended },
-              }
-        }),
+        completeSet: transition(t.completeSet),
+        editSet: transition(t.editSet),
+        next: transition(t.next),
+        back: transition(t.back),
+        postpone: transition(t.postpone),
+        resume: transition(t.resume),
+        addExercise: transition(t.addExercise),
+        end: transition(t.end),
 
         finish: (survey) => {
           const { finished } = get()
 
-          if (finished) set(idle)
+          if (finished) set(t.idle)
 
           return finished && { ...finished, workout: { ...finished.workout, survey } }
         },
 
-        discard: () => set(idle),
+        discard: () => set(t.idle),
       }
     },
-    {
-      name: 'personal-workout:session',
-      version: 3,
-      migrate: (persisted, version) => {
-        let state = persisted as SessionData
-
-        // Version 1 kept no `finished`: rebuild it for a workout that was waiting on the finish screen.
-        if (version < 2)
-          state = {
-            ...state,
-            finished:
-              state.finishing && state.workoutId && state.workout
-                ? { workoutId: state.workoutId, workout: state.workout }
-                : null,
-          }
-
-        // Version 2 had no entry ids and kept the weight shift per exercise.
-        if (version < 3 && state.workout) {
-          // The position rule of the Firestore converters' upgradeEntries.
-          const workout = {
-            ...state.workout,
-            entries: state.workout.entries.map((e, i) => ({
-              ...e,
-              id: (e as Partial<WorkoutEntry>).id ?? `e${String(i)}`,
-            })),
-          }
-          const byExercise = state.shiftKg
-
-          state = {
-            ...state,
-            workout,
-            shiftKg: Object.fromEntries(
-              workout.entries.flatMap((e) =>
-                e.exerciseId in byExercise ? [[e.id, byExercise[e.exerciseId]]] : [],
-              ),
-            ),
-            finished: state.finished && { ...state.finished, workout },
-          }
-        }
-
-        return state
-      },
-      storage: createJSONStorage(() => localStorage, {
-        reviver: (_key, value) => (isTimestampJson(value) ? Timestamp.fromJSON(value) : value),
-      }),
-    },
+    { name: 'personal-workout:session', version: SESSION_VERSION, migrate, storage },
   ),
 )
-
-// A running session the screen can show; false while the finish screen waits.
-export const selectActive = (s: SessionData) => s.workout !== null && !s.finishing
-
-// The ended workout waiting for the survey; a stored object, so the selector is stable.
-export const selectFinishing = (s: SessionData): FinishedWorkout | null => s.finished

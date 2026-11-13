@@ -7,8 +7,10 @@ import type { Profile, Workout } from '@/shared/api'
 import {
   counterpartOf,
   dayPlan,
+  dayState,
   nextPlanned,
   plannedFor,
+  samePair,
   variantFor,
   weekdayOf,
   weekView,
@@ -203,5 +205,24 @@ describe('home/gym pair', () => {
     })
     expect(variantFor(fullGym, 'gym', readyTemplates)).toEqual(fullGym)
     expect(variantFor(upper, 'home', readyTemplates)).toEqual(upper)
+  })
+})
+
+describe('pairs in a day', () => {
+  it('treats both variants of a pair as the same set', () => {
+    const home = { source: 'ready', id: 'home-bodyweight' } as const
+
+    expect(samePair(fullGym, home, readyTemplates)).toBe(true)
+    expect(samePair(fullGym, fullGym, readyTemplates)).toBe(true)
+    expect(samePair(fullGym, warmUp, readyTemplates)).toBe(false)
+  })
+})
+
+describe('dayState', () => {
+  it('reads rest, planned, partly and done from the done flags', () => {
+    expect(dayState([])).toBe('rest')
+    expect(dayState([{ done: false }])).toBe('planned')
+    expect(dayState([{ done: true }, { done: false }])).toBe('partly')
+    expect(dayState([{ done: true }])).toBe('done')
   })
 })

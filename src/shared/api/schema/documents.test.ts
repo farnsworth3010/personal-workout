@@ -25,7 +25,6 @@ const profile = (): Profile => ({
   sounds: true,
   animations: true,
   schedule: { mon: [], tue: [], wed: [], thu: [], fri: [], sat: [], sun: [] },
-  activeWorkoutId: null,
   timers: { exercise: true, rest: true, workout: true },
   updatedAt: at,
 })
@@ -90,6 +89,13 @@ describe('profileSchema timers', () => {
     delete old.timers
 
     expect(profileSchema.parse(old).timers).toEqual({ exercise: true, rest: true, workout: true })
+  })
+})
+
+describe('profileSchema retired fields', () => {
+  it('rejects activeWorkoutId and places (the converter drops them on read)', () => {
+    expect(profileSchema.safeParse({ ...profile(), activeWorkoutId: null }).success).toBe(false)
+    expect(profileSchema.safeParse({ ...profile(), places: {} }).success).toBe(false)
   })
 })
 

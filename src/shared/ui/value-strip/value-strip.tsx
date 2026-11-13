@@ -1,6 +1,8 @@
 import * as React from 'react'
 import { cn } from 'cn'
 
+import { decimalComma } from '@/shared/lib'
+
 import { Chip } from '../chip'
 import { ChipRow } from '../chip-row'
 
@@ -122,7 +124,7 @@ function ValueStrip({
         ))}
       {values.map((n) =>
         n === value && editing ? (
-          editor(String(n).replace('.', ','), n)
+          editor(decimalComma(n), n)
         ) : (
           <Chip
             key={n}

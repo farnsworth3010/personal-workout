@@ -1,6 +1,7 @@
-import { render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router'
+import { StrictMode } from 'react'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Exercise } from '@/entities/exercise'
@@ -58,27 +59,44 @@ const template = {
 }
 const user = { uid: 'u1', displayName: null, email: null, photoURL: null }
 
+function Search() {
+  return <output aria-label="search">{useLocation().search}</output>
+}
+
 const renderPage = (path: string) =>
   render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/templates" element={<p>Список наборов</p>} />
-        <Route path="/templates/new" element={<TemplateEditPage user={user} />} />
-        <Route path="/templates/:id" element={<TemplateEditPage user={user} />} />
-      </Routes>
-    </MemoryRouter>,
+    <StrictMode>
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route path="/templates" element={<p>Список наборов</p>} />
+          <Route path="/templates/new" element={<TemplateEditPage user={user} />} />
+          <Route path="/templates/:id" element={<TemplateEditPage user={user} />} />
+        </Routes>
+        <Search />
+      </MemoryRouter>
+    </StrictMode>,
   )
 
 beforeEach(() => {
+  vi.clearAllMocks()
   mocks.useCatalogById.mockReturnValue({ data: byId })
   mocks.useProfile.mockReturnValue({ profile: { homeEquipment: [], defaultRestSec: 90 } })
   mocks.useOwnTemplates.mockReturnValue({ data: [template], error: null })
 })
 
 describe('TemplateEditPage', () => {
+  it('shows a loading skeleton with the real back link while the catalog or profile is pending', () => {
+    mocks.useCatalogById.mockReturnValue({ data: undefined })
+    renderPage('/templates/t1')
+
+    expect(screen.getByRole('status', { name: 'Загрузка' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Наборы/ })).toBeInTheDocument()
+  })
+
   it('saves the edited rows and keeps an exercise that left the catalog as it was', async () => {
     renderPage('/templates/t1')
 
+    expect(screen.queryByRole('status', { name: 'Загрузка' })).not.toBeInTheDocument()
     expect(screen.getByText(/Упражнение недоступно/)).toBeInTheDocument()
     expect(screen.queryByRole('textbox', { name: 'Подходы: Gone_Run' })).not.toBeInTheDocument()
 
@@ -112,12 +130,31 @@ describe('TemplateEditPage', () => {
     expect(mocks.updateTemplate).not.toHaveBeenCalled()
   })
 
-  it('opens a new set with the exercise from ?add and says so once', () => {
+  it('opens a new set with the exercise from ?add once and says so once', () => {
     renderPage('/templates/new?add=Plank')
 
     const list = screen.getByRole('list', { name: 'Упражнения набора' })
+    expect(within(list).getAllByRole('listitem')).toHaveLength(1)
     expect(within(list).getByRole('textbox', { name: 'Секунды: Plank' })).toHaveValue('30')
+    expect(mocks.toast).toHaveBeenCalledTimes(1)
     expect(mocks.toast).toHaveBeenCalledWith('Добавлено: Plank')
+    expect(screen.getByRole('status', { name: 'search' })).toHaveTextContent('')
+  })
+
+  it('appends ?add to an existing set and stays quiet when the set is gone', () => {
+    renderPage('/templates/t1?add=Plank')
+
+    const list = screen.getByRole('list', { name: 'Упражнения набора' })
+    expect(within(list).getAllByRole('listitem')).toHaveLength(3)
+    expect(mocks.toast).toHaveBeenCalledTimes(1)
+
+    cleanup()
+    vi.clearAllMocks()
+    mocks.useOwnTemplates.mockReturnValue({ data: [], error: null })
+    renderPage('/templates/t1?add=Plank')
+
+    expect(screen.getByText('Набор не найден')).toBeInTheDocument()
+    expect(mocks.toast).not.toHaveBeenCalled()
   })
 
   it('moves and removes rows', async () => {

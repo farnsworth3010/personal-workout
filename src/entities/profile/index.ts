@@ -1,2 +1,3 @@
-export { ensureProfile, profileQueryKey, updateProfile, useProfile } from './api/profile'
-export { defaultProfile, mergeProfile, withDefaults, type ProfilePatch } from './model/profile'
+export { ensureProfile, useProfile } from './api/profile'
+export { weekdays, type Weekday } from './config/weekdays'
+export { defaultProfile, type ProfilePatch } from './model/profile'

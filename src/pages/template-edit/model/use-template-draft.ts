@@ -1,58 +1,36 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 
-import type { Exercise } from '@/entities/exercise'
+import type { ExercisesById } from '@/entities/exercise'
 import type { Template } from '@/entities/template'
+import { move } from '@/shared/lib'
 import { toast } from '@/shared/ui'
 
-import {
-  initialRows,
-  move,
-  newRow,
-  validate,
-  type Field,
-  type Problem,
-  type Row,
-  type Validation,
-} from './editor'
+import { initialRows, newRow } from './rows'
+import type { Field, Problem, Row, Validation } from './types'
+import { useFocusAfterRender } from './use-focus-after-render'
+import { validate } from './validate'
 
 interface DraftOptions {
   template: Template | undefined
   addId: string | null
-  byId: Readonly<Record<string, Exercise | undefined>>
+  byId: ExercisesById
   defaultRestSec: number
 }
 
 /** The editor's draft: name, rows by key, the current problem and where focus goes next. */
 export function useTemplateDraft({ template, addId, byId, defaultRestSec }: DraftOptions) {
-  const list = useRef<HTMLOListElement>(null)
   const nameInput = useRef<HTMLInputElement>(null)
-  const addButton = useRef<HTMLButtonElement>(null)
-  const pendingFocus = useRef<string | null>(null)
 
   const kindOf = (exerciseId: string) => byId[exerciseId]?.kind
   const nameOf = (exerciseId: string) => byId[exerciseId]?.name ?? exerciseId
 
-  const [initial] = useState(() =>
-    initialRows(template?.entries ?? [], addId, byId, defaultRestSec),
-  )
   const [name, setNameValue] = useState(template?.name ?? '')
   const [problem, setProblem] = useState<Problem | null>(null)
-  const [rows, setRows] = useState<Row[]>(initial.rows)
+  const [rows, setRows] = useState<Row[]>(() =>
+    initialRows(template?.entries ?? [], addId, byId, defaultRestSec),
+  )
 
-  const addedName = initial.added?.name
-  useEffect(() => {
-    if (addedName) toast(`Добавлено: ${addedName}`)
-  }, [addedName])
-
-  // Focus moves after the re-render that placed the row, so the moved or next control exists.
-  useEffect(() => {
-    const selector = pendingFocus.current
-    if (!selector) return
-
-    pendingFocus.current = null
-    const target = selector === 'add' ? addButton.current : list.current?.querySelector(selector)
-    if (target instanceof HTMLElement) target.focus()
-  }, [rows])
+  const { listRef, addButtonRef, focusAfterRender } = useFocusAfterRender(rows)
 
   const setName = (value: string) => {
     setProblem(null)
@@ -71,7 +49,7 @@ export function useTemplateDraft({ template, addId, byId, defaultRestSec }: Draf
 
     // At the edge the pressed direction is disabled, so focus takes the other button.
     const dir = edge === delta ? -delta : delta
-    pendingFocus.current = `[data-row="${key}"][data-move="${dir}"]`
+    focusAfterRender(`[data-row="${key}"][data-move="${dir}"]`)
     setRows((current) =>
       move(
         current,
@@ -86,7 +64,7 @@ export function useTemplateDraft({ template, addId, byId, defaultRestSec }: Draf
     const row = rows.at(index)
     const neighbour = rows.at(index + 1) ?? (index > 0 ? rows.at(index - 1) : undefined)
 
-    pendingFocus.current = neighbour ? `[data-row="${neighbour.id}"][data-remove]` : 'add'
+    focusAfterRender(neighbour ? `[data-row="${neighbour.id}"][data-remove]` : 'add')
     setProblem(null)
     setRows((current) => current.filter((r) => r.id !== key))
     if (row) toast(`Убрано: ${nameOf(row.exerciseId)}`)
@@ -110,10 +88,10 @@ export function useTemplateDraft({ template, addId, byId, defaultRestSec }: Draf
 
     const { focus } = result
     if (focus === 'name') nameInput.current?.focus()
-    else if (focus === 'add') addButton.current?.focus()
+    else if (focus === 'add') addButtonRef.current?.focus()
     else {
       const key = rows.at(focus.row)?.id
-      list.current
+      listRef.current
         ?.querySelector<HTMLInputElement>(`[data-row="${key ?? ''}"][data-field="${focus.field}"]`)
         ?.focus()
     }
@@ -122,9 +100,9 @@ export function useTemplateDraft({ template, addId, byId, defaultRestSec }: Draf
   }
 
   return {
-    listRef: list,
+    listRef,
     nameInputRef: nameInput,
-    addButtonRef: addButton,
+    addButtonRef,
     name,
     setName,
     problem,

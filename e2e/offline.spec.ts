@@ -61,7 +61,6 @@ async function readAll<T>(path: string): Promise<(T & { id: string })[]> {
 
 interface Profile {
   homeEquipment: string[]
-  activeWorkoutId: string | null
 }
 
 interface Workout {
@@ -145,7 +144,10 @@ test('a workout started online runs, survives a reload and finishes offline', as
   await page.getByRole('button', { name: /Всё тело · C/ }).click()
   await expect(page).toHaveURL('/session')
   await expect(heading(page)).toHaveText('Barbell Squat')
-  await expect.poll(async () => (await read<Profile>(''))?.activeWorkoutId).toBeTruthy()
+  // The autosaved active workout reaches the server before the network goes.
+  await expect
+    .poll(async () => (await readAll<Workout>('/workouts')).map((w) => w.status))
+    .toEqual(['active'])
 
   await context.setOffline(true)
 
@@ -198,5 +200,4 @@ test('a workout started online runs, survives a reload and finishes offline', as
     .poll(async () => (await read<ExerciseStats>('/exerciseStats/Barbell_Squat'))?.lastWorkoutId)
     .toBe(workout?.id)
   expect((await read<ExerciseStats>('/exerciseStats/Barbell_Squat'))?.lastSets).toHaveLength(3)
-  await expect.poll(async () => (await read<Profile>(''))?.activeWorkoutId).toBeNull()
 })

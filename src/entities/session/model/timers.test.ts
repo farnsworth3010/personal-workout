@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { elapsed, formatClock, restRemaining, timedRemaining } from './timers'
+import { elapsed, restRemaining, timedRemaining } from './timers'
 
 const t0 = 1_700_000_000_000
 const sec = (s: number) => t0 + s * 1000
@@ -54,13 +54,5 @@ describe('timedRemaining', () => {
 
   it('ends at zero after a gap longer than the set', () => {
     expect(timedRemaining(t0, 45, sec(300))).toBe(0)
-  })
-})
-
-describe('formatClock', () => {
-  it('formats minutes and seconds', () => {
-    expect(formatClock(90)).toBe('1:30')
-    expect(formatClock(5, 2)).toBe('00:05')
-    expect(formatClock(3725, 2)).toBe('62:05')
   })
 })

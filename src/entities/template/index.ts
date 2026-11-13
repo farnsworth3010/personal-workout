@@ -2,19 +2,13 @@ export {
   copyTemplate,
   createTemplate,
   deleteTemplate,
-  ownTemplatesQueryKey,
   updateTemplate,
   useOwnTemplates,
-  type TemplateDraft,
 } from './api/own-templates'
-export { readyTemplatesQuery, useReadyTemplates } from './api/ready-templates'
-export {
-  estimateDurationMin,
-  gymOnlyCount,
-  muscleGroupsOf,
-  needsGym,
-  placeOf,
-  type ExerciseFacts,
-} from './lib/derive'
+export { readyTemplatesQuery } from './api/ready-templates'
+export { placeLabels } from './config/place-labels'
+export { estimateDurationMin, gymOnlyCount, muscleGroupsOf, needsGym } from './lib/derive'
+export { refKey } from './lib/template-list'
 export type { TemplateEntry, TemplateRef } from '@/shared/api'
-export type { Place, ReadyTemplate, Template } from './model/types'
+export type { ListedTemplate, Place, ReadyTemplate, Template } from './model/types'
+export { useTemplateList } from './model/use-template-list'

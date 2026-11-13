@@ -1,46 +1,14 @@
 import { useState } from 'react'
 
 import type { Workout } from '@/shared/api'
-import { formatMass, n1 } from '@/shared/lib'
-import { Chip } from '@/shared/ui'
+import { formatMassText, n1 } from '@/shared/lib'
+import { Chip, Section } from '@/shared/ui'
 
-import { dayShort } from '../../model/format'
-import { exerciseProgress, exercisesWithHistory, type ProgressPoint } from '../../model/progress'
+import { metrics } from '../../config/metrics'
+import { exerciseProgress, exercisesWithHistory } from '../../model/progress'
+import type { Metric } from '../../model/types'
 import { LineChart } from '../line-chart'
-import { Section, subheading } from '../section'
-
-type Metric = 'weight' | 'volume' | 'reps'
-
-const metrics: Record<
-  Metric,
-  { label: string; caption: string; unit: string; get: (p: ProgressPoint) => number }
-> = {
-  weight: {
-    label: 'Вес',
-    caption: 'Рабочий вес в лучшем подходе',
-    unit: ' кг',
-    get: (p) => p.topWeightKg,
-  },
-  volume: { label: 'Объём', caption: 'Объём за тренировку', unit: '', get: (p) => p.volumeKg },
-  reps: { label: 'Повторы', caption: 'Повторов за тренировку', unit: '', get: (p) => p.reps },
-}
-
-// Tonnes keep the axis labels short; the unit is part of the value here.
-const formatVolume = (kg: number) => {
-  const { value, unit } = formatMass(kg)
-
-  return `${value} ${unit}`
-}
-
-function Record({ label, value, date }: { label: string; value: string | null; date?: Date }) {
-  return (
-    <div className="min-w-0 py-3 pr-2">
-      <small className="mb-0.5 block text-xs text-muted-foreground">{label}</small>
-      <b className="text-xl font-bold tabular-nums">{value ?? '—'}</b>
-      {date && <span className="mt-0.5 block text-xs text-muted-foreground">{dayShort(date)}</span>}
-    </div>
-  )
-}
+import { RecordTile } from '../record-tile'
 
 export function ExerciseProgress({
   workouts,
@@ -119,23 +87,23 @@ export function ExerciseProgress({
         ]}
         from={from}
         to={now}
-        format={shown === 'volume' ? formatVolume : n1}
+        format={shown === 'volume' ? formatMassText : n1}
         unit={m.unit}
       />
 
-      <h3 className={subheading}>Личные рекорды</h3>
+      <h3 className="text-[13px] font-semibold text-muted-foreground">Личные рекорды</h3>
       <div className="grid grid-cols-3 border-y border-border">
-        <Record
+        <RecordTile
           label="Макс. вес"
           value={records.maxWeightKg && `${n1(records.maxWeightKg.value)} кг`}
           date={records.maxWeightKg?.date}
         />
-        <Record
+        <RecordTile
           label="Макс. объём"
-          value={records.maxVolumeKg && formatVolume(records.maxVolumeKg.value)}
+          value={records.maxVolumeKg && formatMassText(records.maxVolumeKg.value)}
           date={records.maxVolumeKg?.date}
         />
-        <Record
+        <RecordTile
           label="Лучший подход"
           value={
             records.bestSet &&

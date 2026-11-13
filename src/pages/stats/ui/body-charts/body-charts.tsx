@@ -1,11 +1,10 @@
 import type { Workout } from '@/shared/api'
 import { addDays, n1 } from '@/shared/lib'
+import { Section } from '@/shared/ui'
 
 import { bodyWeightSeries, weeklySurvey } from '../../model/body'
-import { LineChart, type ChartPoint } from '../line-chart'
-import { note, Section } from '../section'
-
-const empty = 'text-[15px] leading-[1.4] text-muted-foreground'
+import type { ChartPoint } from '../../model/types'
+import { LineChart } from '../line-chart'
 
 export function BodyCharts({
   workouts,
@@ -38,7 +37,7 @@ export function BodyCharts({
     <Section id="h-body" title="Тело и самочувствие" className={className}>
       <div className="flex flex-col gap-6 min-[900px]:grid min-[900px]:grid-cols-2 min-[900px]:gap-x-12">
         {weight.length === 0 ? (
-          <p className={empty}>
+          <p className="text-[15px] leading-[1.4] text-muted-foreground">
             Вес тела появится здесь, когда вы укажете его в опросе после тренировки.
           </p>
         ) : (
@@ -54,7 +53,7 @@ export function BodyCharts({
         )}
 
         {wellbeing.length + energy.length === 0 ? (
-          <p className={empty}>
+          <p className="text-[15px] leading-[1.4] text-muted-foreground">
             Самочувствие и энергия появятся после ответов в опросе после тренировки.
           </p>
         ) : (
@@ -82,7 +81,7 @@ export function BodyCharts({
               format={n1}
               yDomain={[1, 5, 1]}
             />
-            <p className={note}>Среднее за неделю по шкале 1–5</p>
+            <p className="text-xs text-muted-foreground">Среднее за неделю по шкале 1–5</p>
           </div>
         )}
       </div>

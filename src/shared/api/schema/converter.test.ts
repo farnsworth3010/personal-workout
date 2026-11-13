@@ -69,6 +69,15 @@ describe('profileConverter', () => {
     })
   })
 
+  it('drops the retired activeWorkoutId and places', () => {
+    const profile = profileConverter.fromFirestore(
+      snapshotOf({ ...legacy, activeWorkoutId: 'w1', places: { mon: 'gym' } }),
+    )
+
+    expect(profile).not.toHaveProperty('activeWorkoutId')
+    expect(profile).not.toHaveProperty('places')
+  })
+
   it('still rejects the old shape on write and a missing day on read', () => {
     expect(() => profileConverter.toFirestore(legacy as never)).toThrow()
     expect(() =>

@@ -1,11 +1,9 @@
+import { weekdays, type Weekday } from '@/entities/profile'
 import type { Place, ReadyTemplate, TemplateRef } from '@/entities/template'
 import type { Profile, Workout } from '@/shared/api'
 import { addDays, sameDay, weekStart } from '@/shared/lib'
 
 type Schedule = Profile['schedule']
-export type Weekday = keyof Schedule
-
-export const weekdays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
 
 export const weekdayOf = (date: Date): Weekday => weekdays[(date.getDay() + 6) % 7]
 
@@ -63,18 +61,25 @@ export function dayPlan<W extends Workout>(
     return { ref, done: workout !== null, workout }
   })
 
-  const doneCount = sets.filter((s) => s.done).length
-  const current = sets.findIndex((s) => !s.done)
-  const state: DayState =
-    sets.length === 0
-      ? 'rest'
-      : doneCount === sets.length
-        ? 'done'
-        : doneCount > 0
-          ? 'partly'
-          : 'planned'
+  return { sets, current: firstUndone(sets), state: dayState(sets) }
+}
 
-  return { sets, current: current < 0 ? null : current, state }
+export function dayState(sets: readonly { done: boolean }[]): DayState {
+  const doneCount = sets.filter((s) => s.done).length
+
+  return sets.length === 0
+    ? 'rest'
+    : doneCount === sets.length
+      ? 'done'
+      : doneCount > 0
+        ? 'partly'
+        : 'planned'
+}
+
+export function firstUndone(sets: readonly { done: boolean }[]) {
+  const index = sets.findIndex((s) => !s.done)
+
+  return index < 0 ? null : index
 }
 
 /** Monday to Sunday of the week of `date`; `planned` and `done` count sets, not days. */
@@ -122,4 +127,9 @@ export function variantFor(
   const counterpart = counterpartOf(ref, ready)
 
   return counterpart?.place === place ? { source: 'ready', id: counterpart.id } : ref
+}
+
+/** `a` and `b` are the same set, or the two variants of one home/gym pair. */
+export function samePair(a: TemplateRef, b: TemplateRef, ready: readonly ReadyTemplate[]) {
+  return sameRef(a, b) || (b.source === 'ready' && counterpartOf(a, ready)?.id === b.id)
 }

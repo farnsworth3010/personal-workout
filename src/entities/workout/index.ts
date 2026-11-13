@@ -1,5 +1,4 @@
-export { exerciseStatsAfter, finishedWorkout } from './api/documents'
-export { useLastBodyWeight, useWorkoutHistory, type HistoryRange } from './api/history'
+export { useFullHistory, useLastBodyWeight, useWorkoutHistory } from './api/history'
 export {
   discardWorkout,
   finishWorkout,
@@ -9,14 +8,14 @@ export {
   useExerciseStats,
   useWorkout,
 } from './api/workout'
+export { weightChange, weightDelta } from './lib/weight-change'
 export {
   compareRecords,
   e1rm,
-  muscleSets,
   recordsByExercise,
   setsDone,
   volumeKg,
-  type MuscleFacts,
   type RecordKey,
   type Records,
 } from './model/summary'
+export { WorkoutEntryRow } from './ui/workout-entry-row'

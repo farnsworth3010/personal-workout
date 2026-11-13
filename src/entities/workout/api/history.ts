@@ -2,15 +2,10 @@ import { limit, orderBy, query, Timestamp, where } from 'firebase/firestore'
 import { useMemo } from 'react'
 
 import { querySource, useSnapshotQuery, workoutsRef, type WithId, type Workout } from '@/shared/api'
+import { addDays, startOfDay, useToday } from '@/shared/lib'
 
-export interface HistoryRange {
-  from: Date
-  // Exclusive, so consecutive weeks or months never share a workout.
-  to: Date
-}
-
-export const workoutHistoryQueryKey = (uid: string, { from, to }: HistoryRange) =>
-  ['workouts', uid, from.getTime(), to.getTime()] as const
+import type { HistoryRange } from '../model/types'
+import { workoutKeys } from './keys'
 
 // A range on startedAt alone needs no composite index; the active workout is dropped here.
 export const historyQuery = (uid: string, { from, to }: HistoryRange) =>
@@ -24,16 +19,28 @@ export const historyQuery = (uid: string, { from, to }: HistoryRange) =>
 // Finished workouts started in [from, to), newest first.
 export function useWorkoutHistory(uid: string, range: HistoryRange): WithId<Workout>[] | undefined {
   const { data } = useSnapshotQuery(
-    workoutHistoryQueryKey(uid, range),
+    workoutKeys.history(uid, range),
     querySource(historyQuery(uid, range)),
   )
 
   return useMemo(() => data?.filter((workout) => workout.status === 'done'), [data])
 }
 
-const RECENT = 30
+// The whole history in one query; the epoch is before any workout.
+export const fullHistoryRange = (now: Date): HistoryRange => ({
+  from: new Date(0),
+  to: addDays(startOfDay(now), 1),
+})
 
-const recentWorkoutsQueryKey = (uid: string) => ['workouts', uid, 'recent'] as const
+// Every finished workout up to today; screens that call it share one cached query.
+export function useFullHistory(uid: string) {
+  const now = useToday()
+  const range = useMemo(() => fullHistoryRange(now), [now])
+
+  return useWorkoutHistory(uid, range)
+}
+
+const RECENT = 30
 
 // The body weight of the newest finished workout that recorded one.
 export function lastBodyWeight(workouts: readonly Workout[]): { kg: number; date: Date } | null {
@@ -47,7 +54,7 @@ export function lastBodyWeight(workouts: readonly Workout[]): { kg: number; date
 // with an index if an older weight should still count.
 export function useLastBodyWeight(uid: string): { kg: number; date: Date } | null | undefined {
   const { data } = useSnapshotQuery(
-    recentWorkoutsQueryKey(uid),
+    workoutKeys.recent(uid),
     querySource(query(workoutsRef(uid), orderBy('startedAt', 'desc'), limit(RECENT))),
   )
 

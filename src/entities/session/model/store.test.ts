@@ -19,6 +19,9 @@ vi.hoisted(() => {
   }
 })
 
+// The persistence tests reload the store and with it shared/api; a second initializeFirestore throws.
+vi.mock('@/shared/api/firebase', () => ({ app: {}, auth: {}, db: {} }))
+
 const { selectActive, selectFinishing, useSessionStore } = await import('./store')
 
 const t0 = 1_700_000_000_000
@@ -173,7 +176,7 @@ describe('restore', () => {
       setIndex: 0,
       restEndsAt: null,
       exerciseStartedAt: at(1000),
-      finishing: false,
+      finished: null,
     })
     expect(statuses()).toEqual(['done', 'postponed', 'pending'])
     expect(selectActive(store())).toBe(true)
@@ -196,6 +199,18 @@ describe('restore', () => {
       'skipped',
       'done',
     ])
+  })
+
+  it('ends a document with nothing pending or postponed at once', () => {
+    const { workoutId, workout } = serverDoc()
+    const done = {
+      ...workout,
+      entries: workout.entries.map((e) => ({ ...e, status: 'done' as const })),
+    }
+
+    expect(store().restore(workoutId, done, at(1000))).toBe(true)
+    expect(selectActive(store())).toBe(false)
+    expect(selectFinishing(store())?.workout.endedAt?.toMillis()).toBe(at(1000))
   })
 
   it('refuses unless idle, and refuses a finished document', () => {
@@ -255,11 +270,24 @@ describe('sets', () => {
     expect(store()).toMatchObject({ current: 1, setIndex: 0, exerciseStartedAt: at(200) })
   })
 
-  it('ends the queue after the last exercise', () => {
+  it('ends the workout after the last exercise when nothing is postponed', () => {
+    const { workoutId } = store()
+
     for (let i = 0; i < 6; i++) doSet(60, i * 10)
 
-    expect(statuses()).toEqual(['done', 'done', 'done'])
-    expect(store()).toMatchObject({ current: null, exerciseStartedAt: null })
+    const finished = selectFinishing(store())
+
+    expect(selectActive(store())).toBe(false)
+    expect(finished?.workoutId).toBe(workoutId)
+    expect(finished?.workout).toMatchObject({ status: 'done' })
+    expect(finished?.workout.endedAt?.toMillis()).toBe(at(51))
+    expect(finished?.workout.entries.map((e) => e.status)).toEqual(['done', 'done', 'done'])
+  })
+
+  it('does not end on a set that leaves the last exercise unfinished', () => {
+    for (let i = 0; i < 5; i++) doSet(60, i * 10)
+
+    expect(store()).toMatchObject({ current: 2, setIndex: 1, finished: null })
   })
 })
 
@@ -348,6 +376,28 @@ describe('postpone and resume', () => {
     expect(store()).toMatchObject({ current: 0, setIndex: 0 })
   })
 
+  it('does not end when the last pending exercise is postponed', () => {
+    for (let i = 0; i < 4; i++) doSet(60, i * 10)
+    store().postpone(at(50))
+
+    expect(store()).toMatchObject({ current: null, finished: null })
+    expect(selectActive(store())).toBe(true)
+  })
+
+  it('ends when the last postponed exercise is resumed and done', () => {
+    store().postpone(at(1))
+    for (let i = 0; i < 4; i++) doSet(60, 10 + i * 10)
+    store().resume(idOf(0), at(60))
+    doSet(60, 70)
+    doSet(60, 80)
+
+    expect(selectFinishing(store())?.workout.entries.map((e) => e.status)).toEqual([
+      'done',
+      'done',
+      'done',
+    ])
+  })
+
   it('ignores resume of an entry that is not postponed', () => {
     const before = store()
 
@@ -407,11 +457,25 @@ describe('addExercise', () => {
   })
 
   it('at the end of the queue appends and starts it', () => {
-    for (let i = 0; i < 6; i++) doSet(60, i * 10)
+    // Only postponed entries keep a workout running past its last exercise.
+    store().postpone(at(1))
+    for (let i = 0; i < 4; i++) doSet(60, 10 + i * 10)
     store().addExercise(entry('X'), 'next', at(100))
 
     expect(ids()).toEqual(['A', 'B', 'C', 'X'])
     expect(store().current).toBe(3)
+  })
+
+  it('keeps a workout running after an exercise is added at the end of the queue', () => {
+    store().postpone(at(1))
+    for (let i = 0; i < 4; i++) doSet(60, 10 + i * 10)
+    store().addExercise(entry('Z', 1), 'now', at(60))
+
+    expect(store()).toMatchObject({ current: 3, finished: null })
+
+    doSet(60, 70)
+
+    expect(store()).toMatchObject({ current: null, finished: null })
   })
 
   it('stops at 60 entries', () => {
@@ -528,12 +592,49 @@ describe('persistence', () => {
     expect(reloaded.workout?.entries[0]?.sets).toHaveLength(1)
   })
 
+  it('drops the version 3 finishing flag and keeps where the session was', async () => {
+    doSet(60, 0)
+    const running = { ...store(), finishing: false }
+
+    localStorage.setItem('personal-workout:session', JSON.stringify({ state: running, version: 3 }))
+    vi.resetModules()
+    let reloaded = (await import('./store')).useSessionStore.getState()
+
+    expect(reloaded).not.toHaveProperty('finishing')
+    expect(reloaded.finished).toBeNull()
+    expect(reloaded.workout).toEqual(running.workout)
+
+    store().end(at(600))
+    const ending = { ...store(), finishing: true }
+
+    localStorage.setItem('personal-workout:session', JSON.stringify({ state: ending, version: 3 }))
+    vi.resetModules()
+    reloaded = (await import('./store')).useSessionStore.getState()
+
+    expect(reloaded).not.toHaveProperty('finishing')
+    expect(reloaded.finished).toEqual(ending.finished)
+    expect(reloaded.workout).toEqual(ending.workout)
+  })
+
+  it('rebuilds finished for a version 3 store that waited without it', async () => {
+    doSet(60, 0)
+    store().end(at(600))
+    const { workoutId, workout } = store()
+    const v3 = { ...store(), finishing: true, finished: null }
+
+    localStorage.setItem('personal-workout:session', JSON.stringify({ state: v3, version: 3 }))
+    vi.resetModules()
+    const reloaded = (await import('./store')).useSessionStore.getState()
+
+    expect(reloaded.finished).toEqual({ workoutId, workout })
+  })
+
   it('rebuilds the waiting finished workout from a version 1 store', async () => {
     doSet(60, 0)
     store().end(at(600))
 
     const { workoutId, workout } = store()
-    const v1 = { ...store(), finished: undefined }
+    const v1 = { ...store(), finishing: true, finished: undefined }
 
     localStorage.setItem('personal-workout:session', JSON.stringify({ state: v1, version: 1 }))
     vi.resetModules()

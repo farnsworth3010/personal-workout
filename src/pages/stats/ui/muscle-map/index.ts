@@ -1,2 +1,1 @@
-export { MuscleLegend, MuscleMap } from './muscle-map'
-export { offFigureMuscles } from './shapes'
+export { MuscleMap } from './muscle-map'

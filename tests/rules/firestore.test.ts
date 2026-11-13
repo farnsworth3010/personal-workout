@@ -255,12 +255,29 @@ describe.skipIf(!emulatorHost)(
         )
       })
 
-      it('merges activeWorkoutId into an existing profile, but cannot create one', async () => {
-        const merge = (id: string | null) => ({ activeWorkoutId: id, updatedAt: now })
+      it('lets a profile with the retired activeWorkoutId and places take merges', async () => {
+        const old = {
+          ...defaultProfile,
+          activeWorkoutId: 'w1',
+          places: { mon: 'gym', tue: null, wed: null, thu: null, fri: null, sat: null, sun: null },
+          updatedAt: now,
+        }
+        await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('users/O').set(old))
+        const ref = as('O').doc('users/O')
 
-        await assertSucceeds(as('A').doc('users/A').set(merge('w1'), { merge: true }))
-        await assertSucceeds(as('A').doc('users/A').set(merge(null), { merge: true }))
-        await assertFails(as('A').doc('users/C').set(merge('w1'), { merge: true }))
+        await assertSucceeds(ref.set({ sounds: false, updatedAt: now }, { merge: true }))
+        await assertSucceeds(
+          ref.set({ schedule: defaultProfile.schedule, updatedAt: now }, { merge: true }),
+        )
+        await assertFails(ref.set({ activeWorkoutId: 7, updatedAt: now }, { merge: true }))
+        await assertFails(ref.set({ places: 'gym', updatedAt: now }, { merge: true }))
+      })
+
+      it('accepts the reset of a schedule on an existing profile only', async () => {
+        const reset = { schedule: defaultProfile.schedule, updatedAt: now }
+
+        await assertSucceeds(as('A').doc('users/A').set(reset, { merge: true }))
+        await assertFails(as('A').doc('users/C').set(reset, { merge: true }))
       })
     })
   },

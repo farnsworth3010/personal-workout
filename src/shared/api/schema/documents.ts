@@ -1,6 +1,8 @@
 import { Timestamp } from 'firebase/firestore'
 import { z } from 'zod'
 
+import { limits } from './limits'
+
 // The 17 free-exercise-db muscles plus 'eyes' for local exercises.
 export const muscleSchema = z.enum([
   'abdominals',
@@ -24,7 +26,7 @@ export const muscleSchema = z.enum([
 ])
 
 // free-exercise-db values plus `pull-up bar` from the catalog overrides (research R11).
-export const equipmentSchema = z.enum([
+const equipmentSchema = z.enum([
   'bands',
   'barbell',
   'body only',
@@ -40,18 +42,18 @@ export const equipmentSchema = z.enum([
   'pull-up bar',
 ])
 
-export const exerciseKindSchema = z.enum(['strength', 'bodyweight', 'timed', 'cardio'])
+const exerciseKindSchema = z.enum(['strength', 'bodyweight', 'timed', 'cardio'])
 
 const timestamp = z.instanceof(Timestamp)
 const id = z.string().min(1)
-const templateName = z.string().min(1).max(60)
+const templateName = z.string().min(1).max(limits.templateName.max)
 const templateSource = z.enum(['own', 'ready'])
 const kg = z.number().nonnegative()
 
-export const templateRefSchema = z.strictObject({ source: templateSource, id })
+const templateRefSchema = z.strictObject({ source: templateSource, id })
 
 // Up to five sets per weekday, in the order the user arranged them.
-const scheduleDay = z.array(templateRefSchema).max(5)
+const scheduleDay = z.array(templateRefSchema).max(limits.daySets.max)
 
 // Which session timers are shown. Profiles written before the switches have none: they read as all on.
 const timersSchema = z
@@ -60,7 +62,7 @@ const timersSchema = z
 
 export const profileSchema = z.strictObject({
   homeEquipment: z.array(equipmentSchema),
-  defaultRestSec: z.int().min(0).max(900),
+  defaultRestSec: z.int().min(limits.restSec.min).max(limits.restSec.max),
   defaultWeightStepKg: z.union([z.literal(0.5), z.literal(1), z.literal(2.5), z.literal(5)]),
   sounds: z.boolean(),
   animations: z.boolean(),
@@ -73,17 +75,20 @@ export const profileSchema = z.strictObject({
     sat: scheduleDay,
     sun: scheduleDay,
   }),
-  activeWorkoutId: id.nullable(),
   timers: timersSchema,
   updatedAt: timestamp,
 })
 
 const planShape = {
-  sets: z.int().min(1).max(20),
-  reps: z.int().min(1).max(200).optional(),
-  durationSec: z.int().min(5).max(7200).optional(),
-  restSec: z.int().min(0).max(900),
+  sets: z.int().min(limits.sets.min).max(limits.sets.max),
+  reps: z.int().min(limits.reps.min).max(limits.reps.max).optional(),
+  durationSec: z.int().min(limits.durationSec.min).max(limits.durationSec.max).optional(),
+  restSec: z.int().min(limits.restSec.min).max(limits.restSec.max),
 }
+
+// Logged values may be 0 (a set cut short), up to the plan's maximum.
+const loggedReps = z.int().min(0).max(limits.reps.max)
+const loggedDuration = z.int().min(0).max(limits.durationSec.max)
 
 const hasOneTarget = (plan: { reps?: number; durationSec?: number }) =>
   (plan.reps === undefined) !== (plan.durationSec === undefined)
@@ -97,28 +102,28 @@ export const templateEntrySchema = z
 
 export const templateSchema = z.strictObject({
   name: templateName,
-  entries: z.array(templateEntrySchema).min(1).max(40),
+  entries: z.array(templateEntrySchema).min(1).max(limits.templateEntries.max),
   copiedFrom: id.nullable(),
   createdAt: timestamp,
   updatedAt: timestamp,
 })
 
-export const loggedSetSchema = z.strictObject({
-  n: z.int().min(1).max(20),
-  reps: z.int().min(0).max(200).optional(),
+const loggedSetSchema = z.strictObject({
+  n: z.int().min(limits.sets.min).max(limits.sets.max),
+  reps: loggedReps.optional(),
   weightKg: kg.optional(),
-  durationSec: z.int().min(0).max(7200).optional(),
+  durationSec: loggedDuration.optional(),
   at: timestamp,
 })
 
-export const workoutEntrySchema = z.strictObject({
+const workoutEntrySchema = z.strictObject({
   id,
   exerciseId: id,
   name: z.string().min(1),
   kind: exerciseKindSchema,
   status: z.enum(['pending', 'postponed', 'done', 'skipped']),
   plan: z.strictObject(planShape).refine(hasOneTarget, oneTarget),
-  sets: z.array(loggedSetSchema).max(20),
+  sets: z.array(loggedSetSchema).max(limits.sets.max),
 })
 
 const rating = z.int().min(1).max(5)
@@ -128,7 +133,7 @@ export const workoutSchema = z.strictObject({
   startedAt: timestamp,
   endedAt: timestamp.nullable(),
   template: z.strictObject({ source: templateSource, id, name: templateName }),
-  entries: z.array(workoutEntrySchema).max(60),
+  entries: z.array(workoutEntrySchema).max(limits.workoutEntries.max),
   survey: z.strictObject({
     wellbeing: rating.optional(),
     energy: rating.optional(),
@@ -151,12 +156,12 @@ export const exerciseStatsSchema = z.strictObject({
   lastSets: z
     .array(
       z.strictObject({
-        reps: z.int().min(0).max(200).optional(),
+        reps: loggedReps.optional(),
         weightKg: kg.optional(),
-        durationSec: z.int().min(0).max(7200).optional(),
+        durationSec: loggedDuration.optional(),
       }),
     )
-    .max(20),
+    .max(limits.sets.max),
   lastWorkoutId: id,
   lastAt: timestamp,
   records: z.strictObject({

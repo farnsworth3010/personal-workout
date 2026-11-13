@@ -3,7 +3,8 @@ import { describe, expect, it, vi } from 'vitest'
 
 import type { Workout } from '@/shared/api'
 
-import { historyQuery, lastBodyWeight, workoutHistoryQueryKey } from './history'
+import { fullHistoryRange, historyQuery, lastBodyWeight } from './history'
+import { workoutKeys } from './keys'
 
 vi.mock('firebase/firestore', async (importOriginal) => {
   const real = await importOriginal<typeof import('firebase/firestore')>()
@@ -17,10 +18,23 @@ describe('workout history', () => {
   it('keys a range by its timestamps, so equal ranges share one listener', () => {
     const same = { from: new Date(week.from), to: new Date(week.to) }
 
-    expect(workoutHistoryQueryKey('u1', same)).toEqual(workoutHistoryQueryKey('u1', week))
-    expect(workoutHistoryQueryKey('u1', week)).not.toEqual(
-      workoutHistoryQueryKey('u1', { ...week, to: new Date(2026, 10, 17) }),
+    expect(workoutKeys.history('u1', same)).toEqual(workoutKeys.history('u1', week))
+    expect(workoutKeys.history('u1', week)).not.toEqual(
+      workoutKeys.history('u1', { ...week, to: new Date(2026, 10, 17) }),
     )
+  })
+
+  it('keeps list keys apart from single-workout keys', () => {
+    expect(workoutKeys.recent('u1')).toEqual(['workouts', 'u1', 'recent'])
+    expect(workoutKeys.active('u1')).not.toEqual(workoutKeys.one('u1', 'w1'))
+  })
+
+  it('takes the whole history up to the end of today, the same key all day', () => {
+    const morning = fullHistoryRange(new Date(2026, 10, 13, 7, 5))
+    const evening = fullHistoryRange(new Date(2026, 10, 13, 23, 59))
+
+    expect(morning).toEqual({ from: new Date(0), to: new Date(2026, 10, 14) })
+    expect(workoutKeys.history('u1', morning)).toEqual(workoutKeys.history('u1', evening))
   })
 
   it('queries startedAt in [from, to), newest first, with no composite index', () => {

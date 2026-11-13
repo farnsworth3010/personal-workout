@@ -2,6 +2,8 @@ import * as React from 'react'
 import { cn } from 'cn'
 import { ArrowUp } from 'lucide-react'
 
+import { prefersStill } from '@/shared/lib'
+
 const subscribe = (onChange: () => void) => {
   addEventListener('scroll', onChange, { passive: true })
   addEventListener('resize', onChange)
@@ -13,11 +15,6 @@ const subscribe = (onChange: () => void) => {
 }
 
 const farDown = () => window.scrollY > 0.8 * window.innerHeight
-
-// The profile's animations switch (app/layout/motion-preference) or the system setting.
-const still = () =>
-  matchMedia('(prefers-reduced-motion: reduce)').matches ||
-  document.documentElement.hasAttribute('data-motion-off')
 
 // "Наверх" after about one screen of scrolling, above the bottom bar on phones.
 // It stays mounted so it can fade out; inert keeps the hidden button out of focus and the tree.
@@ -36,7 +33,7 @@ function ScrollTop({ className }: { className?: string }) {
         far ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0',
         className,
       )}
-      onClick={() => scrollTo({ top: 0, behavior: still() ? 'instant' : 'smooth' })}
+      onClick={() => scrollTo({ top: 0, behavior: prefersStill() ? 'instant' : 'smooth' })}
     >
       <ArrowUp aria-hidden="true" className="size-4" />
       Наверх

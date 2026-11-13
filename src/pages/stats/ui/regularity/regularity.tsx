@@ -2,44 +2,17 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 
 import type { WithId, Workout } from '@/shared/api'
-import { cn } from '@/shared/lib'
-import { Sheet, SheetContent } from '@/shared/ui'
+import { cn, formatDuration } from '@/shared/lib'
+import { Section, Sheet, SheetContent, Stat } from '@/shared/ui'
 
+import { dayMonth, formatTotal, inMonth, monthTitle, weekdayNames } from '../../lib/format'
+import { monthStart } from '../../lib/month'
 import {
   monthCalendar,
   totalDurationSec,
   workoutsThisWeek,
   type CalendarDay,
 } from '../../model/calendar'
-import { dayMonth, inMonth, monthTitle } from '../../model/format'
-import { note, Section } from '../section'
-
-const weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
-
-const monthStart = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1)
-
-function Stat({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="border-b border-border py-3">
-      <small className="mb-0.5 block text-xs text-muted-foreground">{label}</small>
-      <b className="text-[26px] font-bold tabular-nums min-[900px]:text-2xl">{children}</b>
-    </div>
-  )
-}
-
-const unit = 'text-[15px] font-semibold text-muted-foreground'
-
-function formatTotal(sec: number) {
-  return sec >= 3600 ? (
-    <>
-      {Math.round(sec / 3600)} <em className={cn(unit, 'not-italic')}>ч</em>
-    </>
-  ) : (
-    <>
-      {Math.round(sec / 60)} <em className={cn(unit, 'not-italic')}>мин</em>
-    </>
-  )
-}
 
 export function Regularity({
   workouts,
@@ -58,6 +31,7 @@ export function Regularity({
 }) {
   const [shown, setShown] = useState(() => monthStart(now))
   const calendar = monthCalendar(workouts, shown, now)
+  const total = formatTotal(totalDurationSec(workouts))
   const move = (by: number) => setShown(new Date(shown.getFullYear(), shown.getMonth() + by, 1))
   // A day with several workouts opens a list of them; a day with one opens that workout.
   const [picked, setPicked] = useState<CalendarDay<WithId<Workout>> | null>(null)
@@ -87,7 +61,7 @@ export function Regularity({
       </div>
 
       <div className="grid grid-cols-7 gap-1 text-center">
-        {weekdays.map((d) => (
+        {weekdayNames.map((d) => (
           <span key={d} aria-hidden="true" className="pb-0.5 text-[11px] text-muted-foreground">
             {d}
           </span>
@@ -98,7 +72,7 @@ export function Regularity({
         {calendar.days.map((day) => {
           const done = day.workouts.length > 0
           const cell = cn(
-            'flex h-10 w-full items-center justify-center rounded-lg text-sm text-muted-foreground tabular-nums outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid',
+            'flex h-10 w-full items-center justify-center rounded-lg text-sm text-muted-foreground tabular-nums focus-ring',
             day.future && 'text-border',
             done && 'bg-primary font-bold text-on-accent',
             // Today keeps the dark text on the accent: a light edge and a dark band mark it instead.
@@ -140,16 +114,23 @@ export function Regularity({
       </div>
 
       <div className="grid grid-cols-3 border-t border-border">
-        <Stat label="На этой неделе">
-          {workoutsThisWeek(workouts, now)}
-          {plannedPerWeek > 0 && <em className={cn(unit, 'not-italic')}> из {plannedPerWeek}</em>}
-        </Stat>
-        <Stat label={inMonth(shown)}>{calendar.count}</Stat>
-        <Stat label="Всего времени">{formatTotal(totalDurationSec(workouts))}</Stat>
+        <Stat
+          label="На этой неделе"
+          value={workoutsThisWeek(workouts, now)}
+          unit={plannedPerWeek > 0 ? `из ${plannedPerWeek}` : undefined}
+          className="border-b border-border"
+        />
+        <Stat label={inMonth(shown)} value={calendar.count} className="border-b border-border" />
+        <Stat
+          label="Всего времени"
+          value={total.value}
+          unit={total.unit}
+          className="border-b border-border"
+        />
       </div>
 
       {workouts.length === 0 && (
-        <p className={note}>
+        <p className="text-xs text-muted-foreground">
           Дни тренировок отметятся в календаре после первой завершённой тренировки.
         </p>
       )}
@@ -164,7 +145,7 @@ export function Regularity({
                 >
                   <b className="font-semibold">{w.template.name}</b>
                   <span className="text-[13px] text-muted-foreground tabular-nums">
-                    {Math.round(totalDurationSec([w]) / 60)} мин
+                    {formatDuration(totalDurationSec([w]))}
                   </span>
                 </Link>
               </li>

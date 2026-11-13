@@ -1,18 +1,12 @@
 import { photoUrl, type Exercise } from '@/entities/exercise'
-import type { ExerciseKind } from '@/shared/api'
-import { cn } from '@/shared/lib'
 import { Badge } from '@/shared/ui'
 
-import { amountLabel, type Field, type Row } from '../../model/editor'
-import { iconButton, input } from '../styles'
-
-const kindNote = (kind: ExerciseKind, lastKg: number | undefined) =>
-  ({
-    strength: `Силовое · ${lastKg ? `в прошлый раз ${String(lastKg).replace('.', ',')} кг` : 'вес подставится после первой тренировки'}`,
-    bodyweight: 'С весом тела · доп. вес по желанию',
-    timed: 'На время',
-    cardio: 'Кардио',
-  })[kind]
+import { amountLabel } from '../../config/amount-label'
+import { kindNote } from '../../lib/kind-note'
+import type { Field, Row } from '../../model/types'
+import { IconButton } from '../icon-button'
+import { MoveButton } from '../move-button'
+import { NumberField } from '../number-field'
 
 interface EntryRowProps {
   row: Row
@@ -42,51 +36,6 @@ export function EntryRow({
 }: EntryRowProps) {
   const name = exercise?.name ?? row.exerciseId
 
-  const field = (key: Field, label: string, decimal = false) => (
-    <label className="block min-w-0">
-      <small className="mb-1.5 block text-[13px] text-muted-foreground min-[900px]:mb-1 min-[900px]:text-xs">
-        {label}
-      </small>
-      <input
-        data-row={row.id}
-        data-field={key}
-        value={row[key]}
-        inputMode={decimal ? 'decimal' : 'numeric'}
-        autoComplete="off"
-        aria-label={`${label}: ${name}`}
-        aria-invalid={invalid(key) || undefined}
-        onChange={(event) => onEdit(key, event.target.value)}
-        className={cn(input, 'min-h-11 px-1.5 text-center text-[17px] font-semibold tabular-nums')}
-      />
-    </label>
-  )
-
-  const arrow = (delta: number, label: string, path: string, disabled: boolean) => (
-    <button
-      type="button"
-      data-row={row.id}
-      data-move={delta}
-      disabled={disabled}
-      aria-label={`${label}: ${name}`}
-      onClick={() => onMove(delta)}
-      className={cn(iconButton, 'border border-border')}
-    >
-      <svg
-        viewBox="0 0 24 24"
-        width="20"
-        height="20"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <path d={path} />
-      </svg>
-    </button>
-  )
-
   return (
     <li className="flex flex-col gap-2.5 border-b border-border py-3 min-[900px]:grid min-[900px]:grid-cols-[56px_minmax(0,1fr)_repeat(3,68px)_auto_44px] min-[900px]:items-center min-[900px]:gap-2.5 min-[900px]:py-2.5">
       <div className="grid grid-cols-[56px_minmax(0,1fr)_44px] items-center gap-3 min-[900px]:contents">
@@ -106,26 +55,66 @@ export function EntryRow({
               : 'Упражнение недоступно: его нет в каталоге, сохранится как было'}
           </span>
         </div>
-        <button
-          type="button"
+        <IconButton
           data-row={row.id}
           data-remove
           aria-label={`Убрать «${name}»`}
           onClick={onRemove}
-          className={cn(iconButton, 'text-[26px] min-[900px]:order-1')}
+          className="text-[26px] min-[900px]:order-1"
         >
           ×
-        </button>
+        </IconButton>
       </div>
       {/* Without the catalog the kind is unknown, so the numbers cannot be edited safely. */}
       {exercise && (
         <div className="grid grid-cols-[repeat(3,minmax(0,1fr))_auto] items-end gap-2 min-[900px]:contents">
-          {field('sets', 'Подходы')}
-          {field('amount', amountLabel(exercise.kind), exercise.kind === 'cardio')}
-          {field('rest', 'Отдых, с')}
+          <NumberField
+            rowId={row.id}
+            field="sets"
+            label="Подходы"
+            exerciseName={name}
+            value={row.sets}
+            invalid={invalid('sets')}
+            onChange={(value) => onEdit('sets', value)}
+          />
+          <NumberField
+            rowId={row.id}
+            field="amount"
+            label={amountLabel(exercise.kind)}
+            exerciseName={name}
+            value={row.amount}
+            decimal={exercise.kind === 'cardio'}
+            invalid={invalid('amount')}
+            onChange={(value) => onEdit('amount', value)}
+          />
+          <NumberField
+            rowId={row.id}
+            field="rest"
+            label="Отдых, с"
+            exerciseName={name}
+            value={row.rest}
+            invalid={invalid('rest')}
+            onChange={(value) => onEdit('rest', value)}
+          />
           <div className="flex gap-1">
-            {arrow(-1, 'Выше', 'm6 15 6-6 6 6', index === 0)}
-            {arrow(1, 'Ниже', 'm6 9 6 6 6-6', last)}
+            <MoveButton
+              rowId={row.id}
+              delta={-1}
+              label="Выше"
+              exerciseName={name}
+              path="m6 15 6-6 6 6"
+              disabled={index === 0}
+              onMove={onMove}
+            />
+            <MoveButton
+              rowId={row.id}
+              delta={1}
+              label="Ниже"
+              exerciseName={name}
+              path="m6 9 6 6 6-6"
+              disabled={last}
+              onMove={onMove}
+            />
           </div>
         </div>
       )}

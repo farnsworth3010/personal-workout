@@ -1,1 +1,1 @@
-export { InstallHint, InstallSettings } from './install-hint'
+export { InstallHint } from './install-hint'

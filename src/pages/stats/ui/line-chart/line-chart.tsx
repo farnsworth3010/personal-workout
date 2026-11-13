@@ -12,21 +12,12 @@ import {
 import { cn } from '@/shared/lib'
 import { ChartContainer, type ChartConfig } from '@/shared/ui'
 
-import { dayShort, monthShort } from '../../model/format'
+import { toneColor } from '../../config/chart'
+import { rowsOf, yAxis } from '../../lib/axis'
+import { dayShort, monthShort } from '../../lib/format'
+import type { ChartSeries } from '../../model/types'
 
-export interface ChartPoint {
-  date: Date
-  value: number
-}
-
-export interface ChartSeries {
-  label: string
-  tone: 'primary' | 'foreground'
-  points: ChartPoint[]
-  dots?: boolean
-}
-
-export interface LineChartProps {
+interface LineChartProps {
   /** Accessible name of the chart. */
   label: string
   /** Left side of the header; the right side is the readout. */
@@ -39,41 +30,6 @@ export interface LineChartProps {
   /** Fixed y axis [low, high, step]; otherwise derived from the data. */
   yDomain?: [number, number, number]
   className?: string
-}
-
-const toneColor = { primary: 'var(--primary)', foreground: 'var(--foreground)' }
-
-type Row = { t: number } & Partial<Record<string, number>>
-
-// A round step that gives about three intervals.
-function niceStep(span: number) {
-  const raw = span / 3
-  const p = 10 ** Math.floor(Math.log10(raw))
-  const f = raw / p
-  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p
-}
-
-function yAxis(values: number[]): [number, number, number] {
-  const min = Math.min(...values)
-  const max = Math.max(...values)
-  const step = niceStep(max - min || 1)
-  const lo = Math.floor(min / step) * step
-  const hi = Math.ceil(max / step) * step
-  return [lo, hi === lo ? hi + step : hi, step]
-}
-
-// One row per date across all series, so each line can skip dates it has no value for.
-function rowsOf(series: ChartSeries[]) {
-  const rows = new Map<number, Row>()
-  series.forEach((s, i) => {
-    for (const p of s.points) {
-      const t = p.date.getTime()
-      const row = rows.get(t) ?? { t }
-      row[`s${i}`] = p.value
-      rows.set(t, row)
-    }
-  })
-  return [...rows.values()].sort((a, b) => a.t - b.t)
 }
 
 export function LineChart({

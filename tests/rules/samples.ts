@@ -39,7 +39,6 @@ export const kinds = [
         sat: [],
         sun: [],
       },
-      activeWorkoutId: 'w1',
       timers: { exercise: true, rest: false, workout: true },
       updatedAt: at,
     }),

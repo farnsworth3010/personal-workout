@@ -9,7 +9,7 @@ export interface ExerciseFacts {
   equipment: Equipment | null
 }
 
-type ExercisesById = Readonly<Record<string, ExerciseFacts | undefined>>
+export type ExerciseFactsById = Readonly<Record<string, ExerciseFacts | undefined>>
 
 interface HasEntries {
   entries: readonly TemplateEntry[]
@@ -28,7 +28,7 @@ export function needsGym(exercise: ExerciseFacts, homeEquipment: readonly Equipm
 
 export function gymOnlyCount(
   template: HasEntries,
-  exercisesById: ExercisesById,
+  exercisesById: ExerciseFactsById,
   homeEquipment: readonly Equipment[],
 ) {
   return template.entries.filter((entry) => {
@@ -40,13 +40,13 @@ export function gymOnlyCount(
 
 export function placeOf(
   template: HasEntries,
-  exercisesById: ExercisesById,
+  exercisesById: ExerciseFactsById,
   homeEquipment: readonly Equipment[],
 ): Place {
   return gymOnlyCount(template, exercisesById, homeEquipment) > 0 ? 'gym' : 'home'
 }
 
-export function estimateDurationMin(template: HasEntries, exercisesById: ExercisesById) {
+export function estimateDurationMin(template: HasEntries, exercisesById: ExerciseFactsById) {
   const totalSec = template.entries.reduce((sum, entry) => {
     const kind = exercisesById[entry.exerciseId]?.kind
     const timed = kind ? usesDuration(kind) : entry.durationSec !== undefined
@@ -58,7 +58,7 @@ export function estimateDurationMin(template: HasEntries, exercisesById: Exercis
   return Math.round(totalSec / 60)
 }
 
-export function muscleGroupsOf(template: HasEntries, exercisesById: ExercisesById) {
+export function muscleGroupsOf(template: HasEntries, exercisesById: ExerciseFactsById) {
   const muscles = template.entries.flatMap(
     (entry) => exercisesById[entry.exerciseId]?.primaryMuscles ?? [],
   )

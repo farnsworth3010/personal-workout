@@ -1,14 +1,7 @@
 import { Timestamp } from 'firebase/firestore'
 import { describe, expect, it } from 'vitest'
 
-import {
-  exerciseRows,
-  formatDuration,
-  formatSet,
-  previousBodyWeight,
-  weightChange,
-  workoutWhen,
-} from './view'
+import { exerciseRows, previousBodyWeight } from './view'
 import { finishedWorkout } from './workout.fixture'
 
 describe('exerciseRows', () => {
@@ -26,19 +19,8 @@ describe('exerciseRows', () => {
   })
 })
 
-describe('formatting', () => {
-  it('formats duration, volume, sets and the time of day', () => {
-    expect(formatDuration(3520)).toBe('58:40')
-    expect(formatDuration(3912)).toBe('1:05:12')
-    expect(formatSet({ n: 1, reps: 8, weightKg: 62.5, at: Timestamp.now() })).toBe('8 × 62,5 кг')
-    expect(formatSet({ n: 1, reps: 8, at: Timestamp.now() })).toBe('8 повт.')
-    expect(formatSet({ n: 1, durationSec: 45, at: Timestamp.now() })).toBe('45 с')
-    expect(workoutWhen(finishedWorkout())).toBe('Среда, 11 ноября · 18:02–19:00')
-  })
-})
-
-describe('body weight change', () => {
-  it('compares with the latest earlier workout that recorded a weight', () => {
+describe('previousBodyWeight', () => {
+  it('takes the latest earlier workout that recorded a weight', () => {
     const w = finishedWorkout()
     const earlier = (day: number, kg?: number) => ({
       ...w,
@@ -48,9 +30,5 @@ describe('body weight change', () => {
 
     const history = [earlier(9), earlier(6, 82.4), earlier(2, 83), earlier(12, 80)]
     expect(previousBodyWeight(w, history)).toBe(82.4)
-    expect(weightChange(82.1, 82.4)).toBe('−0,3 кг к прошлому разу')
-    expect(weightChange(82.6, 82.4)).toBe('+0,2 кг к прошлому разу')
-    expect(weightChange(82.4, 82.4)).toBe('как в прошлый раз')
-    expect(weightChange(82.4, null)).toBeNull()
   })
 })

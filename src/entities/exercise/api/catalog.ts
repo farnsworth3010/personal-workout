@@ -1,6 +1,6 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
 
-import type { Exercise } from '../model/types'
+import type { Exercise, ExercisesById } from '../model/types'
 
 export const catalogQuery = queryOptions({
   queryKey: ['catalog', 'exercises'],
@@ -22,7 +22,7 @@ export function useCatalog() {
 }
 
 function indexById(catalog: readonly Exercise[]) {
-  const byId: Record<string, Exercise | undefined> = {}
+  const byId: ExercisesById = {}
   for (const exercise of catalog) byId[exercise.id] = exercise
 
   return byId
@@ -37,7 +37,7 @@ export function findExercise(catalog: readonly Exercise[], id: string): Exercise
   return catalog.find((exercise) => exercise.id === id)
 }
 
-export const instructionsQuery = queryOptions({
+const instructionsQuery = queryOptions({
   queryKey: ['catalog', 'instructions'],
   queryFn: async (): Promise<Record<string, string[] | undefined>> => {
     const response = await fetch('/catalog/instructions.json')

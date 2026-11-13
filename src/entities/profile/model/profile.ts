@@ -15,7 +15,6 @@ export const defaultProfile: Profile = {
   sounds: true,
   animations: true,
   schedule: { mon: [], tue: [], wed: [], thu: [], fri: [], sat: [], sun: [] },
-  activeWorkoutId: null,
   timers: { exercise: true, rest: true, workout: true },
   updatedAt: Timestamp.fromMillis(0),
 }

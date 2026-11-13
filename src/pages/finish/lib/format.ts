@@ -1,8 +1,6 @@
+import type { RecordKey, Records } from '@/entities/workout'
 import type { WorkoutEntry } from '@/shared/api'
-import { n1 } from '@/shared/lib'
-
-const plural = new Intl.PluralRules('ru')
-const SETS = { one: 'подход', few: 'подхода', many: 'подходов', other: 'подхода' } as const
+import { n1, plural } from '@/shared/lib'
 
 const range = (values: number[], unit: string) => {
   const low = Math.min(...values)
@@ -27,5 +25,19 @@ export function setsLine({ sets }: Pick<WorkoutEntry, 'sets'>): string | null {
 
   return same
     ? `${n} × ${reps[0]}${kg}`
-    : `${n} ${SETS[plural.select(n) as keyof typeof SETS]}${kg}`
+    : `${n} ${plural(n, ['подход', 'подхода', 'подходов'])}${kg}`
+}
+
+// "9 ноября"
+export const sinceDate = (date: Date) =>
+  date.toLocaleDateString('ru', { day: 'numeric', month: 'long' })
+
+export const recordValue = (key: RecordKey, records: Records | undefined) => {
+  if (key === 'bestSet') {
+    const set = records?.bestSet
+    return set && `${set.reps} × ${n1(set.weightKg)} кг`
+  }
+
+  const kg = records?.[key]
+  return kg === undefined ? undefined : `${n1(kg)} кг`
 }

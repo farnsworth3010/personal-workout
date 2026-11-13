@@ -38,6 +38,12 @@ describe('auth', () => {
     fb.signInWithPopup.mockResolvedValue(undefined)
     auth.emulatorConfig = null
     vi.stubGlobal('location', { origin: 'https://personal-workout.firebaseapp.com' })
+    const store = new Map<string, string>()
+    vi.stubGlobal('sessionStorage', {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => store.set(key, value),
+      removeItem: (key: string) => store.delete(key),
+    })
     unsubscribe = onAuthError(errors)
   })
 
@@ -60,12 +66,14 @@ describe('auth', () => {
     expect(call()).toBeUndefined()
     expect(fb.signInWithRedirect).toHaveBeenCalledWith(auth, expect.any(fb.GoogleAuthProvider))
     expect(fb.signInWithPopup).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem('pw:redirect')).toBe('1')
   })
 
   it('uses a popup when the app is served from another host than authDomain', () => {
     vi.stubGlobal('location', { origin: 'https://personal-workout.web.app' })
 
     expect(flowUsed()).toBe('popup')
+    expect(sessionStorage.getItem('pw:redirect')).toBeNull()
   })
 
   it('uses a popup when the Auth emulator listens on another port', () => {
@@ -143,11 +151,29 @@ describe('auth', () => {
   it('completes the redirect and reports its failure without rejecting', async () => {
     const error = new Error('auth/popup-closed-by-user')
     fb.getRedirectResult.mockResolvedValueOnce(null).mockRejectedValueOnce(error)
+    sessionStorage.setItem('pw:redirect', '1')
 
     await expect(completeRedirectSignIn()).resolves.toBeUndefined()
+    sessionStorage.setItem('pw:redirect', '1')
     await expect(completeRedirectSignIn()).resolves.toBeUndefined()
 
     expect(errors.mock.calls).toEqual([[error]])
+  })
+
+  it('resolves at once without calling getRedirectResult when no redirect is pending', async () => {
+    await expect(completeRedirectSignIn()).resolves.toBeUndefined()
+
+    expect(fb.getRedirectResult).not.toHaveBeenCalled()
+  })
+
+  it('calls getRedirectResult once and clears the key when a redirect is pending', async () => {
+    fb.getRedirectResult.mockResolvedValue(null)
+    sessionStorage.setItem('pw:redirect', '1')
+
+    await expect(completeRedirectSignIn()).resolves.toBeUndefined()
+
+    expect(fb.getRedirectResult).toHaveBeenCalledOnce()
+    expect(sessionStorage.getItem('pw:redirect')).toBeNull()
   })
 
   it('maps the Firebase user to AuthUser and passes the unsubscribe through', () => {

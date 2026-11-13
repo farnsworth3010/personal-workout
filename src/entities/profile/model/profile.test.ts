@@ -18,7 +18,6 @@ describe('profile defaults', () => {
       defaultWeightStepKg: 2.5,
       sounds: true,
       animations: true,
-      activeWorkoutId: null,
       timers: { exercise: true, rest: true, workout: true },
     })
     expect(Object.values(defaultProfile.schedule)).toEqual(Array(7).fill([]))

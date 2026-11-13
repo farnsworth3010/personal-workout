@@ -1,7 +1,7 @@
 import { Timestamp } from 'firebase/firestore'
 import { describe, expect, it } from 'vitest'
 
-import { setsLine } from './format'
+import { recordValue, setsLine, sinceDate } from './format'
 
 const at = Timestamp.fromMillis(0)
 const sets = (...list: { reps?: number; weightKg?: number; durationSec?: number }[]) => ({
@@ -23,5 +23,16 @@ describe('format', () => {
       setsLine(sets({ reps: 15 }, { reps: 12 }, { reps: 10 }, { reps: 10 }, { reps: 9 })),
     ).toBe('5 подходов')
     expect(setsLine(sets({ durationSec: 45 }, { durationSec: 45 }))).toBe('2 × 45 с')
+  })
+})
+
+describe('helpers', () => {
+  it('formats the date and record values', () => {
+    expect(sinceDate(new Date(2026, 10, 9))).toBe('9 ноября')
+    expect(recordValue('maxWeightKg', { maxWeightKg: 62.5 })).toBe('62,5 кг')
+    expect(recordValue('bestSet', { bestSet: { reps: 8, weightKg: 62.5, e1rmKg: 79.17 } })).toBe(
+      '8 × 62,5 кг',
+    )
+    expect(recordValue('maxVolumeKg', {})).toBeUndefined()
   })
 })

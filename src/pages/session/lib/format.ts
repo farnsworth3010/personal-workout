@@ -1,6 +1,6 @@
 import type { SetValues } from '@/entities/session'
 import type { Exercise } from '@/entities/exercise'
-import { equipmentLabels, muscleLabels } from '@/entities/exercise'
+import { equipmentLabels, muscleGroupsText } from '@/entities/exercise'
 
 const kg = (n: number) => n.toLocaleString('ru')
 
@@ -13,16 +13,12 @@ export function setText({ reps, weightKg, durationSec }: SetValues, withUnit = f
   return `${reps ?? 0} × ${kg(weightKg)}${withUnit ? ' кг' : ''}`
 }
 
-const lower = (text: string) => text.toLowerCase()
-
 // "Грудь · трицепс, плечи · штанга", as on the prototype's card.
 export function tagsText(exercise: Exercise) {
-  const [first = '', ...rest] = exercise.primaryMuscles.map((m) => muscleLabels[m])
-
   return [
-    [first, ...rest.map(lower)].join(', '),
-    exercise.secondaryMuscles.map((m) => lower(muscleLabels[m])).join(', '),
-    exercise.equipment && lower(equipmentLabels[exercise.equipment]),
+    muscleGroupsText(exercise.primaryMuscles, { capitalizeFirst: true }),
+    muscleGroupsText(exercise.secondaryMuscles),
+    exercise.equipment && equipmentLabels[exercise.equipment].toLocaleLowerCase('ru'),
   ]
     .filter(Boolean)
     .join(' · ')

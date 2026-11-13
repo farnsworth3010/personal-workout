@@ -76,7 +76,10 @@ test('copy a ready-made set, edit it, save and start a workout from it', async (
   await open(page, '/templates')
 
   await page.getByRole('button', { name: `Скопировать «${ready}» к себе` }).click()
-  await expect(page.getByRole('status')).toHaveText(`«${ready}» теперь в ваших наборах`)
+  // A bare getByRole('status') also matches a page skeleton's "Загрузка" status region.
+  await expect(page.getByRole('status').filter({ hasText: ready })).toHaveText(
+    `«${ready}» теперь в ваших наборах`,
+  )
   await expect(page.getByRole('button', { name: `«${ready}» уже скопирован` })).toBeDisabled()
 
   await page.getByRole('link', { name: `Изменить «${ready}»` }).click()
@@ -233,10 +236,16 @@ async function touch(page: Page, target: Locator, holdMs: number) {
 
   const cdp = await page.context().newCDPSession(page)
   const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+  const startUrl = page.url()
 
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] })
   await page.waitForTimeout(holdMs)
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  // The hold's own action may already have navigated away (e.g. a delete-and-redirect); a touchend
+  // dispatched at this fixed point would then land on whatever is on screen now, a stray tap a real
+  // touchscreen never sends because its page is gone.
+  if (page.url() === startUrl) {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  }
 }
 
 test('start needs a hold on touch', async ({ page }, info) => {

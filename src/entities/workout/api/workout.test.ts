@@ -67,13 +67,13 @@ const workout = (): Workout => ({
 
 const paths = (calls: unknown[][]) => calls.map(([ref]) => (ref as DocumentReference).path)
 
-// The profile cache: undefined = not cached, null = known missing, else the stored activeWorkoutId.
+// The profile cache: undefined = not cached, else whether the profile exists.
 // Stats are never cached here, so finishWorkout falls back to getDoc.
-function profileCache(activeWorkoutId?: string | null) {
+function profileCache(exists?: boolean) {
   fs.getDocFromCache.mockImplementation((ref: DocumentReference) =>
-    activeWorkoutId === undefined || ref.path !== 'users/u1'
+    exists === undefined || ref.path !== 'users/u1'
       ? Promise.reject(new Error('not cached'))
-      : Promise.resolve({ exists: () => activeWorkoutId !== null, get: () => activeWorkoutId }),
+      : Promise.resolve({ exists: () => exists }),
   )
 }
 
@@ -108,7 +108,7 @@ describe('workout writes', () => {
       records: { maxWeightKg: 70, maxVolumeKg: 500 },
     }
     fs.getDoc.mockResolvedValue({ data: () => previous })
-    profileCache('w1')
+    profileCache(true)
 
     const call: () => unknown = () => {
       finishWorkout(uid, 'w1', workout(), {
@@ -248,7 +248,7 @@ describe('workout writes', () => {
           : docs(ref.path.split('/')[2] ?? '', 5),
       ),
     )
-    profileCache('w1')
+    profileCache(true)
 
     resetProgress(uid)
     await flush()
@@ -262,9 +262,9 @@ describe('workout writes', () => {
     expect(fs.batch.commit).toHaveBeenCalledTimes(2)
     expect(fs.writeBatch).toHaveBeenCalledTimes(2)
     expect(paths(fs.setDoc.mock.calls)).toEqual(['users/u1'])
-    expect(fs.setDoc.mock.calls[0]?.[1]).toMatchObject({
-      activeWorkoutId: null,
-      schedule: { mon: [], sun: [] },
+    expect(fs.setDoc.mock.calls[0]?.[1]).toEqual({
+      schedule: { mon: [], tue: [], wed: [], thu: [], fri: [], sat: [], sun: [] },
+      updatedAt: expect.any(Timestamp) as Timestamp,
     })
   })
 })

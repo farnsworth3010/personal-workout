@@ -8,27 +8,29 @@ describe('readParams', () => {
   it('reads search, group, equipment and the home flag', () => {
     expect(read('?q=press&muscle=chest&equipment=pull-up+bar&home')).toEqual({
       q: 'press',
-      muscle: 'chest',
+      group: 'chest',
       equipment: 'pull-up bar',
-      home: true,
+      homeOnly: true,
     })
   })
 
   it('drops unknown values and treats missing ones as no filter', () => {
     expect(read('?muscle=toString&equipment=rope')).toEqual({
       q: '',
-      muscle: null,
+      group: null,
       equipment: null,
-      home: false,
+      homeOnly: false,
     })
   })
 })
 
 describe('writeParams', () => {
   it('writes only the active filters and round-trips', () => {
-    const params = { q: 'жим', muscle: 'legs', equipment: 'dumbbell', home: true } as const
+    const params = { q: 'жим', group: 'legs', equipment: 'dumbbell', homeOnly: true } as const
 
     expect(readParams(writeParams(params))).toEqual(params)
-    expect(writeParams({ q: '', muscle: null, equipment: null, home: false }).toString()).toBe('')
+    expect(writeParams({ q: '', group: null, equipment: null, homeOnly: false }).toString()).toBe(
+      '',
+    )
   })
 })

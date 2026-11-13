@@ -11,4 +11,4 @@ export {
   type SessionData,
   type SessionState,
 } from './model/store'
-export { elapsed, formatClock, restRemaining, timedRemaining } from './model/timers'
+export { elapsed, restRemaining, timedRemaining } from './model/timers'

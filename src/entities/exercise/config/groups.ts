@@ -15,3 +15,9 @@ export const muscleGroups = {
 } satisfies Record<string, { label: string; muscles: Muscle[] }>
 
 export type MuscleGroup = keyof typeof muscleGroups
+
+// The chips in their order, typed (Object.entries widens the keys to string).
+export const muscleGroupList = Object.entries(muscleGroups) as [
+  MuscleGroup,
+  (typeof muscleGroups)[MuscleGroup],
+][]

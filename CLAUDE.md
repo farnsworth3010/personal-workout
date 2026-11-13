@@ -27,7 +27,9 @@ Workout app for home and gym: React, Feature-Sliced Design, shadcn/ui, Tailwind 
 ## Code rules
 
 - FSD layers: `app`, `pages`, `widgets`, `features`, `entities`, `shared`. Import only downwards and only through a slice's public API.
-- Segments by role: `ui` holds components only, `model` hooks, state and derived data, `lib` pure helpers and formatters. Inside a slice's segment files are flat (`ui/today-page.tsx` beside `ui/today-page.test.tsx`); a component gets its own folder only when it has private parts of its own. `shared/ui` is the exception: one folder with an `index.ts` per component.
+- Segments by role: `ui` components only, `model` hooks, state, derived data and shared types (`model/types.ts`), `lib` pure helpers and formatters, `config` static data (labels, option lists, limits). A `.tsx` file holds one component and its own Props type: no module-level constants, helpers or shared types. Every component has its own folder: `ui/<name>/<name>.tsx`, its test beside it and an `index.ts` that exports the component. A sub-component, even one used by a single parent, gets its own sibling folder under `ui/` (`ui/today-sets/`, `ui/set-body/`); folders of one slice import each other only through their `index.ts`. shadcn compound primitives (Sheet, Chart, StatRow) keep their parts in one file, and a `cva` variants object stays next to its component. The local ESLint rules `local/one-component` and `local/no-module-code` check this.
+- Typography: section headings and page titles use the `Heading` / `Title` components from `shared/ui`; the focus outline is the `focus-ring` utility from `app/styles`. No class-string constants in `.ts` or `.tsx`.
+- Module constants: `UPPER_SNAKE` for tunable primitives (limits, durations, page sizes: `PAGE_SIZE`, `MAX_SETS`), `camelCase` for lookup tables and lists (`placeLabels`, `weightSteps`).
 - No hard-coded colours: use the theme tokens.
 - No Cloud Functions or Cloud Storage. Per-user data isolation is enforced in Firestore security rules.
 - A workout session must never be blocked by a form, a network call or navigation.

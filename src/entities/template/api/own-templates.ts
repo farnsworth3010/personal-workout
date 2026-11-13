@@ -11,12 +11,12 @@ import {
 
 import type { ReadyTemplate, Template } from '../model/types'
 
-export interface TemplateDraft {
+interface TemplateDraft {
   name: string
   entries: TemplateEntry[]
 }
 
-export const ownTemplatesQueryKey = (uid: string) => ['templates', uid] as const
+const ownTemplatesQueryKey = (uid: string) => ['templates', uid] as const
 
 export const useOwnTemplates = (uid: string) =>
   useSnapshotQuery(

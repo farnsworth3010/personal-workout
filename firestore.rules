@@ -29,15 +29,18 @@ service cloud.firestore {
       return v in ['own', 'ready'];
     }
 
-    // `timers` may be absent: profiles written before the timer switches lack it, and a merge into
-    // one of them must still pass. The app reads a missing `timers` as all on.
+    // `timers` may be absent: older profiles lack it, and a merge into one of them must still pass.
+    // The app reads a missing `timers` as all on.
+    // `activeWorkoutId` and `places` are retired and never written; older profiles keep them, so they
+    // stay allowed (merge writes keep unknown keys) and the converter drops them on read.
     function validProfile(d) {
       return d.keys().hasAll(['homeEquipment', 'defaultRestSec', 'defaultWeightStepKg', 'sounds',
-          'animations', 'schedule', 'activeWorkoutId', 'updatedAt'])
+          'animations', 'schedule', 'updatedAt'])
         && d.keys().hasOnly(['homeEquipment', 'defaultRestSec', 'defaultWeightStepKg', 'sounds',
-          'animations', 'schedule', 'activeWorkoutId', 'timers', 'updatedAt'])
+          'animations', 'schedule', 'places', 'timers', 'activeWorkoutId', 'updatedAt'])
         && (!('timers' in d) || (hasExactly(d.timers, ['exercise', 'rest', 'workout'])
           && d.timers.exercise is bool && d.timers.rest is bool && d.timers.workout is bool))
+        && (!('places' in d) || d.places is map)
         && d.homeEquipment is list
         && d.homeEquipment.hasOnly(['bands', 'barbell', 'body only', 'cable', 'dumbbell',
           'e-z curl bar', 'exercise ball', 'foam roll', 'kettlebells', 'machine', 'medicine ball',
@@ -51,7 +54,7 @@ service cloud.firestore {
         && isListUpTo(d.schedule.wed, 5) && isListUpTo(d.schedule.thu, 5)
         && isListUpTo(d.schedule.fri, 5) && isListUpTo(d.schedule.sat, 5)
         && isListUpTo(d.schedule.sun, 5)
-        && (d.activeWorkoutId == null || isId(d.activeWorkoutId))
+        && (!('activeWorkoutId' in d) || d.activeWorkoutId == null || isId(d.activeWorkoutId))
         && d.updatedAt is timestamp;
     }
 

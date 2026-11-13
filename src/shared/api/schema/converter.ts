@@ -28,17 +28,21 @@ export function zodConverter<S extends z.ZodObject>(
   }
 }
 
-// Profiles written before several sets per day hold one ref or null per weekday.
-export function upgradeProfile(data: DocumentData): DocumentData {
-  const schedule: unknown = data.schedule
-  if (typeof schedule !== 'object' || schedule === null) return data
+// Profiles written before several sets per day hold one ref or null per weekday; some also carry
+// the retired activeWorkoutId or places, which rules still allow so those documents stay writable.
+function upgradeProfile(data: DocumentData): DocumentData {
+  const current = { ...data }
+  delete current.activeWorkoutId
+  delete current.places
+  const schedule: unknown = current.schedule
+  if (typeof schedule !== 'object' || schedule === null) return current
 
   const days = Object.entries(schedule).map(([day, refs]: [string, unknown]): [string, unknown] => [
     day,
     refs === null || Array.isArray(refs) ? (refs ?? []) : [refs],
   ])
 
-  return { ...data, schedule: Object.fromEntries(days) }
+  return { ...current, schedule: Object.fromEntries(days) }
 }
 
 export function upgradeEntries(data: DocumentData): DocumentData {

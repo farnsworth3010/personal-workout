@@ -15,7 +15,3 @@ export const restRemaining = (restEndsAt: number | null, now: number) =>
 // Countdown of a timed set that started at setStartedAt.
 export const timedRemaining = (setStartedAt: number, durationSec: number, now: number) =>
   remainingSec(setStartedAt + durationSec * 1000, now)
-
-// 90 → "1:30", with pad 2 → "01:30"; hours stay in the minutes: 3725 → "62:05".
-export const formatClock = (sec: number, pad = 1) =>
-  `${String(Math.floor(sec / 60)).padStart(pad, '0')}:${String(sec % 60).padStart(2, '0')}`
